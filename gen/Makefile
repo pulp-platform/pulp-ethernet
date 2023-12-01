@@ -12,14 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Author: Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>
+# Author: Robert Balas <balasr@iis.ee.ethz.ch>
 
-ETH_ROOT ?= $(shell pwd)
-BENDER	 ?= bender -d $(ETH_ROOT)
+# Generate C header and SystemVerilog files
 
+REGTOOL ?= regtool.py
+
+SRCS = eth_framing_reg_top.sv eth_framing_reg_pkg.sv
+
+all: srcs headers
+
+srcs: $(SRCS)
+
+eth_framing_reg_top.sv: eth_framing_regs.hjson
+	$(REGTOOL) -r $< -t .
+
+headers: eth_framing.h
+
+eth_framing.h: eth_framing_regs.hjson
+	$(REGTOOL) --cdefines $< > $@
+
+.PHONY: install
+install:
+	cp $(SRCS) ../rtl
+
+.PHONY: clean
 clean:
-	rm -rf .bender
-	rm -f bender
-	rm -f Bender.lock
-
-include eth.mk
+	rm $(SRCS)

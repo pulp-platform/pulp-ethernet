@@ -25,9 +25,10 @@ THE SOFTWARE.
 // Language: Verilog 2001
 
 /*
- * Generic ODDR module (ouput double data rate)
+ * Generic ODDR module
  */
-module oddr #(
+module oddr #
+(
     // target ("SIM", "GENERIC", "XILINX", "ALTERA")
     parameter TARGET = "GENERIC",
     // IODDR style ("IODDR", "IODDR2")

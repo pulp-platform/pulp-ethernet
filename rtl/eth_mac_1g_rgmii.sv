@@ -142,16 +142,10 @@ reg rx_prescale_sync_1;
 reg rx_prescale_sync_2;
 reg rx_prescale_sync_3;
 
-always_ff @(posedge gtx_clk or posedge gtx_rst) begin
-    if (gtx_rst) begin
-        rx_prescale_sync_1 <= 1'b0;
-        rx_prescale_sync_2 <= 1'b0;
-        rx_prescale_sync_3 <= 1'b0;
-    end else begin
-        rx_prescale_sync_1 <= rx_prescale[2];
-        rx_prescale_sync_2 <= rx_prescale_sync_1;
-        rx_prescale_sync_3 <= rx_prescale_sync_2;
-    end
+always @(posedge gtx_clk) begin
+    rx_prescale_sync_1 <= rx_prescale[2];
+    rx_prescale_sync_2 <= rx_prescale_sync_1;
+    rx_prescale_sync_3 <= rx_prescale_sync_2;
 end
 
 reg [6:0] rx_speed_count_1;
