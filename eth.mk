@@ -29,7 +29,7 @@ endif
 ######################
 
 ETH_NONFREE_REMOTE ?= git@iis-git.ee.ethz.ch:pulp-restricted/pulp-ethernet-nonfree.git
-ETH_NONFREE_COMMIT ?= 93c43bf
+ETH_NONFREE_COMMIT ?= cd8dcd3
 
 eth-nonfree-init:
 	git clone $(ETH_NONFREE_REMOTE) $(ETH_ROOT)/nonfree

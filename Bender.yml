@@ -3,28 +3,34 @@ package:
 
   authors:
     - "Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>" # current maintainer
+    - "Thomas Benz <tbenz@iis.ee.ethz.ch>"
+    - "Thiemo Zaugg <zaugg@ethz.ch>"
+    - "Mattia Girotti"
+    - "Alice Afrangoli"
+    - "Chaoqun Liang <chaoqun.liang@unibo.it>"
+    - "Davide Rossi <davide.rossi@unibo.it>"
 
 dependencies:
   axi_mem_if : { git: git@github.com:pulp-platform/axi_mem_if.git, version: 0.2.1 }
   axi : { git: "git@github.com:pulp-platform/axi.git", version: 0.39.1 }
   common_verification : { git: "https://github.com/pulp-platform/common_verification.git", version: 0.2.3 }
+  register_interface : { git: "https://github.com/pulp-platform/register_interface.git", version: 0.3.8 }
+  common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.32.0 }
+  axi_stream: { git: "git@github.com:pulp-platform/axi_stream.git", rev: "472751f550e3918215603e21734fe0ece3c66f79" }
 
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this
   # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
   # levels 1 and 0, etc. Files within a level are ordered alphabetically.
   # Level 0
-  - rtl/axis_async_fifo.sv
+  - gen/eth_framing_reg_pkg.sv
+  - gen/eth_framing_reg_top.sv
   - rtl/axis_gmii_rx.sv
   - rtl/axis_gmii_tx.sv
-  - rtl/mem_wrap_tx.sv
-  - rtl/dualmem_widen8.sv
-  - rtl/dualmem_widen.sv
+  # Level 1
   - rtl/eth_mac_1g_rgmii_fifo.sv
   - rtl/eth_mac_1g_rgmii.sv
   - rtl/eth_mac_1g.sv
-  - rtl/eth_rgmii.sv
-  - rtl/framing_top.sv
   - rtl/iddr.sv
   - rtl/oddr.sv
   - rtl/rgmii_core.sv
@@ -32,12 +38,12 @@ sources:
   - rtl/rgmii_phy_if.sv
   - rtl/rgmii_soc.sv
   - rtl/ssio_ddr_in.sv
-  - rtl/mem_wrap_rx.sv
-  - rtl/eth_rgmii_pkg.sv
-  - rtl/eth_rgmii_synth.sv
+  # Level 2
+  - rtl/framing_top.sv
+  - rtl/eth_top_pkg.sv
+  - rtl/eth_top.sv
+  - target/synth/eth_top_synth.sv
 
   - target: test
     files:
-      - rtl/simple_dual_two_clocks.v
       - target/sim/src/eth_tb.sv
-      - target/sim/src/fixture_eth.sv
