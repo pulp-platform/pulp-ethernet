@@ -33,7 +33,7 @@ module eth_rgmii
    logic [AXI_DATA_WIDTH-1:0]   eth_wrdata, eth_rdata;
    logic [AXI_DATA_WIDTH/8-1:0] eth_be;
 
-   axi2mem
+   eth_axi2mem
      #(
        .AXI_ID_WIDTH   ( AXI_ID_WIDTH     ),
        .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH   ),
