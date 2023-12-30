@@ -224,8 +224,8 @@ module eth_idma_wrap #(
   axi_stream_req_t axis_write_req;
   axi_stream_rsp_t axis_write_rsp;
  
-  assign hw2reg.rsp_valid.de = 1'b1;
-  assign hw2reg.req_ready.de = 1'b1;
+  //assign hw2reg.rsp_valid.de = 1'b1;
+  //assign hw2reg.req_ready.de = 1'b1;
 
   idma_req_t idma_reg_req;
   idma_rsp_t idma_reg_rsp;
@@ -343,9 +343,9 @@ module eth_idma_wrap #(
     .testmode_i           ( testmode_i        ),
     .idma_req_i           ( idma_reg_req      ),
     .req_valid_i          ( idma_req_valid    ),
-    .req_ready_o          ( hw2reg.req_ready.d    ),  
+    .req_ready_o          (   ),   //hw2reg.req_ready.d 
     .idma_rsp_o           ( idma_reg_rsp      ),
-    .rsp_valid_o          ( hw2reg.rsp_valid.d  ),
+    .rsp_valid_o          (   ), //hw2reg.rsp_valid.d
     .rsp_ready_i          ( idma_rsp_ready  ),
     .idma_eh_req_i        ( idma_eh_req_i     ),
     .eh_req_valid_i       ( eh_req_valid_i    ),
