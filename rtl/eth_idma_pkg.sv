@@ -27,7 +27,7 @@ package eth_idma_pkg;
    parameter int unsigned DataWidth           = 64;
   parameter int unsigned AddrWidth           = 64;
   parameter int unsigned UserWidth           = 1;
-  parameter int unsigned AxiIdWidth          = 1;
+  parameter int unsigned AxiIdWidth          = 5;
 
 
    localparam int unsigned StrbWidth     = DataWidth / 8;

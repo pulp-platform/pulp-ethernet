@@ -17,7 +17,7 @@ module eth_idma_tb
   parameter int unsigned DataWidth           = 64,
   parameter int unsigned AddrWidth           = 64,
   parameter int unsigned UserWidth           = 1,
-  parameter int unsigned AxiIdWidth          = 1,
+  parameter int unsigned AxiIdWidth          = 5,
   parameter int unsigned NumAxInFlight       = 3,
   parameter int unsigned BufferDepth         = 3,
   parameter int unsigned TFLenWidth          = 32,
