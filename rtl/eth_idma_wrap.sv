@@ -224,8 +224,8 @@ module eth_idma_wrap #(
   axi_stream_req_t axis_write_req;
   axi_stream_rsp_t axis_write_rsp;
  
-  //assign hw2reg.rsp_valid.de = 1'b1;
-  //assign hw2reg.req_ready.de = 1'b1;
+  assign hw2reg.rsp_valid.de = 1'b1;
+  assign hw2reg.req_ready.de = 1'b1;
 
   idma_req_t idma_reg_req;
   idma_rsp_t idma_reg_rsp;
@@ -267,8 +267,6 @@ module eth_idma_wrap #(
   assign idma_req_valid                        = reg2hw.req_valid.q;
   assign idma_rsp_ready                        = reg2hw.rsp_ready.q;
 
-
-
   eth_top #(
     .axi_stream_req_t   (  axi_stream_req_t  ),
     .axi_stream_rsp_t   (  axi_stream_rsp_t  ),
@@ -276,7 +274,9 @@ module eth_idma_wrap #(
     .IdWidth            (  32'd0             ),
     .DestWidth          (  32'd0             ),
     .UserWidth          (  32'd1             ),
-    .AW_REGBUS          (  AW_REGBUS         )
+    .AW_REGBUS          (  AW_REGBUS         ),
+    .reg2hw_itf_t      ( eth_idma_reg_pkg::eth_idma_reg2hw_t),
+    .hw2reg_itf_t      ( eth_idma_reg_pkg::eth_idma_hw2reg_t)
   ) i_eth_top (
     .rst_ni             (  rst_ni            ),
     .clk_i              (  eth_clk_i         ),
@@ -306,7 +306,7 @@ module eth_idma_wrap #(
 
     // REGBUS Configuration         
     .reg2hw_i          (  reg2hw             ),
-    .hw2reg_o          (  hw2reg             )
+    .hw2reg_o          (                     )
   );
 
    idma_backend_rw_axi_rw_axis #(
@@ -343,9 +343,9 @@ module eth_idma_wrap #(
     .testmode_i           ( testmode_i        ),
     .idma_req_i           ( idma_reg_req      ),
     .req_valid_i          ( idma_req_valid    ),
-    .req_ready_o          (   ),   //hw2reg.req_ready.d 
+    .req_ready_o          ( hw2reg.req_ready.d  ),   
     .idma_rsp_o           ( idma_reg_rsp      ),
-    .rsp_valid_o          (   ), //hw2reg.rsp_valid.d
+    .rsp_valid_o          ( hw2reg.rsp_valid.d ), //
     .rsp_ready_i          ( idma_rsp_ready  ),
     .idma_eh_req_i        ( idma_eh_req_i     ),
     .eh_req_valid_i       ( eh_req_valid_i    ),

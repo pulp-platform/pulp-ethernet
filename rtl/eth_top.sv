@@ -24,8 +24,10 @@ module eth_top #(
   /// AXI Stream User Width
   parameter int unsigned UserWidth = 1,
   /// REGBUS
-  parameter type reg2hw_itf_t = eth_idma_reg_pkg::eth_idma_reg2hw_t,
-  parameter type hw2reg_itf_t = eth_idma_reg_pkg::eth_idma_hw2reg_t,
+  //parameter type reg2hw_itf_t = eth_idma_reg_pkg::eth_idma_reg2hw_t,
+  //parameter type hw2reg_itf_t = eth_idma_reg_pkg::eth_idma_hw2reg_t,
+  parameter type reg2hw_itf_t = logic,
+  parameter type hw2reg_itf_t = logic,
   parameter int AW_REGBUS = 4
 ) (
   // Internal 125 MHz clock
