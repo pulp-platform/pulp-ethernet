@@ -55,6 +55,10 @@ module eth_top #(
   output axi_stream_rsp_t                      tx_axis_rsp_o,
   output axi_stream_req_t                      rx_axis_req_o,
   input  axi_stream_rsp_t                      rx_axis_rsp_i,
+  // Temp fix for multiply driven
+  input  logic                                idma_req_ready,
+  input  logic                                idma_rsp_valid,
+
   // Reg configs
   input  reg2hw_itf_t                          reg2hw_i     ,
   output hw2reg_itf_t                          hw2reg_o    
@@ -116,6 +120,9 @@ module eth_top #(
     .tx_axis_rsp_o(s_framing_tx_rsp),
     .rx_axis_req_o(s_framing_rx_req),
     .rx_axis_rsp_i(s_framing_rx_rsp),
+
+    .idma_req_ready (idma_req_ready),
+    .idma_rsp_valid (idma_rsp_valid),
 
     // Reg Interface
     .reg2hw_i       ( reg2hw_i    ),

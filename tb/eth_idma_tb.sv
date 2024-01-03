@@ -1,36 +1,34 @@
-// Copyright 2022 ETH Zurich and University of Bologna.
+// Copyright 2023 ETH Zurich and University of Bologna.
 // Solderpad Hardware License, Version 0.51, see LICENSE for details.
 // SPDX-License-Identifier: SHL-0.51
-//
-// Chaoqun Liang  <chaoqun.liang@unibo.it>
+
 
 `timescale 1 ns/1 ns
 `include "axi/typedef.svh"
 `include "idma/typedef.svh"
 `include "register_interface/typedef.svh"
 `include "register_interface/assign.svh"
-`include "register_interface/assign.svh"
-
 
 module eth_idma_tb
  #(
-  parameter int unsigned DataWidth           = 64,
-  parameter int unsigned AddrWidth           = 64,
-  parameter int unsigned UserWidth           = 1,
-  parameter int unsigned AxiIdWidth          = 5,
-  parameter int unsigned NumAxInFlight       = 3,
-  parameter int unsigned BufferDepth         = 3,
-  parameter int unsigned TFLenWidth          = 32,
-  parameter int unsigned MemSysDepth         = 0,
-  parameter bit          RAWCouplingAvail    = 0,
-  parameter bit          MaskInvalidData     = 1,
-  parameter bit          HardwareLegalizer   = 1,
-  parameter bit          RejectZeroTransfers = 1,
-  parameter bit          ErrorHandling       = 0
+  parameter int unsigned DataWidth           = 32'd64,
+  parameter int unsigned AddrWidth           = 32'd64,
+  parameter int unsigned UserWidth           = 32'd1,
+  parameter int unsigned AxiIdWidth          = 32'd5,
+  parameter int unsigned NumAxInFlight       = 32'd3,
+  parameter int unsigned BufferDepth         = 32'd3,
+  parameter int unsigned TFLenWidth          = 32'd32,
+  parameter int unsigned MemSysDepth         = 32'd0,
+  parameter bit          RAWCouplingAvail    = 1'b0,
+  parameter bit          MaskInvalidData     = 1'b1,
+  parameter bit          HardwareLegalizer   = 1'b1,
+  parameter bit          RejectZeroTransfers = 1'b1,
+  parameter bit          ErrorHandling       = 1'b0
 );
   
   import idma_pkg::*;
- 
+  import eth_idma_pkg::*;
+
   /// timing parameters
   localparam time SYS_TCK       = 8ns;
   localparam time TCK200        = 5ns;
@@ -39,35 +37,11 @@ module eth_idma_tb
   localparam time SYS_TT        = 6ns;
 
   /// regbus
-  localparam int unsigned REG_BUS_DW  = 64;
+  localparam int unsigned REG_BUS_DW  = 32;
   localparam int unsigned REG_BUS_AW  = 8;
    
   /// parse error handling caps
-  localparam idma_pkg::error_cap_e ErrorCap = ErrorHandling ? idma_pkg::ERROR_HANDLING :
-                                                                idma_pkg::NO_ERROR_HANDLING;
-  
-  /// dependent parameters
-  localparam int unsigned StrbWidth     = DataWidth / 8;
-  localparam int unsigned OffsetWidth   = $clog2(StrbWidth);
-
-  typedef logic [AddrWidth-1:0]      addr_t;
-  typedef logic [DataWidth-1:0]      data_t;
-  typedef logic [StrbWidth-1:0]      strb_t;
-  typedef logic [UserWidth-1:0]      user_t;
-  typedef logic [AxiIdWidth-1:0]     id_t;
-  typedef logic [OffsetWidth-1:0]    offset_t;
-  typedef logic [TFLenWidth-1:0]     tf_len_t;
-
-  /// AXI4+ATOP typedefs
-  `AXI_TYPEDEF_AW_CHAN_T(axi_aw_chan_t, addr_t, id_t, user_t)
-  `AXI_TYPEDEF_W_CHAN_T(axi_w_chan_t, data_t, strb_t, user_t)
-  `AXI_TYPEDEF_B_CHAN_T(axi_b_chan_t, id_t, user_t)
-
-  `AXI_TYPEDEF_AR_CHAN_T(axi_ar_chan_t, addr_t, id_t, user_t)
-  `AXI_TYPEDEF_R_CHAN_T(axi_r_chan_t, data_t, id_t, user_t)
-
-  `AXI_TYPEDEF_REQ_T(axi_req_t, axi_aw_chan_t, axi_w_chan_t, axi_ar_chan_t)
-  `AXI_TYPEDEF_RESP_T(axi_rsp_t, axi_b_chan_t, axi_r_chan_t)
+  localparam error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
 
   /// ethernet pads
   logic       s_clk;
@@ -75,7 +49,11 @@ module eth_idma_tb
   logic       s_clk_125MHz_90;
   logic       s_clk_200MHz;
   logic       s_rst_n;
-  logic       done   = 0;
+  logic       done  = 0;
+  logic       error_found = 0;
+
+  logic [REG_BUS_DW-1:0] tx_req_ready, tx_rsp_valid, prev_tx_req_ready, prev_tx_rsp_valid; 
+  logic [REG_BUS_DW-1:0] rx_req_ready, rx_rsp_valid, prev_rx_req_ready, prev_rx_rsp_valid;
 
   logic       eth_rxck;
   logic       eth_rxctl;
@@ -97,7 +75,7 @@ module eth_idma_tb
   axi_rsp_t axi_tx_rsp_mem, axi_rx_rsp_mem;
 
   /// error handler
-  idma_pkg::idma_eh_req_t idma_eh_req;
+  idma_eh_req_t idma_eh_req;
   logic                   eh_req_valid;
   logic                   eh_req_ready;
 
@@ -133,9 +111,8 @@ module eth_idma_tb
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
   
-  eth_idma_pkg::reg_bus_req_t reg_bus_tx_req, reg_bus_rx_req;
-  eth_idma_pkg::reg_bus_rsp_t reg_bus_tx_rsp, reg_bus_rx_rsp;
- 
+  reg_bus_req_t reg_bus_tx_req, reg_bus_rx_req;
+  reg_bus_rsp_t reg_bus_tx_rsp, reg_bus_rx_rsp;
   
   `REG_BUS_ASSIGN_TO_REQ (reg_bus_tx_req, reg_bus_tx)
   `REG_BUS_ASSIGN_FROM_RSP (reg_bus_tx, reg_bus_tx_rsp)
@@ -163,7 +140,7 @@ module eth_idma_tb
       .WarnUninitialized ( 1'b0         ),
       .ClearErrOnAccess  ( 1'b1         ),
       .ApplDelay         ( SYS_TA       ),
-      .AcqDelay          ( SYS_TT       )  // to do
+      .AcqDelay          ( SYS_TT       )  
   ) i_tx_axi_sim_mem (
       .clk_i              ( s_clk           ),
       .rst_ni             ( s_rst_n         ),
@@ -218,8 +195,6 @@ module eth_idma_tb
       .mon_w_valid_o      ( /* NOT CONNECTED */ )
    );
     
-  
-   // ---------------------------- DUT -----------------------------
   eth_idma_wrap#(
     .DataWidth           ( DataWidth           ),    
     .AddrWidth           ( AddrWidth           ),
@@ -234,8 +209,8 @@ module eth_idma_tb
     .HardwareLegalizer   ( HardwareLegalizer   ),
     .RejectZeroTransfers ( RejectZeroTransfers )
 ) i_tx_eth_idma_wrap (
-    .clk_i               (  s_clk              ),
-    .rst_ni              (  s_rst_n            ),
+    .clk_i               ( s_clk              ),
+    .rst_ni              ( s_rst_n            ),
      /// Etherent Internal clocks
     .eth_clk_i           ( s_clk_125MHz_0      ), // 125MHz in-phase
     .eth_clk90_i         ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
@@ -268,7 +243,6 @@ module eth_idma_tb
     .idma_busy_o         ( tx_busy             )
 );
  
-
 axi_rw_join #(
     .axi_req_t        ( axi_req_t ),
     .axi_resp_t       ( axi_rsp_t )
@@ -287,18 +261,18 @@ axi_rw_join #(
     .axi_req_t        ( axi_req_t ),
     .axi_resp_t       ( axi_rsp_t )
 ) i_axi_rx_rw_join (
-    .clk_i            ( s_clk             ),
-    .rst_ni           ( s_rst_n           ),
-    .slv_read_req_i   ( axi_rx_read_req   ),
-    .slv_read_resp_o  ( axi_rx_read_rsp   ),
-    .slv_write_req_i  ( axi_rx_write_req  ),
-    .slv_write_resp_o ( axi_rx_write_rsp  ),
-    .mst_req_o        ( axi_rx_req_mem    ),
-    .mst_resp_i       ( axi_rx_rsp_mem    )
+    .clk_i            ( s_clk            ),
+    .rst_ni           ( s_rst_n          ),
+    .slv_read_req_i   ( axi_rx_read_req  ),
+    .slv_read_resp_o  ( axi_rx_read_rsp  ),
+    .slv_write_req_i  ( axi_rx_write_req ),
+    .slv_write_resp_o ( axi_rx_write_rsp ),
+    .mst_req_o        ( axi_rx_req_mem   ),
+    .mst_resp_i       ( axi_rx_rsp_mem   )
 );
 
- eth_idma_pkg::reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
- eth_idma_pkg::reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
+ reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
+ reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
 
  eth_idma_wrap #(
     .DataWidth           ( DataWidth           ),    
@@ -332,9 +306,9 @@ axi_rw_join #(
 
      /// Ethernet MDIO
     .phy_mdio_i       ( 1'b0            ),
-    .phy_mdio_o       (                 ), // not used
-    .phy_mdio_oe      (                 ), // not used
-    .phy_mdc          (                 ), // not used
+    .phy_mdio_o       (                 ), // to-do
+    .phy_mdio_oe      (                 ), // to-do
+    .phy_mdc          (                 ), // to-do
 
     .reg_req_i        ( reg_bus_rx_req  ),
     .reg_rsp_o        ( reg_bus_rx_rsp  ),
@@ -378,9 +352,11 @@ axi_rw_join #(
    initial begin
       while (!done) begin
          s_clk_125MHz_90 <= 0;
-         #(TCK125/2);
+         #(TCK125/4);
          s_clk_125MHz_90 <= 1;
-           #(TCK125/2);
+          #(TCK125/2);
+         s_clk_125MHz_90 <= 0;
+          #(TCK125/4);
       end
    end
 
@@ -391,113 +367,110 @@ axi_rw_join #(
       @(posedge s_rst_n);
       @(posedge s_clk);
   
-   
     $readmemh("/scratch/chaol/eth-ETH/fe-ethernet/scripts/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     $readmemh("/scratch/chaol/eth-ETH/fe-ethernet/scripts/eth_packet_frame.vmem", i_tx_axi_sim_mem.mem);
 
- 
     /// Tx path reg configs
-    
+
    //set framing rx mac address to 48'h207098001032
-    reg_drv_tx.send_write( 'h0, 64'h98001032, 'hff, reg_error); //lower 32bits of MAC address
+    reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h8,  64'h00002070, 'h0f, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    reg_drv_tx.send_write( 'h04,  32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h20, 64'h0, 'h0fff, reg_error ); // SRC_ADDR
+    reg_drv_tx.send_write( 'h10, 32'h0, 'hf, reg_error ); // SRC_ADDR
     @(posedge s_clk);
      
-    reg_drv_tx.send_write( 'h28, 64'h0, 'h0fff, reg_error); // DST_ADDR 64'h0000207098001032
+    reg_drv_tx.send_write( 'h14, 32'h0, 'hf, reg_error); // DST_ADDR 64'h0000207098001032
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h30, 64'h40,'h0f , reg_error); // Size in bytes 
-    @(posedge s_clk)
+    reg_drv_tx.send_write( 'h18, 32'h40, 'hf, reg_error); // Size in bytes 
+    @(posedge s_clk);
     
-    reg_drv_tx.send_write( 'h38, 64'h0,'h0f , reg_error); // src protocol
-    @(posedge s_clk)
+    reg_drv_tx.send_write( 'h1c, 32'h0, 'hf, reg_error); // src protocol
+    @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h40, 64'h5,'h0f , reg_error); // dst protocol
-    @(posedge s_clk)
+    reg_drv_tx.send_write( 'h20, 32'h5, 'hf, reg_error); // dst protocol
+    @(posedge s_clk);
     
-    reg_drv_tx.send_write( 'h70, 64'h1,'h0f , reg_error);  // tx req valid
-    @(posedge s_clk)
-    
-
-   // tx_idma_req_valid = 1;  // a valid reuqest is available
-
-     // wait for req_ready to become 1, indicate the dma module is ready to accept the request. 
-     /// wait till transfer request is accpeted (valid to 0 after the transaction complete)
-    //  while (tx_idma_req_ready != 1) begin
-    // @(posedge s_clk); // wait for req_ready to become 1, indicating the DMA module is ready to accept the request.
-    // end
-    reg_drv_tx.send_write( 'h80, 64'h1,'h0f , reg_error);  // launch transfer
-    @(posedge s_clk)
-
-    //tx_idma_rsp_ready = 1; // transfer launch
+    while(1) begin
+      reg_drv_tx.send_read( 'h3c, tx_req_ready, reg_error);   // req ready
+      if( tx_req_ready ) begin
+        reg_drv_tx.send_write( 'h38, 32'h1, 'hf , reg_error);  // req valid
+        @(posedge s_clk);
+        break;
+      end
+      @(posedge s_clk);
+    end
+   
+   reg_drv_tx.send_write( 'h38, 32'h0, 'hf , reg_error);  // req valid
+   reg_drv_tx.send_write( 'h40, 32'h1, 'hf , reg_error);  // rsp_ready
+    @(posedge s_clk);
 
     /// rx path reg configs
-    //rx_idma_req_valid = 1;
-
-   
-
-    reg_drv_rx.send_write( 'h0, 64'h98001032, 'hff, reg_error); //lower 32bits of MAC address
+    reg_drv_rx.send_write( 'h0, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h8,  64'h00002070, 'h0f, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    reg_drv_rx.send_write( 'h4, 32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
 
-    reg_drv_rx.send_write( 'h20, 64'h0, 'h0fff, reg_error ); // SRC_ADDR  64'h0000207098001032
-    @(posedge s_clk);
-    
-    reg_drv_rx.send_write( 'h28, 64'h0, 'h0fff, reg_error); // DST_ADDR
-    @(posedge s_clk);
-
-    reg_drv_rx.send_write( 'h30, 64'h40,'h0f , reg_error); // Size in bytes 
+    reg_drv_rx.send_write( 'h10, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h38, 64'h5,'h0f , reg_error); // src protocol
+    reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error); // DST_ADDR
     @(posedge s_clk);
 
-    reg_drv_rx.send_write( 'h40, 64'h0,'h0f , reg_error); // dst protocol
+    reg_drv_rx.send_write( 'h18, 32'h40, 'hf , reg_error); // Size in bytes 
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h70, 64'h1,'h0f , reg_error);  // rx req valid
-    @(posedge s_clk)
-     
-    //  while (rx_idma_req_ready != 1) begin
-    // @(posedge s_clk); // wait for req_ready to become 1, indicating the DMA module is ready to accept the request.
-    // end
-    reg_drv_rx.send_write( 'h80, 64'h1,'h0f , reg_error);  // launch transfer
-    @(posedge s_clk)
-   // rx_idma_rsp_ready = 1; 
-
-    //wait for rsp valid to be asserted to see the response
-    //rsp_ready to be 0 done
-
-    repeat(70) @(posedge s_clk); // wait enough till all  data are written into rx mem. 
-
-    // tx_idma_req_valid = 0;
-    // rx_idma_req_valid = 0;
+    reg_drv_rx.send_write( 'h1c, 32'h5, 'hf , reg_error); // src protocol
+    @(posedge s_clk);
+    reg_drv_rx.send_write( 'h20, 32'h0, 'hf , reg_error); // dst protocol
+    @(posedge s_clk);
     
-    reg_drv_tx.send_write( 'h70, 64'h0,'h0f , reg_error);  // tx req valid
-    @(posedge s_clk)
+    while(1) begin
+      reg_drv_rx.send_read( 'h3c, rx_req_ready, reg_error);
+      if(rx_req_ready) begin
+        reg_drv_rx.send_write( 'h38, 32'h1, 'hf , reg_error);  
+        @(posedge s_clk);
+        break;
+      end
+      @(posedge s_clk);
+    end
 
-    reg_drv_rx.send_write( 'h70, 64'h0,'h0f , reg_error);  // rx req valid
-    @(posedge s_clk)
+    @(posedge s_clk);
+    
+    reg_drv_rx.send_write( 'h38, 32'h0, 'hf , reg_error);  // req valid
+    reg_drv_rx.send_write( 'h40, 32'h1, 'hf, reg_error);  
+    @(posedge s_clk);
 
-    // repeat(10) @(posedge s_clk);
+    while(1) begin
+      reg_drv_rx.send_read( 'h44, rx_rsp_valid, reg_error);
+      if(rx_rsp_valid) begin
+        reg_drv_rx.send_write( 'h40, 32'h0, 'hf , reg_error);  
+        reg_drv_tx.send_write( 'h40, 32'h0, 'hf , reg_error);  
+        @(posedge s_clk);
+        break;
+      end
+      @(posedge s_clk);
+    end
+  
+    repeat(70) @(posedge s_clk); 
 
-    for(int j=0; j<64; j++) begin
+    for (int j = 0; j < 64; j++) begin
       if (i_tx_axi_sim_mem.mem[j] != i_rx_axi_sim_mem.mem[j]) begin
-        $display("Data at mem[%d] was received %h but was sent as %h", j, i_rx_axi_sim_mem.mem[j], i_tx_axi_sim_mem.mem[j]);
-      end else begin
-        $display("Data at mem[%d] was correctly received: %h", j, i_rx_axi_sim_mem.mem[j] );
+        $display("Test FAIL");
+        error_found = 1;
+        break;
       end
     end
 
-    $finish;
+    if (!error_found) begin
+      $display("Test PASS");
+    end
 
+  $finish;
  end
 
 endmodule

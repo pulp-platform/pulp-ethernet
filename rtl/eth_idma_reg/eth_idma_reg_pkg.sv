@@ -7,7 +7,7 @@
 package eth_idma_reg_pkg;
 
   // Address widths within the block
-  parameter int BlockAw = 8;
+  parameter int BlockAw = 7;
 
   ////////////////////////////
   // Typedefs for registers //
@@ -203,24 +203,24 @@ package eth_idma_reg_pkg;
   } eth_idma_hw2reg_t;
 
   // Register offsets
-  parameter logic [BlockAw-1:0] ETH_IDMA_MACLO_ADDR_OFFSET = 8'h 0;
-  parameter logic [BlockAw-1:0] ETH_IDMA_MACHI_MDIO_OFFSET = 8'h 8;
-  parameter logic [BlockAw-1:0] ETH_IDMA_TX_FCS_OFFSET = 8'h 10;
-  parameter logic [BlockAw-1:0] ETH_IDMA_RX_FCS_OFFSET = 8'h 18;
-  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_ADDR_OFFSET = 8'h 20;
-  parameter logic [BlockAw-1:0] ETH_IDMA_DST_ADDR_OFFSET = 8'h 28;
-  parameter logic [BlockAw-1:0] ETH_IDMA_LENGTH_OFFSET = 8'h 30;
-  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_PROTOCOL_OFFSET = 8'h 38;
-  parameter logic [BlockAw-1:0] ETH_IDMA_DST_PROTOCOL_OFFSET = 8'h 40;
-  parameter logic [BlockAw-1:0] ETH_IDMA_AXI_ID_OFFSET = 8'h 48;
-  parameter logic [BlockAw-1:0] ETH_IDMA_OPT_SRC_OFFSET = 8'h 50;
-  parameter logic [BlockAw-1:0] ETH_IDMA_OPT_DST_OFFSET = 8'h 58;
-  parameter logic [BlockAw-1:0] ETH_IDMA_BEO_OFFSET = 8'h 60;
-  parameter logic [BlockAw-1:0] ETH_IDMA_LAST_OFFSET = 8'h 68;
-  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_VALID_OFFSET = 8'h 70;
-  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_READY_OFFSET = 8'h 78;
-  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_READY_OFFSET = 8'h 80;
-  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_OFFSET = 8'h 88;
+  parameter logic [BlockAw-1:0] ETH_IDMA_MACLO_ADDR_OFFSET = 7'h 0;
+  parameter logic [BlockAw-1:0] ETH_IDMA_MACHI_MDIO_OFFSET = 7'h 4;
+  parameter logic [BlockAw-1:0] ETH_IDMA_TX_FCS_OFFSET = 7'h 8;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RX_FCS_OFFSET = 7'h c;
+  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_ADDR_OFFSET = 7'h 10;
+  parameter logic [BlockAw-1:0] ETH_IDMA_DST_ADDR_OFFSET = 7'h 14;
+  parameter logic [BlockAw-1:0] ETH_IDMA_LENGTH_OFFSET = 7'h 18;
+  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_PROTOCOL_OFFSET = 7'h 1c;
+  parameter logic [BlockAw-1:0] ETH_IDMA_DST_PROTOCOL_OFFSET = 7'h 20;
+  parameter logic [BlockAw-1:0] ETH_IDMA_AXI_ID_OFFSET = 7'h 24;
+  parameter logic [BlockAw-1:0] ETH_IDMA_OPT_SRC_OFFSET = 7'h 28;
+  parameter logic [BlockAw-1:0] ETH_IDMA_OPT_DST_OFFSET = 7'h 2c;
+  parameter logic [BlockAw-1:0] ETH_IDMA_BEO_OFFSET = 7'h 30;
+  parameter logic [BlockAw-1:0] ETH_IDMA_LAST_OFFSET = 7'h 34;
+  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_VALID_OFFSET = 7'h 38;
+  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_READY_OFFSET = 7'h 3c;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_READY_OFFSET = 7'h 40;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_OFFSET = 7'h 44;
 
   // Register index
   typedef enum int {

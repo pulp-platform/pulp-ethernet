@@ -40,6 +40,9 @@ module framing_top #(
   output axi_stream_rsp_t                               tx_axis_rsp_o,
   output axi_stream_req_t                               rx_axis_req_o,
   input  axi_stream_rsp_t                               rx_axis_rsp_i,
+  // ugly fix (to-do)
+  input  logic                                          idma_req_ready,
+  input  logic                                          idma_rsp_valid,
   // REGBUS configs
   input  reg2hw_itf_t                                   reg2hw_i,
   output hw2reg_itf_t                                   hw2reg_o    
@@ -70,6 +73,11 @@ module framing_top #(
 
   assign hw2reg_o.tx_fcs.de = 1'b1;
   assign hw2reg_o.rx_fcs.de = 1'b1;
+  assign hw2reg_o.req_ready.de = 1'b1;
+  assign hw2reg_o.rsp_valid.de = 1'b1;
+
+  assign hw2reg_o.req_ready.d = idma_req_ready;
+  assign hw2reg_o.rsp_valid.d = idma_rsp_valid;
 
   always_comb begin
     rx_axis_tdata_4_d  = rx_axis_tdata_5_q;

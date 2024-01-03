@@ -5,7 +5,7 @@
     bus_interfaces: [
         { protocol: "reg_iface", direction: "device"}
     ]
-    regwidth: "64",
+    regwidth: "32",
     registers: [
         { name: "maclo_addr",
           desc: "lower 4 bytes of the devices MAC address",

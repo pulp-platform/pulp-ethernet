@@ -10,7 +10,7 @@
 module eth_idma_reg_top #(
   parameter type reg_req_t = logic,
   parameter type reg_rsp_t = logic,
-  parameter int AW = 8
+  parameter int AW = 7
 ) (
   input logic clk_i,
   input logic rst_ni,
@@ -27,7 +27,7 @@ module eth_idma_reg_top #(
 
   import eth_idma_reg_pkg::* ;
 
-  localparam int DW = 64;
+  localparam int DW = 32;
   localparam int DBW = DW/8;                    // Byte Width
 
   // register signals
@@ -1419,8 +1419,8 @@ endmodule
 
 module eth_idma_reg_top_intf
 #(
-  parameter int AW = 8,
-  localparam int DW = 64
+  parameter int AW = 7,
+  localparam int DW = 32
 ) (
   input logic clk_i,
   input logic rst_ni,
