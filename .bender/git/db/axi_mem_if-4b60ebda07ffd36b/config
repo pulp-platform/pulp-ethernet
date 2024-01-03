@@ -1,0 +1,7 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+[remote "origin"]
+	url = git@github.com:pulp-platform/axi_mem_if.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
