@@ -44,10 +44,10 @@ packages:
       Git: https://github.com/pulp-platform/common_verification.git
     dependencies: []
   idma:
-    revision: 0bb794dec9fbf7dc51177e56d9d832b5818b628d
+    revision: ad64ce9c66ff2e695a8552998379b0010ef9a0a5
     version: null
     source:
-      Git: git@github.com:chaoqun-liang/idma_axis.git
+      Git: https://github.com/chaoqun-liang/iDMA.git
     dependencies:
     - axi
     - common_cells
@@ -58,7 +58,7 @@ packages:
     revision: null
     version: null
     source:
-      Path: .bender/git/checkouts/idma-e00e861204441bc5/target/rtl
+      Path: .bender/git/checkouts/idma-dc4c2164e87611aa/target/rtl
     dependencies:
     - axi
     - common_cells
