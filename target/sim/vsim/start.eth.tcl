@@ -11,3 +11,4 @@ eval "vsim ${TESTBENCH}_opt -coverage -t 1ns" ${flags}
 
 set StdArithNoWarnings 1
 set NumericStdNoWarnings 1
+
