@@ -1,5 +1,5 @@
 package:
-  name: ethernet
+  name: ethernet_idma
 
   authors:
     - "Andreas Kurth <akurth@iis.ee.ethz.ch>" # current maintainer
@@ -27,14 +27,14 @@ sources:
   # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
   # levels 1 and 0, etc. Files within a level are ordered alphabetically.
   # Level 0
-  - rtl/eth_idma_reg/eth_idma_reg_pkg.sv
-  - rtl/eth_idma_reg/eth_idma_reg_top.sv
+  - gen/eth_idma_reg_pkg.sv
+  - gen/eth_idma_reg_top.sv
   - rtl/axis_gmii_rx.sv
   - rtl/axis_gmii_tx.sv
+   # Level 1
   - rtl/eth_mac_1g_rgmii_fifo.sv
   - rtl/eth_mac_1g_rgmii.sv
   - rtl/eth_mac_1g.sv
-  - rtl/framing_top.sv
   - rtl/iddr.sv
   - rtl/oddr.sv
   - rtl/rgmii_core.sv
@@ -42,23 +42,14 @@ sources:
   - rtl/rgmii_phy_if.sv
   - rtl/rgmii_soc.sv
   - rtl/ssio_ddr_in.sv
-  - rtl/eth_top_pkg.sv
-  - rtl/eth_top.sv
-  - rtl/eth_top_synth.sv
+   # Level 2
+  - rtl/framing_top.sv
   - rtl/eth_idma_pkg.sv
+  - rtl/eth_top.sv
   - rtl/eth_idma_wrap.sv
-
-  - target: synthesis
-    files:
-      - ../../macro_wrap/tc_clk_gf22.sv
 
   - target: eth_test
     files:
-      - tb/eth_idma_tb.sv
+      - target/sim/src/eth_idma_tb.sv
 
-  - target: gate
-    files:
-      - ../../synopsys/netlists/eth_idma_wrap.v
-      - rtl/eth_idma_pkg.sv
-      - tb/eth_idma_tb.sv
 
