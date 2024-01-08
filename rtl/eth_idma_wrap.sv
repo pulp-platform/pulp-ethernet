@@ -41,7 +41,8 @@ module eth_idma_wrap #(
   /// Enable error handling
   parameter bit          ErrorHandling       = 1'b0,
   /// CDC FIFO
-  parameter int unsigned FIFODepth           = 32'd8,
+  parameter int unsigned TxFifoLogDepth           = 32'd8,
+  parameter int unsigned RxFifoLogDepth           = 32'd8,
   /// 
   parameter type reg_req_t                   = eth_idma_pkg::reg_bus_req_t,
   parameter type reg_rsp_t                   = eth_idma_pkg::reg_bus_rsp_t
@@ -272,73 +273,38 @@ module eth_idma_wrap #(
   // assign idma_axis_read_rsp = eth_axis_rx_rsp;
   // assign eth_axis_rx_req = idma_axis_read_req;
 
-axis_cdc #(
-  .FIFODepth(FIFODepth),
-  .DataWidth(DataWidth),
-  .IdWidth(AxiIdWidth),
-  .UserWidth(UserWidth),
-  .DestWidth(5)
-)i_axis_tx_cdc(
- // FIFO IN
- .clk_src_i(clk_i),
- .rstn_src_i(rst_ni),
- .tdata_i(idma_axis_write_req.t.data),
- .tstrb_i(idma_axis_write_req.t.strb),
- .tkeep_i(idma_axis_write_req.t.keep),
- .tlast_i(idma_axis_write_req.t.last),
- .tid_i(idma_axis_write_req.t.id),
- .tdest_i(idma_axis_write_req.t.dest),
- .tuser_i(idma_axis_write_req.t.user),
- .tvalid_i(idma_axis_write_req.tvalid),
- .tready_o(idma_axis_write_rsp.tready),
- 
- // FIFO OUT
- .clk_dst_i(eth_clk_i),
- .rstn_dst_i(rst_ni),
- .tdata_o(eth_axis_tx_req.t.data),
- .tstrb_o(eth_axis_tx_req.t.strb),
- .tkeep_o(eth_axis_tx_req.t.keep),
-.tlast_o(eth_axis_tx_req.t.last),
- .tid_o(eth_axis_tx_req.t.id),
- .tdest_o(eth_axis_tx_req.t.dest),
- .tuser_o(eth_axis_tx_req.t.user),
- .tvalid_o(eth_axis_tx_req.tvalid),
- .tready_i(eth_axis_tx_rsp.tready)
-);
+  cdc_fifo_gray  #(
+      .T          ( axi_stream_req_t    ),
+      .LOG_DEPTH  ( TxFifoLogDepth )
+  ) i_cdc_fifo_tx (
+      .src_rst_ni     ( rst_ni   ),
+      .src_clk_i      ( clk_i     ),
+      .src_data_i     ( idma_axis_write_req.t       ),
+      .src_valid_i    ( idma_axis_write_req.tvalid ),
+      .src_ready_o    ( idma_axis_write_rsp.tready  ),
 
+      .dst_rst_ni     ( rst_ni      ),
+      .dst_clk_i      ( eth_clk_i  ),
+      .dst_data_o     ( eth_axis_tx_req.t       ),
+      .dst_valid_o    ( eth_axis_tx_req.tvalid ),
+      .dst_ready_i    ( eth_axis_tx_rsp.tready )
+  );
 
-axis_cdc #(
-  .FIFODepth(FIFODepth),
-  .DataWidth(DataWidth),
-  .IdWidth(AxiIdWidth),
-  .UserWidth(UserWidth),
-  .DestWidth(5)
-)i_axis_rx_cdc(
- // FIFO IN
- .clk_src_i(eth_clk_i),
- .rstn_src_i(rst_ni),
- .tdata_i(eth_axis_rx_rsp.t.data),
- .tstrb_i(eth_axis_rx_rsp.t.strb),
- .tkeep_i(eth_axis_rx_rsp.t.keep),
- .tlast_i(eth_axis_rx_rsp.t.last),
- .tid_i (eth_axis_rx_rsp.t.id),
- .tdest_i(eth_axis_rx_rsp.t.dest),
- .tuser_i(eth_axis_rx_rsp.t.user),
- .tvalid_i(eth_axis_rx_rsp.tvalid),
- .tready_o(eth_axis_rx_req.tready),
- 
- // FIFO OUT
- .clk_dst_i(clk_i),
- .rstn_dst_i(rst_ni),
- .tdata_o( idma_axis_read_rsp.t.data),
- .tstrb_o( idma_axis_read_rsp.t.strb),
- .tkeep_o( idma_axis_read_rsp.t.keep),
-.tlast_o( idma_axis_read_rsp.t.last),
- .tid_o( idma_axis_read_rsp.t.id),
- .tdest_o( idma_axis_read_rsp.t.dest),
- .tuser_o( idma_axis_read_rsp.t.user),
- .tvalid_o( idma_axis_read_rsp.tvalid),
- .tready_i( idma_axis_read_req.tready)
-);
+  // Read data, RX CDC FIFO
+  cdc_fifo_gray  #(
+      .T          ( axi_stream_req_t),
+      .LOG_DEPTH  ( RxFifoLogDepth )
+  ) i_cdc_fifo_rx (
+      .src_rst_ni     ( rst_ni       ),
+      .src_clk_i      ( eth_clk_i   ),
+      .src_data_i     ( eth_axis_rx_rsp.t       ),
+      .src_valid_i    ( eth_axis_rx_rsp.tvalid  ),
+      .src_ready_o    ( eth_axis_rx_req.tready ),
 
+      .dst_rst_ni     ( rst_ni   ),
+      .dst_clk_i      ( clk_i    ),
+      .dst_data_o     ( idma_axis_read_rsp.t      ),
+      .dst_valid_o    ( idma_axis_read_rsp.tvalid ),
+      .dst_ready_i    ( idma_axis_read_req.tready  )
+  );
 endmodule : eth_idma_wrap
