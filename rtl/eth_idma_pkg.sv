@@ -13,7 +13,7 @@
 package eth_idma_pkg;
   
   /// Ethernet reg typedefs
-  parameter  int AW_REGBUS           = 8;
+  parameter  int AW_REGBUS           = 32;
   localparam int DW_REGBUS           = 32;
   localparam int unsigned STRB_WIDTH = DW_REGBUS/8;
 

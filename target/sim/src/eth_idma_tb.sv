@@ -38,7 +38,7 @@ module eth_idma_tb
 
   /// regbus
   localparam int unsigned REG_BUS_DW  = 32;
-  localparam int unsigned REG_BUS_AW  = 8;
+  localparam int unsigned REG_BUS_AW  = 32;
    
   /// parse error handling caps
   localparam error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
