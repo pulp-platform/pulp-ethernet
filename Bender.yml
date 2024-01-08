@@ -29,6 +29,7 @@ sources:
   # Level 0
   - gen/eth_idma_reg_pkg.sv
   - gen/eth_idma_reg_top.sv
+  - rtl/axis_cdc.sv
   - rtl/axis_gmii_rx.sv
   - rtl/axis_gmii_tx.sv
    # Level 1

@@ -40,6 +40,8 @@ module eth_idma_wrap #(
   parameter bit          RejectZeroTransfers = 1'b1,
   /// Enable error handling
   parameter bit          ErrorHandling       = 1'b0,
+  /// CDC FIFO
+  parameter int unsigned FIFODepth           = 32'd8,
   /// 
   parameter type reg_req_t                   = eth_idma_pkg::reg_bus_req_t,
   parameter type reg_rsp_t                   = eth_idma_pkg::reg_bus_rsp_t
@@ -119,11 +121,11 @@ module eth_idma_wrap #(
   );
 
   /// AXI Stream request and response
-  axi_stream_rsp_t axis_read_req;
-  axi_stream_req_t axis_read_rsp;
+  axi_stream_rsp_t idma_axis_read_req, eth_axis_tx_rsp;  
+  axi_stream_req_t idma_axis_read_rsp, eth_axis_tx_req;
 
-  axi_stream_req_t axis_write_req;
-  axi_stream_rsp_t axis_write_rsp;
+  axi_stream_req_t idma_axis_write_req, eth_axis_rx_rsp;
+  axi_stream_rsp_t idma_axis_write_rsp, eth_axis_rx_req;
 
   idma_req_t idma_reg_req;
   idma_rsp_t idma_reg_rsp;
@@ -164,50 +166,7 @@ module eth_idma_wrap #(
   assign idma_req_valid                          = reg2hw.req_valid.q;
   assign idma_rsp_ready                          = reg2hw.rsp_ready.q;
 
-  eth_top #(
-    .axi_stream_req_t   (  axi_stream_req_t  ),
-    .axi_stream_rsp_t   (  axi_stream_rsp_t  ),
-    .DataWidth          (  DataWidth         ), 
-    .IdWidth            (  32'd0             ),
-    .DestWidth          (  32'd0             ),
-    .UserWidth          (  32'd1             ),
-    .AW_REGBUS          (  AW_REGBUS         ),
-    .reg2hw_itf_t       (  eth_idma_reg2hw_t ),
-    .hw2reg_itf_t       (  eth_idma_hw2reg_t )
-  ) i_eth_top (
-    .rst_ni             (  rst_ni            ),
-    .clk_i              (  eth_clk_i         ),
-    .clk90_int          (  eth_clk90_i       ),
-    .clk_200_int        (  eth_clk200M_i     ),
 
-    // Ethernet: 1000BASE-T RGMII
-    .phy_rx_clk         (  phy_rx_clk_i      ),
-    .phy_rxd            (  phy_rxd_i         ),
-    .phy_rx_ctl         (  phy_rx_ctl_i      ),
-    .phy_tx_clk         (  phy_tx_clk_o      ),
-    .phy_txd            (  phy_txd_o         ),
-    .phy_tx_ctl         (  phy_tx_ctl_o      ),
-    .phy_reset_n        (  phy_resetn_o      ),
-    .phy_int_n          (  phy_intn_i        ),
-    .phy_pme_n          (  phy_pme_i         ),
-    .phy_mdio_i         (  phy_mdio_i        ),
-    .phy_mdio_o         (  phy_mdio_o        ),
-    .phy_mdio_oe        (  phy_mdio_oe       ),
-    .phy_mdc            (  phy_mdc           ),
-    
-    // AXIS Interface 
-    .tx_axis_req_i      (  axis_write_req    ), 
-    .tx_axis_rsp_o      (  axis_write_rsp    ),
-    .rx_axis_req_o      (  axis_read_rsp     ),
-    .rx_axis_rsp_i      (  axis_read_req     ),
-
-    .idma_req_ready     (  req_ready         ),
-    .idma_rsp_valid     (  rsp_valid         ),
-
-    // REGBUS Configuration         
-    .reg2hw_i           (  reg2hw            ),
-    .hw2reg_o           (  hw2reg            )
-  );
 
    idma_backend_rw_axi_rw_axis #(
     .DataWidth            ( DataWidth            ),
@@ -240,7 +199,7 @@ module eth_idma_wrap #(
     .rst_ni               ( rst_ni            ),
     .testmode_i           ( testmode_i        ),
     .idma_req_i           ( idma_reg_req      ),
-    .req_valid_i          ( idma_req_valid    ),
+    .req_valid_i          ( idma_req_valid    ), // also output them
     .req_ready_o          ( req_ready         ),  
     .idma_rsp_o           ( idma_reg_rsp      ),
     .rsp_valid_o          ( rsp_valid         ),  
@@ -256,11 +215,130 @@ module eth_idma_wrap #(
     .axi_read_rsp_i       ( axi_read_rsp_i    ),
 
     /// AXIS Interface
-    .axis_read_req_o      ( axis_read_req    ),
-    .axis_read_rsp_i      ( axis_read_rsp    ), 
-    .axis_write_req_o     ( axis_write_req   ), 
-    .axis_write_rsp_i     ( axis_write_rsp   ),
+    .axis_read_req_o      ( idma_axis_read_req    ),
+    .axis_read_rsp_i      ( idma_axis_read_rsp    ), 
+    .axis_write_req_o     ( idma_axis_write_req   ), 
+    .axis_write_rsp_i     ( idma_axis_write_rsp   ),
     .busy_o               ( idma_busy_o      )
+);
+
+  eth_top #(
+    .axi_stream_req_t   (  axi_stream_req_t  ),
+    .axi_stream_rsp_t   (  axi_stream_rsp_t  ),
+    .DataWidth          (  DataWidth         ), 
+    .IdWidth            (  32'd0             ),
+    .DestWidth          (  32'd0             ),
+    .UserWidth          (  32'd1             ),
+    .AW_REGBUS          (  AW_REGBUS         ),
+    .reg2hw_itf_t       (  eth_idma_reg2hw_t ),
+    .hw2reg_itf_t       (  eth_idma_hw2reg_t )
+  ) i_eth_top (
+    .rst_ni             (  rst_ni            ),
+    .clk_i              (  eth_clk_i         ),
+    .clk90_int          (  eth_clk90_i       ),
+    .clk_200_int        (  eth_clk200M_i     ),
+
+    // Ethernet: 1000BASE-T RGMII
+    .phy_rx_clk         (  phy_rx_clk_i      ),
+    .phy_rxd            (  phy_rxd_i         ),
+    .phy_rx_ctl         (  phy_rx_ctl_i      ),
+    .phy_tx_clk         (  phy_tx_clk_o      ),
+    .phy_txd            (  phy_txd_o         ),
+    .phy_tx_ctl         (  phy_tx_ctl_o      ),
+    .phy_reset_n        (  phy_resetn_o      ),
+    .phy_int_n          (  phy_intn_i        ),
+    .phy_pme_n          (  phy_pme_i         ),
+    .phy_mdio_i         (  phy_mdio_i        ),
+    .phy_mdio_o         (  phy_mdio_o        ),
+    .phy_mdio_oe        (  phy_mdio_oe       ),
+    .phy_mdc            (  phy_mdc           ),
+    
+    // AXIS Interface 
+    .tx_axis_req_i      (  eth_axis_tx_req    ), 
+    .tx_axis_rsp_o      (  eth_axis_tx_rsp    ),
+    .rx_axis_req_o      (  eth_axis_rx_rsp     ),
+    .rx_axis_rsp_i      (  eth_axis_rx_req     ),
+
+    .idma_req_ready     (  req_ready         ),
+    .idma_rsp_valid     (  rsp_valid         ),
+
+    // REGBUS Configuration         
+    .reg2hw_i           (  reg2hw            ),
+    .hw2reg_o           (  hw2reg            )
+  );
+  
+  // assign eth_axis_tx_req = idma_axis_write_req;
+  // assign idma_axis_write_rsp = eth_axis_tx_rsp;
+  // assign idma_axis_read_rsp = eth_axis_rx_rsp;
+  // assign eth_axis_rx_req = idma_axis_read_req;
+
+axis_cdc #(
+  .FIFODepth(FIFODepth),
+  .DataWidth(DataWidth),
+  .IdWidth(AxiIdWidth),
+  .UserWidth(UserWidth),
+  .DestWidth(5)
+)i_axis_tx_cdc(
+ // FIFO IN
+ .clk_src_i(clk_i),
+ .rstn_src_i(rst_ni),
+ .tdata_i(idma_axis_write_req.t.data),
+ .tstrb_i(idma_axis_write_req.t.strb),
+ .tkeep_i(idma_axis_write_req.t.keep),
+ .tlast_i(idma_axis_write_req.t.last),
+ .tid_i(idma_axis_write_req.t.id),
+ .tdest_i(idma_axis_write_req.t.dest),
+ .tuser_i(idma_axis_write_req.t.user),
+ .tvalid_i(idma_axis_write_req.tvalid),
+ .tready_o(idma_axis_write_rsp.tready),
+ 
+ // FIFO OUT
+ .clk_dst_i(eth_clk_i),
+ .rstn_dst_i(rst_ni),
+ .tdata_o(eth_axis_tx_req.t.data),
+ .tstrb_o(eth_axis_tx_req.t.strb),
+ .tkeep_o(eth_axis_tx_req.t.keep),
+.tlast_o(eth_axis_tx_req.t.last),
+ .tid_o(eth_axis_tx_req.t.id),
+ .tdest_o(eth_axis_tx_req.t.dest),
+ .tuser_o(eth_axis_tx_req.t.user),
+ .tvalid_o(eth_axis_tx_req.tvalid),
+ .tready_i(eth_axis_tx_rsp.tready)
+);
+
+
+axis_cdc #(
+  .FIFODepth(FIFODepth),
+  .DataWidth(DataWidth),
+  .IdWidth(AxiIdWidth),
+  .UserWidth(UserWidth),
+  .DestWidth(5)
+)i_axis_rx_cdc(
+ // FIFO IN
+ .clk_src_i(eth_clk_i),
+ .rstn_src_i(rst_ni),
+ .tdata_i(eth_axis_rx_rsp.t.data),
+ .tstrb_i(eth_axis_rx_rsp.t.strb),
+ .tkeep_i(eth_axis_rx_rsp.t.keep),
+ .tlast_i(eth_axis_rx_rsp.t.last),
+ .tid_i (eth_axis_rx_rsp.t.id),
+ .tdest_i(eth_axis_rx_rsp.t.dest),
+ .tuser_i(eth_axis_rx_rsp.t.user),
+ .tvalid_i(eth_axis_rx_rsp.tvalid),
+ .tready_o(eth_axis_rx_req.tready),
+ 
+ // FIFO OUT
+ .clk_dst_i(clk_i),
+ .rstn_dst_i(rst_ni),
+ .tdata_o( idma_axis_read_rsp.t.data),
+ .tstrb_o( idma_axis_read_rsp.t.strb),
+ .tkeep_o( idma_axis_read_rsp.t.keep),
+.tlast_o( idma_axis_read_rsp.t.last),
+ .tid_o( idma_axis_read_rsp.t.id),
+ .tdest_o( idma_axis_read_rsp.t.dest),
+ .tuser_o( idma_axis_read_rsp.t.user),
+ .tvalid_o( idma_axis_read_rsp.tvalid),
+ .tready_i( idma_axis_read_req.tready)
 );
 
 endmodule : eth_idma_wrap

@@ -48,6 +48,7 @@
           fields: [
               { bits: "31:0", name: "tx_fcs_reg",
                 desc: "FCS TX status"
+                resval: "0"
               }
           ]
         },
@@ -58,6 +59,7 @@
           fields: [
               { bits: "31:0", name: "rx_fcs_reg",
                 desc: "FCS RX status"
+                resval: "0"
               }
           ]
         },
