@@ -274,6 +274,7 @@ module eth_idma_wrap #(
   // assign eth_axis_rx_req = idma_axis_read_req;
 
   cdc_fifo_gray  #(
+      .WIDTH      (92),
       .T          ( axi_stream_req_t    ),
       .LOG_DEPTH  ( TxFifoLogDepth )
   ) i_cdc_fifo_tx (
@@ -292,6 +293,7 @@ module eth_idma_wrap #(
 
   // Read data, RX CDC FIFO
   cdc_fifo_gray  #(
+      .WIDTH      (92),
       .T          ( axi_stream_req_t),
       .LOG_DEPTH  ( RxFifoLogDepth )
   ) i_cdc_fifo_rx (

@@ -12,9 +12,9 @@
 
 module eth_top #(
   /// AXI Stream in request struct
-  parameter type axi_stream_req_t = eth_top_pkg::s_req_t,
+  parameter type axi_stream_req_t = eth_idma_pkg::axi_stream_req_t,
   /// AXI Stream in response struct
-  parameter type axi_stream_rsp_t = eth_top_pkg::s_rsp_t,
+  parameter type axi_stream_rsp_t = eth_idma_pkg::axi_stream_rsp_t,
   /// AXI Stream Data Width
   parameter int unsigned DataWidth = 64,
   /// AXI Stream Id Width
