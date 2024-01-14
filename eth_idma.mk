@@ -17,7 +17,7 @@
 BENDER ?= bender
 QUESTA ?= questa-2022.3
 TBENCH ?= eth_idma_tb
-DUT    ?= eth_idma
+DUT    ?= eth_idma_wrap
 
 # Design and simulation variables
 ETH_ROOT      ?= $(shell $(BENDER) path fe-ethernet)

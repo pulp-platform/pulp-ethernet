@@ -35,7 +35,6 @@ module rgmii_soc (
     input              clk_int,
     input              rst_int,
     input              clk90_int,
-    input              clk_200_int,
 
     /*
      * Ethernet: 1000BASE-T RGMII
@@ -81,116 +80,8 @@ module rgmii_soc (
 wire [3:0] phy_rxd_delay;
 wire       phy_rx_ctl_delay;
 
-`ifdef GENESYSII
-   
-IDELAYCTRL
-idelayctrl_inst
-(
-    .REFCLK(clk_200_int),
-    .RST(rst_int),
-    .RDY()
-);
-
-IDELAYE2 #(
-    .IDELAY_TYPE("FIXED")
-)
-phy_rxd_idelay_0
-(
-    .IDATAIN(phy_rxd[0]),
-    .DATAOUT(phy_rxd_delay[0]),
-    .DATAIN(1'b0),
-    .C(1'b0),
-    .CE(1'b0),
-    .INC(1'b0),
-    .CINVCTRL(1'b0),
-    .CNTVALUEIN(5'd0),
-    .CNTVALUEOUT(),
-    .LD(1'b0),
-    .LDPIPEEN(1'b0),
-    .REGRST(1'b0)
-);
-
-IDELAYE2 #(
-    .IDELAY_TYPE("FIXED")
-)
-phy_rxd_idelay_1
-(
-    .IDATAIN(phy_rxd[1]),
-    .DATAOUT(phy_rxd_delay[1]),
-    .DATAIN(1'b0),
-    .C(1'b0),
-    .CE(1'b0),
-    .INC(1'b0),
-    .CINVCTRL(1'b0),
-    .CNTVALUEIN(5'd0),
-    .CNTVALUEOUT(),
-    .LD(1'b0),
-    .LDPIPEEN(1'b0),
-    .REGRST(1'b0)
-);
-
-IDELAYE2 #(
-    .IDELAY_TYPE("FIXED")
-)
-phy_rxd_idelay_2
-(
-    .IDATAIN(phy_rxd[2]),
-    .DATAOUT(phy_rxd_delay[2]),
-    .DATAIN(1'b0),
-    .C(1'b0),
-    .CE(1'b0),
-    .INC(1'b0),
-    .CINVCTRL(1'b0),
-    .CNTVALUEIN(5'd0),
-    .CNTVALUEOUT(),
-    .LD(1'b0),
-    .LDPIPEEN(1'b0),
-    .REGRST(1'b0)
-);
-
-IDELAYE2 #(
-    .IDELAY_TYPE("FIXED")
-)
-phy_rxd_idelay_3
-(
-    .IDATAIN(phy_rxd[3]),
-    .DATAOUT(phy_rxd_delay[3]),
-    .DATAIN(1'b0),
-    .C(1'b0),
-    .CE(1'b0),
-    .INC(1'b0),
-    .CINVCTRL(1'b0),
-    .CNTVALUEIN(5'd0),
-    .CNTVALUEOUT(),
-    .LD(1'b0),
-    .LDPIPEEN(1'b0),
-    .REGRST(1'b0)
-);
-
-IDELAYE2 #(
-    .IDELAY_VALUE(0),
-    .IDELAY_TYPE("FIXED")
-)
-phy_rx_ctl_idelay
-(
-    .IDATAIN(phy_rx_ctl),
-    .DATAOUT(phy_rx_ctl_delay),
-    .DATAIN(1'b0),
-    .C(1'b0),
-    .CE(1'b0),
-    .INC(1'b0),
-    .CINVCTRL(1'b0),
-    .CNTVALUEIN(5'd0),
-    .CNTVALUEOUT(),
-    .LD(1'b0),
-    .LDPIPEEN(1'b0),
-    .REGRST(1'b0)
-);
-
-`else // !`ifdef GENESYSII
-   assign phy_rx_ctl_delay = phy_rx_ctl;
-   assign phy_rxd_delay = phy_rxd;
-`endif
+assign phy_rx_ctl_delay = phy_rx_ctl;
+assign phy_rxd_delay = phy_rxd;
 
 rgmii_core
 core_inst (

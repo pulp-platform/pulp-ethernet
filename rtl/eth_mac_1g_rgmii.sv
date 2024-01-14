@@ -105,6 +105,7 @@ wire [7:0]  mac_gmii_txd;
 wire        mac_gmii_tx_er;
 
 reg [1:0] speed_reg;
+reg rxclk_enable;
 wire mii_select;
 
 reg tx_mii_select_1;
@@ -133,7 +134,9 @@ reg [2:0] rx_prescale = 3'd0;
 always_ff @(posedge rx_clk or posedge gtx_rst) begin
     if (gtx_rst) begin
         rx_prescale <= 3'd0;
+        rxclk_enable <= 1'b0;
     end else begin
+        rxclk_enable <= 1'b1;
         rx_prescale <= rx_prescale + 3'd1;
     end
 end
@@ -157,6 +160,8 @@ always_ff @(posedge gtx_clk or posedge gtx_rst) begin
         rx_speed_count_2 <= 0;
         speed_reg <= 2'b10;
     end else begin
+        
+    if (rxclk_enable) begin
         rx_speed_count_1 <= rx_speed_count_1 + 1;
         
         if (rx_prescale_sync_2 ^ rx_prescale_sync_3) begin
@@ -182,6 +187,7 @@ always_ff @(posedge gtx_clk or posedge gtx_rst) begin
                 speed_reg <= 2'b10;
             end
         end
+    end
     end
 end
 

@@ -1,8 +1,5 @@
 // See LICENSE for license details.
 
-`ifdef GENESYSII
-  `default_nettype none
-`endif
 
 module framing_top #(
   /// AXI Stream in request struct
@@ -19,7 +16,6 @@ module framing_top #(
   input  wire                                           clk_i        ,
   input  wire                                           rst_ni       ,
   input  wire                                           clk90_int    ,
-  input  wire                                           clk_200_int  ,
   // Ethernet: 1000BASE-T RGMII
   input  wire                                           phy_rx_clk   ,
   input  wire     [3:0]                                 phy_rxd      ,
@@ -180,7 +176,6 @@ module framing_top #(
     .rst_int       (~rst_ni             ),
     .clk_int       (clk_i               ),
     .clk90_int     (clk90_int           ),
-    .clk_200_int   (clk_200_int         ),
 
     // Ethernet: 1000BASE-T RGMII
     .phy_rx_clk    (phy_rx_clk          ),
@@ -230,7 +225,6 @@ module framing_top_intf (
   input  wire           clk_i       ,
   input  wire           rst_ni      ,
   input  wire           clk90_int   ,
-  input  wire           clk_200_int ,
   /// Ethernet: 1000BASE-T RGMII
   input  wire           phy_rx_clk  ,
   input  wire     [3:0] phy_rxd     ,
@@ -312,7 +306,6 @@ module framing_top_intf (
     .rst_ni(rst_ni),
     .clk_i(clk_i),
     .clk90_int(clk90_int),
-    .clk_200_int(clk_200_int),
 
     // Ethernet: 1000BASE-T RGMII
     .phy_rx_clk(phy_rx_clk),

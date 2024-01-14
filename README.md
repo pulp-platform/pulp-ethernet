@@ -1,3 +1,7 @@
+## Generate iDMA with AXIS support  (Terminal)
+```
+make -C /idma checkout pwd/ idma_hw_all IDMA_BACKEND_IDS?=rw_axi_rw_axis
+```
 
 ## Compile (Questa)
 
