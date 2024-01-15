@@ -10,7 +10,7 @@ packages:
     revision: fccffb5953ec8564218ba05e20adbedec845e014
     version: 0.39.1
     source:
-      Git: git@github.com:pulp-platform/axi.git
+      Git: https://github.com/pulp-platform/axi.git
     dependencies:
     - common_cells
     - common_verification
@@ -44,10 +44,10 @@ packages:
       Git: https://github.com/pulp-platform/common_verification.git
     dependencies: []
   idma:
-    revision: ad64ce9c66ff2e695a8552998379b0010ef9a0a5
+    revision: 83fba99b5ddab970777d7bcc3017973194831f3b
     version: null
     source:
-      Git: https://github.com/chaoqun-liang/iDMA.git
+      Git: git@github.com:pulp-platform/iDMA.git
     dependencies:
     - axi
     - common_cells
@@ -58,11 +58,8 @@ packages:
     revision: null
     version: null
     source:
-      Path: .bender/git/checkouts/idma-5434e534ae0a05c8/target/rtl
-    dependencies:
-    - axi
-    - common_cells
-    - register_interface
+      Path: .bender/git/checkouts/idma-9c2c563d827a2a73/target/rtl
+    dependencies: []
   register_interface:
     revision: d7693be4aef1fc7e7eb2b00b41c42e87d959866c
     version: 0.4.2
