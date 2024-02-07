@@ -52,7 +52,7 @@ eth-nonfree-init:
 ##############                            
 
 $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl: Bender.yml
-	$(BENDER) script vsim -t eth_test -t rtl -t test \
+	$(BENDER) script vsim -t eth_test -t rtl \
 	--vlog-arg="-svinputport=compat" \
 	--vlog-arg="-override_timescale 1ns/1ps" \
 	--vlog-arg="-suppress 2583" > $@
