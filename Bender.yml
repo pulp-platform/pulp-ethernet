@@ -47,7 +47,7 @@ sources:
   - rtl/eth_top.sv
   - rtl/eth_idma_wrap.sv
 
-  - target: eth_test
+  - target: test
     files:
       - target/sim/src/eth_idma_tb.sv
 

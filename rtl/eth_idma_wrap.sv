@@ -96,7 +96,6 @@ module eth_idma_wrap #(
  import eth_idma_pkg::*;
  import eth_idma_reg_pkg::*;
  import idma_pkg::*;
- import reg_test::*;
  
  logic  idma_req_valid, idma_rsp_ready;
  logic  req_ready, rsp_valid;  

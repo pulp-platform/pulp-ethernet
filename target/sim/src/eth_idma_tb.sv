@@ -28,6 +28,7 @@ module eth_idma_tb
   
   import idma_pkg::*;
   import eth_idma_pkg::*;
+  import reg_test::*;
 
   /// timing parameters
   localparam time SYS_TCK       = 8ns;
