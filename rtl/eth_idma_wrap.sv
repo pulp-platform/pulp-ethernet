@@ -1,7 +1,8 @@
-// Copyright 2023 ETH Zurich and University of Bologna.
+// Copyright 2024 ETH Zurich and University of Bologna.
 // Solderpad Hardware License, Version 0.51, see LICENSE for details.
 // SPDX-License-Identifier: SHL-0.51
-
+//
+// Chaoqun Liang <chaoqun.liang@unibo.it>
 
 `include "axi/assign.svh"
 `include "axi/typedef.svh"
@@ -49,11 +50,9 @@ module eth_idma_wrap #(
 )(
   input  logic                       clk_i,
   input  logic                       rst_ni, 
-
   /// Etherent Internal clocks
   input  logic                       eth_clk_i, 
   input  logic                       eth_clk90_i, 
-
   /// Ethernet: 1000BASE-T RGMII
   input  logic                       phy_rx_clk_i,
   input  logic    [3:0]              phy_rxd_i,
@@ -61,52 +60,42 @@ module eth_idma_wrap #(
   output logic                       phy_tx_clk_o,
   output logic    [3:0]              phy_txd_o,
   output logic                       phy_tx_ctl_o,
-
   output logic                       phy_resetn_o,
   input  logic                       phy_intn_i,
   input  logic                       phy_pme_i,
-
   /// Ethernet MDIO
   input  logic                       phy_mdio_i,
   output logic                       phy_mdio_o,
   output logic                       phy_mdio_oe,
-  output wire                        phy_mdc,
-
-  /// idma testmode in
+  output wire                        phy_mdc_o,
+  /// iDMA testmode
   input  logic                       testmode_i,
-
   /// Error handler request
   input  idma_pkg::idma_eh_req_t     idma_eh_req_i,
   input  logic                       eh_req_valid_i,
   output logic                       eh_req_ready_o,
-
-  output eth_idma_pkg::axi_req_t     axi_read_req_o,
-  input  eth_idma_pkg::axi_rsp_t     axi_read_rsp_i,
-  output eth_idma_pkg::axi_req_t     axi_write_req_o,
-  input  eth_idma_pkg::axi_rsp_t     axi_write_rsp_i,
-
+  output eth_idma_pkg::axi_req_t     axi_req_o,
+  input  eth_idma_pkg::axi_rsp_t     axi_rsp_i,
   /// iDMA busy flags
   output idma_pkg::idma_busy_t       idma_busy_o,
-
   /// REGBUS Configuration Interface
   input  reg_req_t                   reg_req_i,
   output reg_rsp_t                   reg_rsp_o
 );
  
- import eth_idma_pkg::*;
- import eth_idma_reg_pkg::*;
- import idma_pkg::*;
+  import eth_idma_pkg::*;
+  import eth_idma_reg_pkg::*;
+  import idma_pkg::*;
  
- logic  idma_req_valid, idma_rsp_ready;
- logic  req_ready, rsp_valid;  
+  logic  idma_req_valid, req_ready, idma_rsp_ready, rsp_valid;  
     
- localparam idma_pkg::error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
- localparam int unsigned AW_REGBUS = 8; 
+  localparam idma_pkg::error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
+  localparam int unsigned AW_REGBUS = 8; 
 
- eth_idma_reg_pkg::eth_idma_reg2hw_t reg2hw; // Write
- eth_idma_reg_pkg::eth_idma_hw2reg_t hw2reg; // Read
+  eth_idma_reg_pkg::eth_idma_reg2hw_t reg2hw; // Write
+  eth_idma_reg_pkg::eth_idma_hw2reg_t hw2reg; // Read
 
- eth_idma_reg_top #(
+  eth_idma_reg_top #(
     .reg_req_t(reg_req_t),
     .reg_rsp_t(reg_rsp_t),
     .AW(AW_REGBUS)
@@ -119,6 +108,10 @@ module eth_idma_wrap #(
     .hw2reg(hw2reg), // Read
     .devmode_i(1'b1)
   );
+
+  /// AXI request and response
+  eth_idma_pkg::axi_req_t     axi_read_req,axi_write_req;
+  eth_idma_pkg::axi_rsp_t     axi_read_rsp,axi_write_rsp;
 
   /// AXI Stream request and response
   axi_stream_rsp_t idma_axis_read_req, eth_axis_tx_rsp;  
@@ -204,19 +197,15 @@ module eth_idma_wrap #(
     .idma_eh_req_i        ( idma_eh_req_i     ),
     .eh_req_valid_i       ( eh_req_valid_i    ),
     .eh_req_ready_o       ( eh_req_ready_o    ),
-
-    /// AXI Interface
-    .axi_write_req_o      ( axi_write_req_o   ),
-    .axi_write_rsp_i      ( axi_write_rsp_i   ),
-    .axi_read_req_o       ( axi_read_req_o    ),
-    .axi_read_rsp_i       ( axi_read_rsp_i    ),
-
-    /// AXIS Interface
-    .axis_read_req_o      ( idma_axis_read_req    ),
-    .axis_read_rsp_i      ( idma_axis_read_rsp    ), 
-    .axis_write_req_o     ( idma_axis_write_req   ), 
-    .axis_write_rsp_i     ( idma_axis_write_rsp   ),
-    .busy_o               ( idma_busy_o           )
+    .axi_write_req_o      ( axi_write_req     ),
+    .axi_write_rsp_i      ( axi_write_rsp     ),
+    .axi_read_req_o       ( axi_read_req      ),
+    .axi_read_rsp_i       ( axi_read_rsp      ),
+    .axis_read_req_o      ( idma_axis_read_req   ),
+    .axis_read_rsp_i      ( idma_axis_read_rsp   ), 
+    .axis_write_req_o     ( idma_axis_write_req  ), 
+    .axis_write_rsp_i     ( idma_axis_write_rsp  ),
+    .busy_o               ( idma_busy_o          )
   );
 
   eth_top #(
@@ -233,8 +222,6 @@ module eth_idma_wrap #(
     .rst_ni             (  rst_ni            ),
     .clk_i              (  eth_clk_i         ),
     .clk90_int          (  eth_clk90_i       ),
-
-    // Ethernet: 1000BASE-T RGMII
     .phy_rx_clk         (  phy_rx_clk_i      ),
     .phy_rxd            (  phy_rxd_i         ),
     .phy_rx_ctl         (  phy_rx_ctl_i      ),
@@ -247,56 +234,63 @@ module eth_idma_wrap #(
     .phy_mdio_i         (  phy_mdio_i        ),
     .phy_mdio_o         (  phy_mdio_o        ),
     .phy_mdio_oe        (  phy_mdio_oe       ),
-    .phy_mdc            (  phy_mdc           ),
-    
-    // AXIS Interface 
-    .tx_axis_req_i      (  eth_axis_tx_req    ), 
-    .tx_axis_rsp_o      (  eth_axis_tx_rsp    ),
-    .rx_axis_req_o      (  eth_axis_rx_rsp    ),
-    .rx_axis_rsp_i      (  eth_axis_rx_req    ),
-
-    .idma_req_ready     (  req_ready          ),
-    .idma_rsp_valid     (  rsp_valid          ),
-
-    // REGBUS Configuration         
-    .reg2hw_i           (  reg2hw             ),
-    .hw2reg_o           (  hw2reg             )
+    .phy_mdc            (  phy_mdc           ), 
+    .tx_axis_req_i      (  eth_axis_tx_req   ), 
+    .tx_axis_rsp_o      (  eth_axis_tx_rsp   ),
+    .rx_axis_req_o      (  eth_axis_rx_rsp   ),
+    .rx_axis_rsp_i      (  eth_axis_rx_req   ),
+    .idma_req_ready     (  req_ready         ),
+    .idma_rsp_valid     (  rsp_valid         ),        
+    .reg2hw_i           (  reg2hw            ),
+    .hw2reg_o           (  hw2reg            )
   );
   
   // TX CDC FIFO
   cdc_fifo_gray #(
-      .T           ( axis_t_chan_t     ),
-      .LOG_DEPTH   ( TxFifoLogDepth    )
+    .T           ( axis_t_chan_t   ),
+    .LOG_DEPTH   ( TxFifoLogDepth  )
   ) i_cdc_fifo_tx (
-      .src_rst_ni     ( rst_ni                     ),
-      .src_clk_i      ( clk_i                      ),
-      .src_data_i     ( idma_axis_write_req.t      ),
-      .src_valid_i    ( idma_axis_write_req.tvalid ),
-      .src_ready_o    ( idma_axis_write_rsp.tready ),
-
-      .dst_rst_ni     ( rst_ni                 ),
-      .dst_clk_i      ( eth_clk_i              ),
-      .dst_data_o     ( eth_axis_tx_req.t      ),
-      .dst_valid_o    ( eth_axis_tx_req.tvalid ),
-      .dst_ready_i    ( eth_axis_tx_rsp.tready )
+    .src_rst_ni     ( rst_ni                     ),
+    .src_clk_i      ( clk_i                      ),
+    .src_data_i     ( idma_axis_write_req.t      ),
+    .src_valid_i    ( idma_axis_write_req.tvalid ),
+    .src_ready_o    ( idma_axis_write_rsp.tready ),
+    .dst_rst_ni     ( rst_ni                     ),
+    .dst_clk_i      ( eth_clk_i                  ),
+    .dst_data_o     ( eth_axis_tx_req.t          ),
+    .dst_valid_o    ( eth_axis_tx_req.tvalid     ),
+    .dst_ready_i    ( eth_axis_tx_rsp.tready     )
   );
 
   // RX CDC FIFO
   cdc_fifo_gray #(
-      .T           ( axis_t_chan_t  ),
-      .LOG_DEPTH   ( RxFifoLogDepth )
+    .T           ( axis_t_chan_t  ),
+    .LOG_DEPTH   ( RxFifoLogDepth )
   ) i_cdc_fifo_rx (
-      .src_rst_ni     ( rst_ni                  ),
-      .src_clk_i      ( eth_clk_i               ),
-      .src_data_i     ( eth_axis_rx_rsp.t       ),
-      .src_valid_i    ( eth_axis_rx_rsp.tvalid  ),
-      .src_ready_o    ( eth_axis_rx_req.tready  ),
+    .src_rst_ni     ( rst_ni                    ),
+    .src_clk_i      ( eth_clk_i                 ),
+    .src_data_i     ( eth_axis_rx_rsp.t         ),
+    .src_valid_i    ( eth_axis_rx_rsp.tvalid    ),
+    .src_ready_o    ( eth_axis_rx_req.tready    ),
+    .dst_rst_ni     ( rst_ni                    ),
+    .dst_clk_i      ( clk_i                     ),
+    .dst_data_o     ( idma_axis_read_rsp.t      ),
+    .dst_valid_o    ( idma_axis_read_rsp.tvalid ),
+    .dst_ready_i    ( idma_axis_read_req.tready )
+  );
 
-      .dst_rst_ni     ( rst_ni                    ),
-      .dst_clk_i      ( clk_i                     ),
-      .dst_data_o     ( idma_axis_read_rsp.t      ),
-      .dst_valid_o    ( idma_axis_read_rsp.tvalid ),
-      .dst_ready_i    ( idma_axis_read_req.tready )
+  axi_rw_join #(
+    .axi_req_t   ( eth_idma_pkg::axi_req_t ),
+    .axi_resp_t  ( eth_idma_pkg::axi_rsp_t )
+  ) i_axi_tx_rw_join (
+    .clk_i            ( clk_i         ),
+    .rst_ni           ( rst_ni        ),  
+    .slv_read_req_i   ( axi_read_req  ),
+    .slv_read_resp_o  ( axi_read_rsp  ),
+    .slv_write_req_i  ( axi_write_req ),
+    .slv_write_resp_o ( axi_write_rsp ),
+    .mst_req_o        ( axi_req_o     ), 
+    .mst_resp_i       ( axi_rsp_i     ) 
   );
 
 endmodule : eth_idma_wrap

@@ -2,7 +2,6 @@
 // Solderpad Hardware License, Version 0.51, see LICENSE for details.
 // SPDX-License-Identifier: SHL-0.51
 
-
 `timescale 1 ns/1 ns
 `include "axi/typedef.svh"
 `include "idma/typedef.svh"
@@ -65,22 +64,17 @@ module eth_idma_tb
   logic tx_idma_req_valid, tx_idma_req_ready, tx_idma_rsp_valid, tx_idma_rsp_ready;
   logic rx_idma_req_valid, rx_idma_req_ready, rx_idma_rsp_valid, rx_idma_rsp_ready;
 
-
   /// AXI4+ATOP request and response
-  axi_req_t axi_tx_read_req, axi_tx_write_req, axi_rx_read_req, axi_rx_write_req ;
-  axi_rsp_t axi_tx_read_rsp, axi_tx_write_rsp, axi_rx_read_rsp, axi_rx_write_rsp ;
-
   axi_req_t axi_tx_req_mem, axi_rx_req_mem;
   axi_rsp_t axi_tx_rsp_mem, axi_rx_rsp_mem;
 
   /// error handler
   idma_eh_req_t idma_eh_req;
-  logic                   eh_req_valid;
-  logic                   eh_req_ready;
+  logic         eh_req_valid;
+  logic         eh_req_ready;
 
   /// busy signal
-  idma_busy_t             tx_busy, rx_busy;
-  
+  idma_busy_t   tx_busy, rx_busy;
   
   /// -------------------- REG Drivers -----------------------  
   typedef reg_test::reg_driver #(
@@ -120,77 +114,77 @@ module eth_idma_tb
 
   // clocking block
   clk_rst_gen #(
-      .ClkPeriod    ( SYS_TCK   ),
-      .RstClkCycles ( 1         )
+    .ClkPeriod    ( SYS_TCK   ),
+    .RstClkCycles ( 1         )
   ) i_clk_rst_gen (
-      .clk_o        ( s_clk     ),
-      .rst_no       ( s_rst_n   )
+    .clk_o        ( s_clk     ),
+    .rst_no       ( s_rst_n   )
   );
 
   // AXI4 TX sim memory
   axi_sim_mem #(
-      .AddrWidth         ( AddrWidth    ),
-      .DataWidth         ( DataWidth    ),
-      .IdWidth           ( AxiIdWidth   ),
-      .UserWidth         ( UserWidth    ),
-      .axi_req_t         ( axi_req_t    ),
-      .axi_rsp_t         ( axi_rsp_t    ),
-      .WarnUninitialized ( 1'b0         ),
-      .ClearErrOnAccess  ( 1'b1         ),
-      .ApplDelay         ( SYS_TA       ),
-      .AcqDelay          ( SYS_TT       )  
+    .AddrWidth         ( AddrWidth    ),
+    .DataWidth         ( DataWidth    ),
+    .IdWidth           ( AxiIdWidth   ),
+    .UserWidth         ( UserWidth    ),
+    .axi_req_t         ( axi_req_t    ),
+    .axi_rsp_t         ( axi_rsp_t    ),
+    .WarnUninitialized ( 1'b0         ),
+    .ClearErrOnAccess  ( 1'b1         ),
+    .ApplDelay         ( SYS_TA       ),
+    .AcqDelay          ( SYS_TT       )  
   ) i_tx_axi_sim_mem (
-      .clk_i              ( s_clk           ),
-      .rst_ni             ( s_rst_n         ),
-      .axi_req_i          ( axi_tx_req_mem  ),
-      .axi_rsp_o          ( axi_tx_rsp_mem  ),
-      .mon_r_last_o       ( /* NOT CONNECTED */ ),
-      .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
-      .mon_r_user_o       ( /* NOT CONNECTED */ ),
-      .mon_r_id_o         ( /* NOT CONNECTED */ ),
-      .mon_r_data_o       ( /* NOT CONNECTED */ ),
-      .mon_r_addr_o       ( /* NOT CONNECTED */ ),
-      .mon_r_valid_o      ( /* NOT CONNECTED */ ),
-      .mon_w_last_o       ( /* NOT CONNECTED */ ),
-      .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
-      .mon_w_user_o       ( /* NOT CONNECTED */ ),
-      .mon_w_id_o         ( /* NOT CONNECTED */ ),
-      .mon_w_data_o       ( /* NOT CONNECTED */ ),
-      .mon_w_addr_o       ( /* NOT CONNECTED */ ),
-      .mon_w_valid_o      ( /* NOT CONNECTED */ )
+    .clk_i              ( s_clk           ),
+    .rst_ni             ( s_rst_n         ),
+    .axi_req_i          ( axi_tx_req_mem  ),
+    .axi_rsp_o          ( axi_tx_rsp_mem  ),
+    .mon_r_last_o       ( /* NOT CONNECTED */ ),
+    .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_r_user_o       ( /* NOT CONNECTED */ ),
+    .mon_r_id_o         ( /* NOT CONNECTED */ ),
+    .mon_r_data_o       ( /* NOT CONNECTED */ ),
+    .mon_r_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_r_valid_o      ( /* NOT CONNECTED */ ),
+    .mon_w_last_o       ( /* NOT CONNECTED */ ),
+    .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_w_user_o       ( /* NOT CONNECTED */ ),
+    .mon_w_id_o         ( /* NOT CONNECTED */ ),
+    .mon_w_data_o       ( /* NOT CONNECTED */ ),
+    .mon_w_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_w_valid_o      ( /* NOT CONNECTED */ )
   );
 
   // AXI4 RX sim memory
   axi_sim_mem #(
-      .AddrWidth         ( AddrWidth    ),
-      .DataWidth         ( DataWidth    ),
-      .IdWidth           ( AxiIdWidth   ),
-      .UserWidth         ( UserWidth    ),
-      .axi_req_t         ( axi_req_t    ),
-      .axi_rsp_t         ( axi_rsp_t    ),
-      .WarnUninitialized ( 1'b0         ),
-      .ClearErrOnAccess  ( 1'b1         ),
-      .ApplDelay         ( SYS_TA       ),
-      .AcqDelay          ( SYS_TT       )
+    .AddrWidth         ( AddrWidth    ),
+    .DataWidth         ( DataWidth    ),
+    .IdWidth           ( AxiIdWidth   ),
+    .UserWidth         ( UserWidth    ),
+    .axi_req_t         ( axi_req_t    ),
+    .axi_rsp_t         ( axi_rsp_t    ),
+    .WarnUninitialized ( 1'b0         ),
+    .ClearErrOnAccess  ( 1'b1         ),
+    .ApplDelay         ( SYS_TA       ),
+    .AcqDelay          ( SYS_TT       )
   ) i_rx_axi_sim_mem (
-      .clk_i              ( s_clk             ),
-      .rst_ni             ( s_rst_n           ),
-      .axi_req_i          ( axi_rx_req_mem    ),
-      .axi_rsp_o          ( axi_rx_rsp_mem    ),
-      .mon_r_last_o       ( /* NOT CONNECTED */ ),
-      .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
-      .mon_r_user_o       ( /* NOT CONNECTED */ ),
-      .mon_r_id_o         ( /* NOT CONNECTED */ ),
-      .mon_r_data_o       ( /* NOT CONNECTED */ ),
-      .mon_r_addr_o       ( /* NOT CONNECTED */ ),
-      .mon_r_valid_o      ( /* NOT CONNECTED */ ),
-      .mon_w_last_o       ( /* NOT CONNECTED */ ),
-      .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
-      .mon_w_user_o       ( /* NOT CONNECTED */ ),
-      .mon_w_id_o         ( /* NOT CONNECTED */ ),
-      .mon_w_data_o       ( /* NOT CONNECTED */ ),
-      .mon_w_addr_o       ( /* NOT CONNECTED */ ),
-      .mon_w_valid_o      ( /* NOT CONNECTED */ )
+    .clk_i              ( s_clk             ),
+    .rst_ni             ( s_rst_n           ),
+    .axi_req_i          ( axi_rx_req_mem    ),
+    .axi_rsp_o          ( axi_rx_rsp_mem    ),
+    .mon_r_last_o       ( /* NOT CONNECTED */ ),
+    .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_r_user_o       ( /* NOT CONNECTED */ ),
+    .mon_r_id_o         ( /* NOT CONNECTED */ ),
+    .mon_r_data_o       ( /* NOT CONNECTED */ ),
+    .mon_r_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_r_valid_o      ( /* NOT CONNECTED */ ),
+    .mon_w_last_o       ( /* NOT CONNECTED */ ),
+    .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_w_user_o       ( /* NOT CONNECTED */ ),
+    .mon_w_id_o         ( /* NOT CONNECTED */ ),
+    .mon_w_data_o       ( /* NOT CONNECTED */ ),
+    .mon_w_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_w_valid_o      ( /* NOT CONNECTED */ )
    );
     
   eth_idma_wrap#(
@@ -201,77 +195,44 @@ module eth_idma_tb
     .NumAxInFlight       ( NumAxInFlight       ),
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
-    /// The depth of the memory system the backend is attached to
     .MemSysDepth         ( MemSysDepth         ),
     .RAWCouplingAvail    ( RAWCouplingAvail    ),
     .HardwareLegalizer   ( HardwareLegalizer   ),
     .RejectZeroTransfers ( RejectZeroTransfers )
-) i_tx_eth_idma_wrap (
+  ) i_tx_eth_idma_wrap (
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
      /// Etherent Internal clocks
     .eth_clk_i           ( s_clk_125MHz_0      ), // 125MHz in-phase
     .eth_clk90_i         ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
-  
     .phy_rx_clk_i        ( eth_rxck            ),
     .phy_rxd_i           ( eth_rxd             ),
     .phy_rx_ctl_i        ( eth_rxctl           ),
     .phy_tx_clk_o        ( eth_txck            ),
     .phy_txd_o           ( eth_txd             ),
     .phy_tx_ctl_o        ( eth_txctl           ),
-    .phy_resetn_o        ( eth_tx_rstn         ),  // output
+    .phy_resetn_o        ( eth_tx_rstn         ),  
     .phy_intn_i          ( 1'b1                ),
     .phy_pme_i           ( 1'b1                ),
     .phy_mdio_i          ( 1'b0                ),
     .phy_mdio_o          (                     ),
     .phy_mdio_oe         (                     ),
-    .phy_mdc             (                     ),
+    .phy_mdc_o           (                     ),
     .reg_req_i           ( reg_bus_tx_req      ),
     .reg_rsp_o           ( reg_bus_tx_rsp      ),
     .testmode_i          ( 1'b0                ),
     .idma_eh_req_i       ( idma_eh_req         ), // error handling disabled now
     .eh_req_valid_i      ( eh_req_valid        ),
     .eh_req_ready_o      ( eh_req_ready        ),
-    .axi_read_req_o      ( axi_tx_read_req     ),
-    .axi_read_rsp_i      ( axi_tx_read_rsp     ),
-
-    .axi_write_req_o     ( axi_tx_write_req    ),
-    .axi_write_rsp_i     ( axi_tx_write_rsp    ),
+    .axi_req_o           ( axi_tx_req_mem      ),
+    .axi_rsp_i           ( axi_tx_rsp_mem      ),
     .idma_busy_o         ( tx_busy             )
-);
+  );
  
-axi_rw_join #(
-    .axi_req_t        ( axi_req_t ),
-    .axi_resp_t       ( axi_rsp_t )
-) i_axi_tx_rw_join (
-    .clk_i            ( s_clk            ),
-    .rst_ni           ( s_rst_n          ),
-    .slv_read_req_i   ( axi_tx_read_req  ),
-    .slv_read_resp_o  ( axi_tx_read_rsp  ),
-    .slv_write_req_i  ( axi_tx_write_req ),
-    .slv_write_resp_o ( axi_tx_write_rsp ),
-    .mst_req_o        ( axi_tx_req_mem   ),
-    .mst_resp_i       ( axi_tx_rsp_mem   )
-);
+  reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
+  reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
 
-axi_rw_join #(
-    .axi_req_t        ( axi_req_t ),
-    .axi_resp_t       ( axi_rsp_t )
-) i_axi_rx_rw_join (
-    .clk_i            ( s_clk            ),
-    .rst_ni           ( s_rst_n          ),
-    .slv_read_req_i   ( axi_rx_read_req  ),
-    .slv_read_resp_o  ( axi_rx_read_rsp  ),
-    .slv_write_req_i  ( axi_rx_write_req ),
-    .slv_write_resp_o ( axi_rx_write_rsp ),
-    .mst_req_o        ( axi_rx_req_mem   ),
-    .mst_resp_i       ( axi_rx_rsp_mem   )
-);
-
- reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
- reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
-
- eth_idma_wrap #(
+  eth_idma_wrap #(
     .DataWidth           ( DataWidth           ),    
     .AddrWidth           ( AddrWidth           ),
     .UserWidth           ( UserWidth           ),
@@ -283,13 +244,11 @@ axi_rw_join #(
     .RAWCouplingAvail    ( RAWCouplingAvail    ),
     .HardwareLegalizer   ( HardwareLegalizer   ),
     .RejectZeroTransfers ( RejectZeroTransfers )
-)i_rx_eth_idma_wrap (
+  )i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
-  /// Etherent Internal clocks
     .eth_clk_i        ( s_clk_125MHz_0  ), // 125MHz in-phase
     .eth_clk90_i      ( s_clk_125MHz_90 ), // 125 MHz with 90 phase shift
-
     .phy_rx_clk_i     ( eth_txck        ),
     .phy_rxd_i        ( eth_txd         ),
     .phy_rx_ctl_i     ( eth_txctl       ),
@@ -299,31 +258,19 @@ axi_rw_join #(
     .phy_resetn_o     ( eth_rx_rstn     ),  
     .phy_intn_i       ( 1'b1            ),
     .phy_pme_i        ( 1'b1            ),
-
-     /// Ethernet MDIO
     .phy_mdio_i       ( 1'b0            ),
     .phy_mdio_o       (                 ), 
     .phy_mdio_oe      (                 ), 
-    .phy_mdc          (                 ), 
-
+    .phy_mdc_o        (                 ), 
     .reg_req_i        ( reg_bus_rx_req  ),
     .reg_rsp_o        ( reg_bus_rx_rsp  ),
-    
-    /// idma 
-    .testmode_i       (  1'b0           ),
-
-    /// idma request
-
-    .idma_eh_req_i    (                    ), // error handling disabled now
-    .eh_req_valid_i   (                    ),
-    .eh_req_ready_o   (                    ),
-
-    .axi_read_req_o   ( axi_rx_read_req    ),
-    .axi_read_rsp_i   ( axi_rx_read_rsp    ),
-
-    .axi_write_req_o  ( axi_rx_write_req   ),
-    .axi_write_rsp_i  ( axi_rx_write_rsp   ),
-    .idma_busy_o      ( rx_busy            )
+    .testmode_i       ( 1'b0            ),
+    .idma_eh_req_i    (                 ), // error handling disabled now
+    .eh_req_valid_i   (                 ),
+    .eh_req_ready_o   (                 ),
+    .axi_req_o        ( axi_rx_req_mem  ),
+    .axi_rsp_i        ( axi_rx_rsp_mem  ),
+    .idma_busy_o      ( rx_busy         )
   );
 
   /// Ethernet Internal Clock generation
