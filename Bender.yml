@@ -30,6 +30,8 @@ sources:
   - gen/eth_idma_reg_top.sv
   - rtl/axis_gmii_rx.sv
   - rtl/axis_gmii_tx.sv
+  - rtl/fll_dummy.sv
+  - rtl/clk_gen_hyper.sv
    # Level 1
   - rtl/eth_mac_1g_rgmii_fifo.sv
   - rtl/eth_mac_1g_rgmii.sv
@@ -45,6 +47,7 @@ sources:
   - rtl/framing_top.sv
   - rtl/eth_idma_pkg.sv
   - rtl/eth_top.sv
+  - rtl/eth_clk_gen.sv
   - rtl/eth_idma_wrap.sv
 
   - target: test
