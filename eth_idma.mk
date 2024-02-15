@@ -19,6 +19,9 @@ QUESTA ?= questa-2022.3
 TBENCH ?= eth_idma_tb
 DUT    ?= eth_idma_wrap
 
+IDMA_BACKEND_IDS ?=rw_axi_rw_axis
+DMA_ROOT    ?= $(shell $(BENDER) path idma)
+
 # Design and simulation variables
 ETH_ROOT      ?= $(shell $(BENDER) path fe-ethernet)
 
@@ -46,6 +49,13 @@ eth-nonfree-init:
 	cd $(ETH_ROOT)/nonfree && git checkout $(ETH_NONFREE_COMMIT)
 
 -include $(ETH_ROOT)/nonfree/nonfree.mk
+
+##############
+# HW GEN     #
+##############  
+
+eth-gen:
+	make -C $(DMA_ROOT) idma_hw_all IDMA_BACKEND_IDS=$(IDMA_BACKEND_IDS)
 
 ##############
 # Simulation #

@@ -145,11 +145,18 @@ reg rx_prescale_sync_1;
 reg rx_prescale_sync_2;
 reg rx_prescale_sync_3;
 
-always @(posedge gtx_clk) begin
-    rx_prescale_sync_1 <= rx_prescale[2];
-    rx_prescale_sync_2 <= rx_prescale_sync_1;
-    rx_prescale_sync_3 <= rx_prescale_sync_2;
+always_ff @(posedge gtx_clk or posedge gtx_rst) begin
+    if (gtx_rst) begin
+        rx_prescale_sync_1 <= 1'b0;
+        rx_prescale_sync_2 <= 1'b0;
+        rx_prescale_sync_3 <= 1'b0;
+    end else begin
+        rx_prescale_sync_1 <= rx_prescale[2];
+        rx_prescale_sync_2 <= rx_prescale_sync_1;
+        rx_prescale_sync_3 <= rx_prescale_sync_2;
+    end
 end
+
 
 reg [6:0] rx_speed_count_1;
 reg [1:0] rx_speed_count_2;
@@ -160,10 +167,10 @@ always_ff @(posedge gtx_clk or posedge gtx_rst) begin
         rx_speed_count_2 <= 0;
         speed_reg <= 2'b10;
     end else begin
-        
-    if (rxclk_enable) begin
+
+        if (rxclk_enable) begin
         rx_speed_count_1 <= rx_speed_count_1 + 1;
-        
+
         if (rx_prescale_sync_2 ^ rx_prescale_sync_3) begin
             rx_speed_count_2 <= rx_speed_count_2 + 1;
         end
@@ -188,7 +195,7 @@ always_ff @(posedge gtx_clk or posedge gtx_rst) begin
             end
         end
     end
-    end
+end
 end
 
 assign speed = speed_reg;
