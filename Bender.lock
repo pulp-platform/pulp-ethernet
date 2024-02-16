@@ -44,7 +44,7 @@ packages:
       Git: https://github.com/pulp-platform/common_verification.git
     dependencies: []
   idma:
-    revision: 18fa40f0b12927622c6a0ff771fb0142d20bcb3d
+    revision: a80fcace92b1562e7cd76c8615298b5623ba74d2
     version: null
     source:
       Git: git@github.com:pulp-platform/iDMA.git

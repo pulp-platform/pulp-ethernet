@@ -15,7 +15,9 @@ module eth_clk_gen (
 logic clk_eth_125;
 assign clk_eth_125 = clk_eth_125_o;
 
-fll_dummy i_gf12_fll (         // Clock & reset
+fll_dummy #(
+  .NB_FLL (1)
+) i_gf12_fll (         // Clock & reset
   .OUTCLK ( clk_eth_125_o  ), // FLL clock outputs
   .REFCLK ( ref_clk_i      ), // Reference clock input
   .RSTB   ( rst_ni         ), // Asynchronous reset (active low)

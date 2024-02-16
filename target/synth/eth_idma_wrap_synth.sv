@@ -14,13 +14,13 @@
 
 module eth_idma_wrap_synth #(
   /// Data width
-  parameter int unsigned DataWidth           = 32'd32,
+  parameter int unsigned DataWidth           = 32'd64,
   /// Address width
   parameter int unsigned AddrWidth           = 32'd32,
   /// AXI User width
   parameter int unsigned UserWidth           = 32'd1,
   /// AXI ID width
-  parameter int unsigned AxiIdWidth          = 32'd1,
+  parameter int unsigned AxiIdWidth          = 32'd5,
   /// Number of transaction that can be in-flight concurrently
   parameter int unsigned NumAxInFlight       = 32'd3,
   /// The depth of the internal reorder buffer
