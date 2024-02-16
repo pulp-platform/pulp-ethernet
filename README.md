@@ -20,7 +20,7 @@ used.
 ## Generate iDMA with AXIS support  (Terminal)
 
 ```
-make eth-gen
+make eth-idma-gen
 ```
 
 ## Compile (Questa)
