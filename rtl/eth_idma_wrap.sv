@@ -106,14 +106,14 @@ module eth_idma_wrap #(
     .hw2reg(hw2reg), // Read
     .devmode_i(1'b1)
   );
-
+  
   /// AXI request and response
   eth_idma_pkg::axi_req_t     axi_read_req,axi_write_req;
   eth_idma_pkg::axi_rsp_t     axi_read_rsp,axi_write_rsp;
 
   /// AXI Stream request and response
-  axi_stream_rsp_t idma_axis_read_req, eth_axis_tx_rsp;  
-  axi_stream_req_t idma_axis_read_rsp, eth_axis_tx_req;
+  axi_stream_rsp_t idma_axis_read_rsp, eth_axis_tx_rsp;  
+  axi_stream_req_t idma_axis_read_req, eth_axis_tx_req;
 
   axi_stream_req_t idma_axis_write_req, eth_axis_rx_rsp;
   axi_stream_rsp_t idma_axis_write_rsp, eth_axis_rx_req;
@@ -176,10 +176,8 @@ module eth_idma_wrap #(
     .idma_busy_t          ( idma_busy_t          ),
     .axi_req_t            ( axi_req_t            ),
     .axi_rsp_t            ( axi_rsp_t            ),
-    .axis_read_req_t      ( axi_stream_rsp_t     ),
-    .axis_read_rsp_t      ( axi_stream_req_t     ),
-    .axis_write_req_t     ( axi_stream_req_t     ),
-    .axis_write_rsp_t     ( axi_stream_rsp_t     ),
+    .axis_req_t           ( axi_stream_req_t     ),
+    .axis_rsp_t           ( axi_stream_rsp_t     ),
     .write_meta_channel_t ( write_meta_channel_t ),
     .read_meta_channel_t  ( read_meta_channel_t  )
   ) i_idma_backend (
@@ -199,8 +197,8 @@ module eth_idma_wrap #(
     .axi_write_rsp_i      ( axi_write_rsp     ),
     .axi_read_req_o       ( axi_read_req      ),
     .axi_read_rsp_i       ( axi_read_rsp      ),
-    .axis_read_req_o      ( idma_axis_read_req   ),
-    .axis_read_rsp_i      ( idma_axis_read_rsp   ), 
+    .axis_read_req_i      ( idma_axis_read_req   ),
+    .axis_read_rsp_o      ( idma_axis_read_rsp   ), 
     .axis_write_req_o     ( idma_axis_write_req  ), 
     .axis_write_rsp_i     ( idma_axis_write_rsp  ),
     .busy_o               ( idma_busy_o          )
@@ -279,9 +277,9 @@ module eth_idma_wrap #(
     .src_ready_o    ( eth_axis_rx_req.tready    ),
     .dst_rst_ni     ( rst_ni                    ),
     .dst_clk_i      ( clk_i                     ),
-    .dst_data_o     ( idma_axis_read_rsp.t      ),
-    .dst_valid_o    ( idma_axis_read_rsp.tvalid ),
-    .dst_ready_i    ( idma_axis_read_req.tready )
+    .dst_data_o     ( idma_axis_read_req.t      ),
+    .dst_valid_o    ( idma_axis_read_req.tvalid ),
+    .dst_ready_i    ( idma_axis_read_rsp.tready )
   );
 
   axi_rw_join #(

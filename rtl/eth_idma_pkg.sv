@@ -69,34 +69,34 @@ package eth_idma_pkg;
      return (a > b) ? a : b;
  endfunction
 
- typedef struct packed {
-     axi_ar_chan_t ar_chan;
-     logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axi_ar_chan_width:0] padding;
- } axi_read_ar_chan_padded_t;
+typedef struct packed {
+    axi_ar_chan_t ar_chan;
+    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axi_ar_chan_width:0] padding;
+} axi_read_ar_chan_padded_t;
 
- typedef struct packed {
-     axis_t_chan_t t_chan;
-     logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
- } axis_read_t_chan_padded_t;
+typedef struct packed {
+    axis_t_chan_t t_chan;
+    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
+} axis_read_t_chan_padded_t;
 
- typedef union packed {
-     axi_read_ar_chan_padded_t axi;
-     axis_read_t_chan_padded_t axi_stream;
- } read_meta_channel_t;
+typedef union packed {
+    axi_read_ar_chan_padded_t axi;
+    axis_read_t_chan_padded_t axis;
+} read_meta_channel_t;
 
- typedef struct packed {
-     axi_aw_chan_t aw_chan;
-     logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axi_aw_chan_width:0] padding;
- } axi_write_aw_chan_padded_t;
+typedef struct packed {
+    axi_aw_chan_t aw_chan;
+    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axi_aw_chan_width:0] padding;
+} axi_write_aw_chan_padded_t;
 
- typedef struct packed {
-     axis_t_chan_t t_chan;
-     logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
- } axis_write_t_chan_padded_t;
+typedef struct packed {
+    axis_t_chan_t t_chan;
+    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
+} axis_write_t_chan_padded_t;
 
- typedef union packed {
-     axi_write_aw_chan_padded_t axi;
-     axis_write_t_chan_padded_t axi_stream;
- } write_meta_channel_t;
+typedef union packed {
+    axi_write_aw_chan_padded_t axi;
+    axis_write_t_chan_padded_t axis;
+} write_meta_channel_t;
 
 endpackage : eth_idma_pkg

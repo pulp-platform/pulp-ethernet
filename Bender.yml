@@ -14,8 +14,8 @@ dependencies:
   common_verification : { git: "https://github.com/pulp-platform/common_verification.git", version: 0.2.0 }
   register_interface : { git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.2 }
   common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.21.0 }
-  axi_stream: { git: "git@github.com:pulp-platform/axi_stream.git", rev: "472751f550e3918215603e21734fe0ece3c66f79" }
-  idma: { git: "git@github.com:pulp-platform/iDMA.git", rev: "7072a3f85c47fccef8e23a0dfe69cd64337a415f" } 
+  axi_stream: { git: "git@github.com:pulp-platform/axi_stream.git", rev: "54891ff40455ca94a37641b9da4604647878cc07" }
+  idma: { git: "git@github.com:pulp-platform/iDMA.git", rev: "18fa40f0b12927622c6a0ff771fb0142d20bcb3d" } 
   
 
 export_include_dirs:
