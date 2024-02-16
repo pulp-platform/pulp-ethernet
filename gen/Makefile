@@ -18,18 +18,18 @@
 
 REGTOOL ?= regtool.py
 
-SRCS = eth_framing_reg_top.sv eth_framing_reg_pkg.sv
+SRCS = eth_idma_reg_top.sv eth_idma_reg_pkg.sv
 
 all: srcs headers
 
 srcs: $(SRCS)
 
-eth_framing_reg_top.sv: eth_framing_regs.hjson
+eth_idma_reg_top.sv: eth_idma_reg.hjson
 	$(REGTOOL) -r $< -t .
 
-headers: eth_framing.h
+headers: eth_idma_reg.h
 
-eth_framing.h: eth_framing_regs.hjson
+eth_idma_reg.h: eth_idma_reg.hjson
 	$(REGTOOL) --cdefines $< > $@
 
 .PHONY: install

@@ -6,509 +6,371 @@
 // - Davide Rossi <davide.rossi@unibo.it>
 // - Thiemo Zaugg <zauggth@ethz.ch>
 // - Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>
+// - Chaoqun Liang <chaoqun.liang@unibo.it>
 
-`timescale 1 ns/1 ps
+`timescale 1 ns/1 ns
 
-`include "axi_stream/assign.svh"
-`include "axi_stream/typedef.svh"
+`include "axi/typedef.svh"
+`include "idma/typedef.svh"
 `include "register_interface/typedef.svh"
 `include "register_interface/assign.svh"
 
-module eth_tb ();
-  localparam tCK    = 8ns;
-  localparam tCK200 = 5ns;
+module eth_tb
+ #(
+  parameter int unsigned DataWidth           = 32'd64,
+  parameter int unsigned AddrWidth           = 32'd64,
+  parameter int unsigned UserWidth           = 32'd1,
+  parameter int unsigned AxiIdWidth          = 32'd5,
+  parameter int unsigned NumAxInFlight       = 32'd3,
+  parameter int unsigned BufferDepth         = 32'd3,
+  parameter int unsigned TFLenWidth          = 32'd32,
+  parameter int unsigned MemSysDepth         = 32'd0,
+  parameter bit          RAWCouplingAvail    = 1'b0,
+  parameter bit          MaskInvalidData     = 1'b1,
+  parameter bit          HardwareLegalizer   = 1'b1,
+  parameter bit          RejectZeroTransfers = 1'b1,
+  parameter bit          ErrorHandling       = 1'b0
+);
 
-  localparam TEST_TIME = 6ns;
-  localparam APPLY_TIME = 2ns;
+  import idma_pkg::*;
+  import eth_idma_pkg::*;
+  import reg_test::*;
 
-  localparam int unsigned REG_BUS_DW = 32;
-  localparam int unsigned REG_BUS_AW = 4;
+  /// timing parameters
+  localparam time SYS_TCK       = 8ns;
+  localparam time SYS_TA        = 2ns;
+  localparam time SYS_TT        = 6ns;
 
-  localparam int unsigned DW = 64;
-  localparam int unsigned DW_FRAMING = 8;
-  localparam int unsigned ID_WIDTH  = 0;
-  localparam int unsigned DEST_WIDTH  = 0;
-  localparam int unsigned USER_WIDTH  = 1;
+  /// regbus
+  localparam int unsigned REG_BUS_DW  = 32;
+  localparam int unsigned REG_BUS_AW  = 32;
 
-  logic clk_i           = 0; // 125 MHz
-  logic clk_90_i        = 0; // 125 MHz phase shifted
-  logic clk_200MHz_i    = 0; // 200 MHz
-  logic rst_ni          = 1;
-  logic done            = 0;
+  /// parse error handling caps
+  localparam error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
 
-  // signals to instantiate the DUT
-  wire       eth_rxck    ;
-  wire       eth_rxctl   ;
-  wire [3:0] eth_rxd     ;
-  wire       eth_txck    ;
-  wire       eth_txctl   ;
-  wire [3:0] eth_txd     ;
-  wire       eth_tx_rst_n;
-  wire       eth_rx_rst_n;
+  /// ethernet pads
+  logic       s_clk;
+  logic       s_rst_n;
+  logic       done  = 0;
+  logic       error_found = 0;
 
-  logic [7:0] tx_axis_tdata ;
-  logic       tx_axis_tvalid;
-  logic       tx_axis_tready;
-  logic       tx_axis_tlast ;
+  logic [REG_BUS_DW-1:0] tx_req_ready, tx_rsp_valid;
+  logic [REG_BUS_DW-1:0] rx_req_ready, rx_rsp_valid;
 
-  // ----------------------- AXI-Stream master drivers --------------------------
-  typedef axi_stream_test::axi_stream_rand_tx #(
-    .DataWidth (DW),
-    .IdWidth   (ID_WIDTH),
-    .DestWidth (DEST_WIDTH),
-    .UserWidth (USER_WIDTH),
-    .TestTime  (TEST_TIME),
-    .ApplTime  (APPLY_TIME),
-    .MinWaitCycles(0),
-    .MaxWaitCycles(50)
-  ) master_drv_t;
+  logic       eth_rxck;
+  logic       eth_rxctl;
+  logic [3:0] eth_rxd;
+  logic       eth_txck;
+  logic       eth_txctl;
+  logic [3:0] eth_txd;
+  logic       eth_tx_rstn, eth_rx_rstn;
 
-  // TX_FRAMING master driver
-  AXI_STREAM_BUS_DV #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) tx_framing_master_dv (
-    .clk_i(clk_i)
-  );
+  logic tx_idma_req_valid, tx_idma_req_ready, tx_idma_rsp_valid, tx_idma_rsp_ready;
+  logic rx_idma_req_valid, rx_idma_req_ready, rx_idma_rsp_valid, rx_idma_rsp_ready;
 
-  AXI_STREAM_BUS #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) tx_axis_tx_big();
+  /// AXI4+ATOP request and response
+  axi_req_t axi_tx_req_mem, axi_rx_req_mem;
+  axi_rsp_t axi_tx_rsp_mem, axi_rx_rsp_mem;
 
-  `AXI_STREAM_ASSIGN(tx_axis_tx_big, tx_framing_master_dv);
+  /// error handler
+  idma_eh_req_t idma_eh_req;
+  logic         eh_req_valid;
+  logic         eh_req_ready;
 
-  master_drv_t tx_framing_master_drv = new(tx_framing_master_dv, "tx_framing_master_dvr_tx_path");
+  /// busy signal
+  idma_busy_t   tx_busy, rx_busy;
 
-  eth_top_pkg::s_req_t tx_axis_tx_req_i;
-  eth_top_pkg::s_rsp_t tx_axis_tx_rsp_o;
-  `AXI_STREAM_ASSIGN_TO_REQ(tx_axis_tx_req_i, tx_axis_tx_big)
-  `AXI_STREAM_ASSIGN_FROM_RSP(tx_axis_tx_big, tx_axis_tx_rsp_o)
-
-
-  // RX_FRAMING master driver
-  AXI_STREAM_BUS_DV #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) rx_framing_master_dv (
-    .clk_i(clk_i)
-  );
-
-  AXI_STREAM_BUS #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) tx_axis_rx_big();
-
-  `AXI_STREAM_ASSIGN(tx_axis_rx_big, rx_framing_master_dv);
-
-  master_drv_t rx_framing_master_drv = new(rx_framing_master_dv, "rx_framing_master_dvr_tx_path");
-
-  eth_top_pkg::s_req_t tx_axis_rx_req_i;
-  eth_top_pkg::s_rsp_t tx_axis_rx_rsp_o;
-  `AXI_STREAM_ASSIGN_TO_REQ(tx_axis_rx_req_i, tx_axis_rx_big)
-  `AXI_STREAM_ASSIGN_FROM_RSP(tx_axis_rx_big, tx_axis_rx_rsp_o)
-
-
-// ----------------------- AXI-Stream slave drivers -------------------------
-  typedef axi_stream_test::axi_stream_rand_rx #(
-    .DataWidth (DW),
-    .IdWidth   (ID_WIDTH),
-    .DestWidth (DEST_WIDTH),
-    .UserWidth (USER_WIDTH),
-    .TestTime  (TEST_TIME),
-    .ApplTime  (APPLY_TIME),
-    .MinWaitCycles(0),
-    .MaxWaitCycles(50)
-  ) slave_drv_t;
-
-  // TX_FRAMING slave driver
-  AXI_STREAM_BUS_DV #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) tx_framing_slave_dv (
-    .clk_i(clk_i)
-  );
-
-  AXI_STREAM_BUS #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) rx_axis_tx_big();
-
-  `AXI_STREAM_ASSIGN(tx_framing_slave_dv, rx_axis_tx_big);
-
-  slave_drv_t tx_framing_slave_drv = new(tx_framing_slave_dv, "tx_framing_slave_dvr_rx_path");
-
-  eth_top_pkg::s_req_t rx_axis_tx_req_o;
-  eth_top_pkg::s_rsp_t rx_axis_tx_rsp_i;
-  `AXI_STREAM_ASSIGN_FROM_REQ(rx_axis_tx_big, rx_axis_tx_req_o)
-  `AXI_STREAM_ASSIGN_TO_RSP(rx_axis_tx_rsp_i, rx_axis_tx_big)
-
-  // RX_FRAMING slave driver
-  AXI_STREAM_BUS_DV #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) rx_framing_slave_dv (
-    .clk_i(clk_i)
-  );
-
-  AXI_STREAM_BUS #(
-    .DataWidth(DW),
-    .IdWidth  (ID_WIDTH),
-    .DestWidth(DEST_WIDTH),
-    .UserWidth(USER_WIDTH)
-  ) rx_axis_rx_big();
-
-  `AXI_STREAM_ASSIGN(rx_framing_slave_dv, rx_axis_rx_big);
-
-  slave_drv_t rx_framing_slave_drv = new(rx_framing_slave_dv, "rx_framing_slave_dvr_rx_path");
-
-  eth_top_pkg::s_req_t rx_axis_rx_req_o;
-  eth_top_pkg::s_rsp_t rx_axis_rx_rsp_i;
-  `AXI_STREAM_ASSIGN_FROM_REQ(rx_axis_rx_big, rx_axis_rx_req_o)
-  `AXI_STREAM_ASSIGN_TO_RSP(rx_axis_rx_rsp_i, rx_axis_rx_big)
-
-
-// -------------------- (configuration) REG Drivers ------------------------
-  REG_BUS #(
-     .DATA_WIDTH(REG_BUS_DW),
-     .ADDR_WIDTH(REG_BUS_AW)
-  ) reg_bus_mst_tx (.clk_i(clk_i));
-
-  logic reg_tx_error;
-
-  REG_BUS #(
-     .DATA_WIDTH(REG_BUS_DW),
-     .ADDR_WIDTH(REG_BUS_AW)
-  ) reg_bus_mst_rx (.clk_i(clk_i));
-
-  logic reg_rx_error;
-
+  /// -------------------- REG Drivers -----------------------
   typedef reg_test::reg_driver #(
-     .AW(REG_BUS_AW),
-     .DW(REG_BUS_DW),
-     .TT(TEST_TIME),
-     .TA(APPLY_TIME)
-  ) reg_bus_master_t;
+    .AW(REG_BUS_AW),
+    .DW(REG_BUS_DW),
+    .TT(SYS_TT),
+    .TA(SYS_TA)
+  ) reg_bus_drv_t;
 
-  reg_bus_master_t reg_master_tx = new(reg_bus_mst_tx);
-  reg_bus_master_t reg_master_rx = new(reg_bus_mst_rx);
-
-  eth_top_pkg::reg_bus_req_t rx_reg_req_i, tx_reg_req_i;
-  eth_top_pkg::reg_bus_rsp_t rx_reg_rsp_o, tx_reg_rsp_o;
-
-  `REG_BUS_ASSIGN_TO_REQ(rx_reg_req_i, reg_bus_mst_rx)
-  `REG_BUS_ASSIGN_TO_REQ(tx_reg_req_i, reg_bus_mst_tx)
-  `REG_BUS_ASSIGN_FROM_RSP(reg_bus_mst_rx, rx_reg_rsp_o)
-  `REG_BUS_ASSIGN_FROM_RSP(reg_bus_mst_tx, tx_reg_rsp_o)
-
-// -------------------------------- DUT ---------------------------------
-  // TX ETH_RGMII
-  eth_top_synth tx_eth_top_synth (
-    .rst_ni      (rst_ni         ),
-    .clk_i       (clk_i          ),
-    .clk90_i     (clk_90_i       ),
-    .clk_200MHz_i(clk_200MHz_i   ),
-
-
-    // Ethernet: 1000BASE-T RGMII
-    .phy_rx_clk  (eth_rxck       ),
-    .phy_rxd     (eth_rxd        ),
-    .phy_rx_ctl  (eth_rxctl      ),
-
-    .phy_tx_clk  (eth_txck       ),
-    .phy_txd     (eth_txd        ),
-    .phy_tx_ctl  (eth_txctl      ),
-
-    .phy_reset_n (eth_tx_rst_n   ),
-    .phy_int_n   (1'b1           ),
-    .phy_pme_n   (1'b1           ),
-
-    // MDIO
-    .phy_mdio_i  (1'b0           ),
-    .phy_mdio_o  (               ),
-    .phy_mdio_oe (               ),
-    .phy_mdc     (               ),
-    // TX AXIS
-    .tx_axis_tdata_i (tx_axis_tx_req_i.t.data),
-    .tx_axis_tstrb_i (tx_axis_tx_req_i.t.strb),
-    .tx_axis_tkeep_i (tx_axis_tx_req_i.t.keep),
-    .tx_axis_tlast_i (tx_axis_tx_req_i.t.last),
-    .tx_axis_tid_i   (tx_axis_tx_req_i.t.id),
-    .tx_axis_tdest_i (tx_axis_tx_req_i.t.dest),
-    .tx_axis_tuser_i (tx_axis_tx_req_i.t.user), // set tuser to 1'b0 to indicate no error
-    .tx_axis_tvalid_i(tx_axis_tx_req_i.tvalid),
-    .tx_axis_tready_o(tx_axis_tx_rsp_o.tready),
-    // RX AXIS
-    .rx_axis_tdata_o (rx_axis_tx_req_o.t.data),
-    .rx_axis_tstrb_o (rx_axis_tx_req_o.t.strb),
-    .rx_axis_tkeep_o (rx_axis_tx_req_o.t.keep),
-    .rx_axis_tlast_o (rx_axis_tx_req_o.t.last),
-    .rx_axis_tid_o   (rx_axis_tx_req_o.t.id),
-    .rx_axis_tdest_o (rx_axis_tx_req_o.t.dest),
-    .rx_axis_tuser_o (rx_axis_tx_req_o.t.user),
-    .rx_axis_tvalid_o(rx_axis_tx_req_o.tvalid),
-    .rx_axis_tready_i(rx_axis_tx_rsp_i.tready),
-
-    // Configuration Interface
-    .reg_bus_addr_i  (tx_reg_req_i.addr),
-    .reg_bus_write_i (tx_reg_req_i.write),
-    .reg_bus_wdata_i (tx_reg_req_i.wdata),
-    .reg_bus_valid_i (tx_reg_req_i.valid),
-    .reg_bus_wstrb_i (tx_reg_req_i.wstrb),
-    .reg_bus_rdata_o (tx_reg_rsp_o.rdata),
-    .reg_bus_ready_o (tx_reg_rsp_o.ready),
-    .reg_bus_error_o (tx_reg_rsp_o.error)
+  REG_BUS #(
+    .DATA_WIDTH(REG_BUS_DW),
+    .ADDR_WIDTH(REG_BUS_AW)
+  )  reg_bus_tx (
+    .clk_i(s_clk)
   );
 
-
-
-   // RX ETH_RGMII
-    eth_top_synth rx_eth_top_synth (
-    .rst_ni      (rst_ni         ),
-    .clk_i       (clk_i          ),
-    .clk90_i     (clk_90_i       ),
-    .clk_200MHz_i(clk_200MHz_i   ),
-
-    // Ethernet: 1000BASE-T RGMII
-    .phy_rx_clk  (eth_txck       ),
-    .phy_rxd     (eth_txd        ),
-    .phy_rx_ctl  (eth_txctl      ),
-
-    .phy_tx_clk  (eth_rxck       ),
-    .phy_txd     (eth_rxd        ),
-    .phy_tx_ctl  (eth_rxctl      ),
-
-    .phy_reset_n (eth_rx_rst_n   ),
-    .phy_int_n   (1'b1           ),
-    .phy_pme_n   (1'b1           ),
-
-    // MDIO
-    .phy_mdio_i  (1'b0           ),
-    .phy_mdio_o  (               ),
-    .phy_mdio_oe (               ),
-    .phy_mdc     (               ),
-
-    // TX AXIS
-    .tx_axis_tdata_i (tx_axis_rx_req_i.t.data),
-    .tx_axis_tstrb_i (tx_axis_rx_req_i.t.strb),
-    .tx_axis_tkeep_i (tx_axis_rx_req_i.t.keep),
-    .tx_axis_tlast_i (tx_axis_rx_req_i.t.last),
-    .tx_axis_tid_i   (tx_axis_rx_req_i.t.id),
-    .tx_axis_tdest_i (tx_axis_rx_req_i.t.dest),
-    .tx_axis_tuser_i (tx_axis_rx_req_i.t.user), // set tuser to 1'b0 to indicate no error
-    .tx_axis_tvalid_i(tx_axis_rx_req_i.tvalid),
-    .tx_axis_tready_o(tx_axis_rx_rsp_o.tready),
-    // RX AXIS
-    .rx_axis_tdata_o (rx_axis_rx_req_o.t.data),
-    .rx_axis_tstrb_o (rx_axis_rx_req_o.t.strb),
-    .rx_axis_tkeep_o (rx_axis_rx_req_o.t.keep),
-    .rx_axis_tlast_o (rx_axis_rx_req_o.t.last),
-    .rx_axis_tid_o   (rx_axis_rx_req_o.t.id),
-    .rx_axis_tdest_o (rx_axis_rx_req_o.t.dest),
-    .rx_axis_tuser_o (rx_axis_rx_req_o.t.user),
-    .rx_axis_tvalid_o(rx_axis_rx_req_o.tvalid),
-    .rx_axis_tready_i(rx_axis_rx_rsp_i.tready),
-
-    // Configuration Interface
-    .reg_bus_addr_i  (rx_reg_req_i.addr),
-    .reg_bus_write_i (rx_reg_req_i.write),
-    .reg_bus_wdata_i (rx_reg_req_i.wdata),
-    .reg_bus_valid_i (rx_reg_req_i.valid),
-    .reg_bus_wstrb_i (rx_reg_req_i.wstrb),
-    .reg_bus_rdata_o (rx_reg_rsp_o.rdata),
-    .reg_bus_ready_o (rx_reg_rsp_o.ready),
-    .reg_bus_error_o (rx_reg_rsp_o.error)
+  REG_BUS #(
+    .DATA_WIDTH(REG_BUS_DW),
+    .ADDR_WIDTH(REG_BUS_AW)
+  )  reg_bus_rx (
+    .clk_i(s_clk)
   );
 
-// ------------------------- DATA ----------------------------
+  logic reg_error;
 
-  // initialization data array (data to be sent by TX)
-  logic [DW-1:0] data_array[7:0];
-  initial begin
-     data_array[0] = 64'h1032207098001032; //1 --> 230100890702 (Multicast Address) 2301, mac dest + begi of src mac address
-     data_array[1] = 64'h3210E20020709800; //2 --> 00890702 002E 0123, end of soource mac address + length/Ethertype(002E=IEEE802.3) + payload (2 byte)
-     data_array[2] = 64'h1716151413121110; //3 --> payload 8 byte
-     data_array[3] = 64'h2726252423222120; //4 --> payload 8 byte
-     data_array[4] = 64'h3736353433323130; //5 --> payload 8 byte
-     data_array[5] = 64'h4746454443424140; //6 --> payload 8 byte
-     data_array[6] = 64'h5756555453525150; //7 --> payload 8 byte
-     data_array[7] = 64'h6766656463626160; //8 --> payload 8 byte
-  end
+  reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
+  reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
 
-  logic [DW-1:0] data_recv_array[8:0];
-  logic last_recv;
+  reg_bus_req_t reg_bus_tx_req, reg_bus_rx_req;
+  reg_bus_rsp_t reg_bus_tx_rsp, reg_bus_rx_rsp;
 
+  `REG_BUS_ASSIGN_TO_REQ (reg_bus_tx_req, reg_bus_tx)
+  `REG_BUS_ASSIGN_FROM_RSP (reg_bus_tx, reg_bus_tx_rsp)
 
-  // ---------------------- CLOCK GENERATION ------------------------
-  initial begin
-     while (!done) begin //SYSTEM CLOCK
-        clk_i <= 1;
-        #(tCK/2);
-        clk_i <= 0;
-        #(tCK/2);
-     end
-  end
+  `REG_BUS_ASSIGN_TO_REQ (reg_bus_rx_req, reg_bus_rx)
+  `REG_BUS_ASSIGN_FROM_RSP (reg_bus_rx, reg_bus_rx_rsp)
 
-  initial begin
-     while (!done) begin
-        clk_90_i <= 0;
-        #(tCK/2);
-        clk_90_i <= 1;
-        #(tCK/2);
-     end
-  end
+  // clocking block
+  clk_rst_gen #(
+    .ClkPeriod    ( SYS_TCK   ),
+    .RstClkCycles ( 1         )
+  ) i_clk_rst_gen (
+    .clk_o        ( s_clk     ),
+    .rst_no       ( s_rst_n   )
+  );
 
-  initial begin
-     while (!done) begin
-        clk_200MHz_i <= 1;
-        #(tCK200/2);
-        clk_200MHz_i <= 0;
-        #(tCK200/2);
-     end
-  end
+  // AXI4 TX sim memory
+  axi_sim_mem #(
+    .AddrWidth         ( AddrWidth    ),
+    .DataWidth         ( DataWidth    ),
+    .IdWidth           ( AxiIdWidth   ),
+    .UserWidth         ( UserWidth    ),
+    .axi_req_t         ( axi_req_t    ),
+    .axi_rsp_t         ( axi_rsp_t    ),
+    .WarnUninitialized ( 1'b0         ),
+    .ClearErrOnAccess  ( 1'b1         ),
+    .ApplDelay         ( SYS_TA       ),
+    .AcqDelay          ( SYS_TT       )
+  ) i_tx_axi_sim_mem (
+    .clk_i              ( s_clk           ),
+    .rst_ni             ( s_rst_n         ),
+    .axi_req_i          ( axi_tx_req_mem  ),
+    .axi_rsp_o          ( axi_tx_rsp_mem  ),
+    .mon_r_last_o       ( /* NOT CONNECTED */ ),
+    .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_r_user_o       ( /* NOT CONNECTED */ ),
+    .mon_r_id_o         ( /* NOT CONNECTED */ ),
+    .mon_r_data_o       ( /* NOT CONNECTED */ ),
+    .mon_r_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_r_valid_o      ( /* NOT CONNECTED */ ),
+    .mon_w_last_o       ( /* NOT CONNECTED */ ),
+    .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_w_user_o       ( /* NOT CONNECTED */ ),
+    .mon_w_id_o         ( /* NOT CONNECTED */ ),
+    .mon_w_data_o       ( /* NOT CONNECTED */ ),
+    .mon_w_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_w_valid_o      ( /* NOT CONNECTED */ )
+  );
 
-  // ------------------------ BEGINNING OF SIMULATION ------------------------
-  initial begin
-    // General reset
+  // AXI4 RX sim memory
+  axi_sim_mem #(
+    .AddrWidth         ( AddrWidth    ),
+    .DataWidth         ( DataWidth    ),
+    .IdWidth           ( AxiIdWidth   ),
+    .UserWidth         ( UserWidth    ),
+    .axi_req_t         ( axi_req_t    ),
+    .axi_rsp_t         ( axi_rsp_t    ),
+    .WarnUninitialized ( 1'b0         ),
+    .ClearErrOnAccess  ( 1'b1         ),
+    .ApplDelay         ( SYS_TA       ),
+    .AcqDelay          ( SYS_TT       )
+  ) i_rx_axi_sim_mem (
+    .clk_i              ( s_clk             ),
+    .rst_ni             ( s_rst_n           ),
+    .axi_req_i          ( axi_rx_req_mem    ),
+    .axi_rsp_o          ( axi_rx_rsp_mem    ),
+    .mon_r_last_o       ( /* NOT CONNECTED */ ),
+    .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_r_user_o       ( /* NOT CONNECTED */ ),
+    .mon_r_id_o         ( /* NOT CONNECTED */ ),
+    .mon_r_data_o       ( /* NOT CONNECTED */ ),
+    .mon_r_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_r_valid_o      ( /* NOT CONNECTED */ ),
+    .mon_w_last_o       ( /* NOT CONNECTED */ ),
+    .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
+    .mon_w_user_o       ( /* NOT CONNECTED */ ),
+    .mon_w_id_o         ( /* NOT CONNECTED */ ),
+    .mon_w_data_o       ( /* NOT CONNECTED */ ),
+    .mon_w_addr_o       ( /* NOT CONNECTED */ ),
+    .mon_w_valid_o      ( /* NOT CONNECTED */ )
+   );
 
-    // Reset axi master and reg master
-    reg_master_tx.reset_master();
-    reg_master_rx.reset_master();
-    // Master drivers TX-paths
-    tx_framing_master_drv.reset();
-    rx_framing_master_drv.reset();
-    // Slave drivers RX-paths
-    tx_framing_slave_drv.reset();
-    rx_framing_slave_drv.reset();
+  eth_idma_wrap#(
+    .DataWidth           ( DataWidth           ),
+    .AddrWidth           ( AddrWidth           ),
+    .UserWidth           ( UserWidth           ),
+    .AxiIdWidth          ( AxiIdWidth          ),
+    .NumAxInFlight       ( NumAxInFlight       ),
+    .BufferDepth         ( BufferDepth         ),
+    .TFLenWidth          ( TFLenWidth          ),
+    .MemSysDepth         ( MemSysDepth         ),
+    .RAWCouplingAvail    ( RAWCouplingAvail    ),
+    .HardwareLegalizer   ( HardwareLegalizer   ),
+    .RejectZeroTransfers ( RejectZeroTransfers )
+  ) i_tx_eth_idma_wrap (
+    .clk_i               ( s_clk               ),
+    .rst_ni              ( s_rst_n             ),
+     /// Etherent Internal clocks
+    .phy_rx_clk_i        ( eth_rxck            ),
+    .phy_rxd_i           ( eth_rxd             ),
+    .phy_rx_ctl_i        ( eth_rxctl           ),
+    .phy_tx_clk_o        ( eth_txck            ),
+    .phy_txd_o           ( eth_txd             ),
+    .phy_tx_ctl_o        ( eth_txctl           ),
+    .phy_resetn_o        ( eth_tx_rstn         ),
+    .phy_intn_i          ( 1'b1                ),
+    .phy_pme_i           ( 1'b1                ),
+    .phy_mdio_i          ( 1'b0                ),
+    .phy_mdio_o          (                     ),
+    .phy_mdio_oe         (                     ),
+    .phy_mdc_o           (                     ),
+    .reg_req_i           ( reg_bus_tx_req      ),
+    .reg_rsp_o           ( reg_bus_tx_rsp      ),
+    .testmode_i          ( 1'b0                ),
+    .idma_eh_req_i       ( idma_eh_req         ), // error handling disabled now
+    .eh_req_valid_i      ( eh_req_valid        ),
+    .eh_req_ready_o      ( eh_req_ready        ),
+    .axi_req_o           ( axi_tx_req_mem      ),
+    .axi_rsp_i           ( axi_tx_rsp_mem      ),
+    .idma_busy_o         ( tx_busy             )
+  );
 
-    @(posedge clk_i);
-    rst_ni <= 0;
-    repeat(10000) @(posedge clk_i);
-    rst_ni <= 1;
-    @(posedge clk_i);
+  reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
+  reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
 
-    // set receive array to 0;
-    reset_recv_array();
-    repeat(5) @(posedge clk_i);
+  eth_idma_wrap #(
+    .DataWidth           ( DataWidth           ),
+    .AddrWidth           ( AddrWidth           ),
+    .UserWidth           ( UserWidth           ),
+    .AxiIdWidth          ( AxiIdWidth          ),
+    .NumAxInFlight       ( NumAxInFlight       ),
+    .BufferDepth         ( BufferDepth         ),
+    .TFLenWidth          ( TFLenWidth          ),
+    .MemSysDepth         ( MemSysDepth         ),
+    .RAWCouplingAvail    ( RAWCouplingAvail    ),
+    .HardwareLegalizer   ( HardwareLegalizer   ),
+    .RejectZeroTransfers ( RejectZeroTransfers )
+  )i_rx_eth_idma_wrap (
+    .clk_i            ( s_clk           ),
+    .rst_ni           ( s_rst_n         ),
+    .phy_rx_clk_i     ( eth_txck        ),
+    .phy_rxd_i        ( eth_txd         ),
+    .phy_rx_ctl_i     ( eth_txctl       ),
+    .phy_tx_clk_o     ( eth_rxck        ),
+    .phy_txd_o        ( eth_rxd         ),
+    .phy_tx_ctl_o     ( eth_rxctl       ),
+    .phy_resetn_o     ( eth_rx_rstn     ),
+    .phy_intn_i       ( 1'b1            ),
+    .phy_pme_i        ( 1'b1            ),
+    .phy_mdio_i       ( 1'b0            ),
+    .phy_mdio_o       (                 ),
+    .phy_mdio_oe      (                 ),
+    .phy_mdc_o        (                 ),
+    .reg_req_i        ( reg_bus_rx_req  ),
+    .reg_rsp_o        ( reg_bus_rx_rsp  ),
+    .testmode_i       ( 1'b0            ),
+    .idma_eh_req_i    (                 ), // error handling disabled now
+    .eh_req_valid_i   (                 ),
+    .eh_req_ready_o   (                 ),
+    .axi_req_o        ( axi_rx_req_mem  ),
+    .axi_rsp_i        ( axi_rx_rsp_mem  ),
+    .idma_busy_o      ( rx_busy         )
+  );
 
-    //set framing rx mac address to 48'h207098001032
-    reg_master_rx.send_write(4'h0, 32'h98001032, 4'b1111, reg_tx_error); //lower 32bits of MAC address
-    @(posedge clk_i);
-    reg_master_rx.send_write(4'h4, 32'h00002070, 4'b1111, reg_tx_error); //upper 16bits of MAC address + other configuration set to false/0
+    // ------------------------ BEGINNING OF SIMULATION ------------------------
 
-    // TEST 1: Send Frame with the destination_MAC = RX_module_MAC
-    $display("Test 1");
-    data_array[0] = 64'h1032_207098001032;
-    send_and_receive();
-    check_data_received();
-    @(posedge clk_i);
+   initial begin
 
-    // TEST 2: Send Broadcast Frame
-    $display("Test 2");
-    reset_recv_array();
-    data_array[0] = 64'h1032_FFFFFFFFFFFF;
-    send_and_receive();
-    check_data_received();
-    @(posedge clk_i);
+      @(posedge s_rst_n);
+      @(posedge s_clk);
 
-    // TEST 3: Send Multicast Frame
-    $display("Test 3");
-    reset_recv_array();
-    data_array[0] = 64'h1032_01005EFFFFFF;
-    send_and_receive();
-    check_data_received();
-    @(posedge clk_i);
+    $readmemh("../stimuli/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("../stimuli/eth_frame.vmem", i_tx_axi_sim_mem.mem);
 
-    // TEST 4: Send Frame not addressed to RX_module without promiscuous flag
-    $display("Test 4");
-    reset_recv_array();
-    data_array[0] = 64'h1032_00015EFF3FFF;
-    send_and_receive();
-    check_no_data_received();
-    @(posedge clk_i);
+    /// TX eth configs
+    reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
+    @(posedge s_clk);
 
-    // TEST 5: Send Frame not addressed to RX_module with promiscuous flag
-    $display("Test 5");
-    reset_recv_array();
-    data_array[0] = 64'h1032_00015EFF3FFF;
-    reg_master_rx.send_write(4'h4, 32'h00012070, 4'b1111, reg_tx_error); // set promiscuous flag
-    @(posedge clk_i);
-    send_and_receive();
-    check_data_received();
-    @(posedge clk_i);
+    reg_drv_tx.send_write( 'h04,  32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    @(posedge s_clk);
 
-    $display("[SUCCESS] All written and read data match");
+    reg_drv_tx.send_write( 'h10, 32'h0, 'hf, reg_error ); // SRC_ADDR
+    @(posedge s_clk);
 
-    $stop();
-  end
+    reg_drv_tx.send_write( 'h14, 32'h0, 'hf, reg_error); // DST_ADDR
+    @(posedge s_clk);
 
-  task reset_recv_array();
-    for (int i = 0; i < 8; i++) begin
-      data_recv_array[i] = 'd0;
+    reg_drv_tx.send_write( 'h18, 32'h40, 'hf, reg_error); // Size in bytes
+    @(posedge s_clk);
+
+    reg_drv_tx.send_write( 'h1c, 32'h0, 'hf, reg_error); // src protocol AXI
+    @(posedge s_clk);
+
+    reg_drv_tx.send_write( 'h20, 32'h5, 'hf, reg_error); // dst protocol AXIS
+    @(posedge s_clk);
+
+    /// RX eth configs
+    reg_drv_rx.send_write( 'h0, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
+    @(posedge s_clk);
+
+    reg_drv_rx.send_write( 'h4, 32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    @(posedge s_clk);
+
+    reg_drv_rx.send_write( 'h10, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
+    @(posedge s_clk);
+
+    reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error); // DST_ADDR
+    @(posedge s_clk);
+
+    reg_drv_rx.send_write( 'h18, 32'h40, 'hf, reg_error); // Size in bytes, 48 for transmission including appended FCS
+    @(posedge s_clk);
+
+    reg_drv_rx.send_write( 'h1c, 32'h5, 'hf, reg_error); // src protocol
+    @(posedge s_clk);
+
+    reg_drv_rx.send_write( 'h20, 32'h0, 'hf, reg_error); // dst protocol
+    @(posedge s_clk);
+
+    /// Transaction configs
+    while(1) begin
+      reg_drv_tx.send_read( 'h3c, tx_req_ready, reg_error);   // req ready
+      if( tx_req_ready ) begin
+        reg_drv_tx.send_write( 'h38, 32'h1, 'hf , reg_error);  // req valid - req start
+        @(posedge s_clk);
+        break;
+      end
+      @(posedge s_clk);
     end
-  endtask : reset_recv_array
 
-  task send_and_receive();
-    fork
-      begin // send
-        tx_framing_master_drv.send(data_array[0], 1'b0);
-        tx_framing_master_drv.send(data_array[1], 1'b0);
-        tx_framing_master_drv.send(data_array[2], 1'b0);
-        tx_framing_master_drv.send(data_array[3], 1'b0);
-        tx_framing_master_drv.send(data_array[4], 1'b0);
-        tx_framing_master_drv.send(data_array[5], 1'b0);
-        tx_framing_master_drv.send(data_array[6], 1'b0);
-        tx_framing_master_drv.send(data_array[7], 1'b1);
-        repeat(34) @(posedge clk_i);
-      end
-      begin // receive
-        rx_framing_slave_drv.recv(data_recv_array[0], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[1], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[2], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[3], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[4], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[5], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[6], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[7], last_recv);
-        rx_framing_slave_drv.recv(data_recv_array[8], last_recv); // SFD
-      end
-    join_any
-  endtask : send_and_receive
+    reg_drv_tx.send_write( 'h38, 32'h0, 'hf, reg_error);  // req valid - lock in
+    reg_drv_tx.send_write( 'h40, 32'h1, 'hf, reg_error);  // rsp_ready - data transfer launch
+    @(posedge s_clk);
 
-  task check_data_received();
-    for(int j=0; j<8; j++) begin
-      if (data_array[j] != data_recv_array[j]) begin
-        $display("Data at j= %d was received %h but was sent as %h", j, data_recv_array[j], data_array[j]);
-        $display("[FAIL] At least one mismatch between written and read data");
-        $stop();  
-      end else begin
-        $display("Data at j= %d was correctly recived: %h", j, data_recv_array[j]);
+    while(1) begin
+      reg_drv_rx.send_read( 'h3c, rx_req_ready, reg_error);   // req ready
+      if( rx_req_ready ) begin
+        reg_drv_rx.send_write( 'h38, 32'h1, 'hf, reg_error);  // req_valid
+        @(posedge s_clk);
+        break;
+      end
+      @(posedge s_clk);
+    end
+
+    reg_drv_rx.send_write( 'h38, 32'h0, 'hf, reg_error);  // req valid
+    reg_drv_rx.send_write( 'h40, 32'h1, 'hf, reg_error);  // rsp ready
+    @(posedge s_clk);
+
+    repeat(160) @(posedge s_clk); // adjust based on num_bytes to write into rx sim mem
+
+    for (int j = 0; j < 64; j++) begin
+      if (i_tx_axi_sim_mem.mem[j] != i_rx_axi_sim_mem.mem[j]) begin
+        $display("Test FAIL");
+        error_found = 1;
+        break;
       end
     end
-  endtask : check_data_received
 
-  task check_no_data_received();
-    for(int j=0; j<8; j++) begin
-      if (data_recv_array[j] != 'd0) begin
-        $display("Data at j= %d was recived %h but no data should have been received", j, data_recv_array[j]);
-        $display("[FAIL] At least one mismatch between written and read data");
-        $stop();  
-      end
+    if (!error_found) begin
+      $display("Test PASS");
     end
-  endtask : check_no_data_received
+
+  $finish;
+ end
 
 endmodule

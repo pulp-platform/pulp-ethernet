@@ -17,6 +17,12 @@ used.
 `pulp-ethernet` is intended for use with https://github.com/pulp-platform/ariane
 (a RISCV Linux-capable soft core).
 
+## Generate iDMA with AXIS support  (Terminal)
+
+```
+make eth-gen
+```
+
 ## Compile (Questa)
 
 ```

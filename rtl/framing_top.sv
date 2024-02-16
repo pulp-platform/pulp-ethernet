@@ -1,30 +1,21 @@
-// Copyright 2023 ETH Zurich and University of Bologna.
-// Solderpad Hardware License, Version 0.51, see LICENSE for details.
-// SPDX-License-Identifier: SHL-0.51
-//
-// Authors:
-// - Jonathan Kimmitt <jrrk2@cam.ac.uk>
-// - Thiemo Zaugg <zauggth@ethz.ch>
+// See LICENSE for license details.
 
-`ifdef GENESYSII
-  `default_nettype none
-`endif
 
 module framing_top #(
   /// AXI Stream in request struct
-  parameter type axi_stream_req_t = logic,
+  parameter type axi_stream_req_t  = logic,
   /// AXI Stream in response struct
-  parameter type axi_stream_rsp_t = logic,
-  /// REGBUS
-  parameter type reg_req_t = logic,
-  parameter type reg_rsp_t = logic,
-  parameter int AW_REGBUS = 4
+  parameter type axi_stream_rsp_t  = logic,
+  /// reg intf
+  parameter type reg2hw_itf_t      = logic,
+  parameter type hw2reg_itf_t      = logic,
+  /// regbus address width
+  parameter int AW_REGBUS          = 4
 ) (
   // Internal 125 MHz clock
   input  wire                                           clk_i        ,
   input  wire                                           rst_ni       ,
   input  wire                                           clk90_int    ,
-  input  wire                                           clk_200_int  ,
   // Ethernet: 1000BASE-T RGMII
   input  wire                                           phy_rx_clk   ,
   input  wire     [3:0]                                 phy_rxd      ,
@@ -37,22 +28,23 @@ module framing_top #(
   input  wire                                           phy_pme_n    ,
   // MDIO
   input  wire                                           phy_mdio_i   ,
-  output      reg                                       phy_mdio_o   ,
-  output      reg                                       phy_mdio_oe  ,
+  output reg                                            phy_mdio_o   ,
+  output reg                                            phy_mdio_oe  ,
   output wire                                           phy_mdc      ,
   // AXIS TX/RX
-  input       axi_stream_req_t                          tx_axis_req_i,
-  output      axi_stream_rsp_t                          tx_axis_rsp_o,
-  output      axi_stream_req_t                          rx_axis_req_o,
-  input       axi_stream_rsp_t                          rx_axis_rsp_i,
-  // configuration (register interface)
-  input       reg_req_t                                 reg_req_i    ,
-  output      reg_rsp_t                                 reg_rsp_o
+  input  axi_stream_req_t                               tx_axis_req_i,
+  output axi_stream_rsp_t                               tx_axis_rsp_o,
+  output axi_stream_req_t                               rx_axis_req_o,
+  input  axi_stream_rsp_t                               rx_axis_rsp_i,
+  // ugly fix (to-do)
+  input  logic                                          idma_req_ready,
+  input  logic                                          idma_rsp_valid,
+  // REGBUS configs
+  input  reg2hw_itf_t                                   reg2hw_i,
+  output hw2reg_itf_t                                   hw2reg_o
 );
-  import eth_framing_reg_pkg::* ;
 
-  eth_framing_reg_pkg::eth_framing_reg2hw_t reg2hw; // Read from HW
-  eth_framing_reg_pkg::eth_framing_hw2reg_t hw2reg; // Write from HW
+  import eth_idma_reg_pkg::* ;
 
   logic        mac_gmii_tx_en;
   logic        accept_frame_q, accept_frame_d;
@@ -69,14 +61,19 @@ module framing_top #(
   logic       rx_axis_tuser_5_q,  rx_axis_tuser_4_q,  rx_axis_tuser_3_q,  rx_axis_tuser_2_q,  rx_axis_tuser_1_q,  rx_axis_tuser_0_q;
   logic       rx_axis_tuser_5_d,  rx_axis_tuser_4_d,  rx_axis_tuser_3_d,  rx_axis_tuser_2_d,  rx_axis_tuser_1_d,  rx_axis_tuser_0_d;
 
-  assign mac_address = {reg2hw.config1.upper_mac_address.q, reg2hw.config0.q}; // combine upper and lower mac address from registers
-  assign promiscuous = reg2hw.config1.promiscuous.q;
-  assign phy_mdc     = reg2hw.config1.phy_mdclk.q;
-  assign phy_mdio_o  = reg2hw.config1.phy_mdio_o.q;
-  assign phy_mdio_oe = reg2hw.config1.phy_mdio_oe.q;
+  assign mac_address = {reg2hw_i.machi_mdio.upper_mac_address.q, reg2hw_i.maclo_addr.q}; // combine upper and lower mac address from registers
+  assign promiscuous = reg2hw_i.machi_mdio.promiscuous.q;
+  assign phy_mdc     = reg2hw_i.machi_mdio.phy_mdclk.q;
+  assign phy_mdio_o  = reg2hw_i.machi_mdio.phy_mdio_o.q;
+  assign phy_mdio_oe = reg2hw_i.machi_mdio.phy_mdio_oe.q;
 
-  assign hw2reg.config2.de = 1'b1;
-  assign hw2reg.config3.de = 1'b1;
+  assign hw2reg_o.tx_fcs.de = 1'b1;
+  assign hw2reg_o.rx_fcs.de = 1'b1;
+  assign hw2reg_o.req_ready.de = 1'b1;
+  assign hw2reg_o.rsp_valid.de = 1'b1;
+
+  assign hw2reg_o.req_ready.d = idma_req_ready;
+  assign hw2reg_o.rsp_valid.d = idma_rsp_valid;
 
   always_comb begin
     rx_axis_tdata_4_d  = rx_axis_tdata_5_q;
@@ -175,26 +172,10 @@ module framing_top #(
     end
   end
 
-
-  eth_framing_reg_top #(
-    .reg_req_t(reg_req_t),
-    .reg_rsp_t(reg_rsp_t),
-    .AW(AW_REGBUS)
-  ) i_regs (
-    .clk_i(clk_i),
-    .rst_ni(rst_ni),
-    .reg_req_i(reg_req_i),
-    .reg_rsp_o(reg_rsp_o),
-    .reg2hw(reg2hw), // Write
-    .hw2reg(hw2reg), // Read
-    .devmode_i(1'b1)
-  );
-
   rgmii_soc rgmii_soc1 (
     .rst_int       (~rst_ni             ),
     .clk_int       (clk_i               ),
     .clk90_int     (clk90_int           ),
-    .clk_200_int   (clk_200_int         ),
 
     // Ethernet: 1000BASE-T RGMII
     .phy_rx_clk    (phy_rx_clk          ),
@@ -224,8 +205,8 @@ module framing_top #(
     .rx_axis_tuser (rx_axis_tuser_5_d   ),
 
     // Error registers
-    .rx_fcs_reg    (hw2reg.config3.d    ),
-    .tx_fcs_reg    (hw2reg.config2.d    )
+    .rx_fcs_reg    (hw2reg_o.rx_fcs.d    ),
+    .tx_fcs_reg    (hw2reg_o.tx_fcs.d    )
   );
 
 endmodule // framing_top
@@ -244,7 +225,6 @@ module framing_top_intf (
   input  wire           clk_i       ,
   input  wire           rst_ni      ,
   input  wire           clk90_int   ,
-  input  wire           clk_200_int ,
   /// Ethernet: 1000BASE-T RGMII
   input  wire           phy_rx_clk  ,
   input  wire     [3:0] phy_rxd     ,
@@ -326,7 +306,6 @@ module framing_top_intf (
     .rst_ni(rst_ni),
     .clk_i(clk_i),
     .clk90_int(clk90_int),
-    .clk_200_int(clk_200_int),
 
     // Ethernet: 1000BASE-T RGMII
     .phy_rx_clk(phy_rx_clk),
