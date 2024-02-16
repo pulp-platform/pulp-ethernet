@@ -2,10 +2,7 @@
 ```
 make eth-gen
 ```
-## Update iDMA dependency
-```
-change target name "test" into "idma_test" to exclude idma test from compilation as idma tb is currently bugged (to-do)
-```
+
 ## Compile (Questa)
 
 ```
