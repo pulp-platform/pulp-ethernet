@@ -52,7 +52,7 @@ include $(IDMA_ROOT)/idma.mk
 ######################
 
 ETH_NONFREE_REMOTE ?= git@iis-git.ee.ethz.ch:pulp-restricted/pulp-ethernet-nonfree.git
-ETH_NONFREE_COMMIT ?= 0f2f998
+ETH_NONFREE_COMMIT ?= 9a45a7c
 
 eth-nonfree-init:
 	git clone $(ETH_NONFREE_REMOTE) $(ETH_ROOT)/nonfree
