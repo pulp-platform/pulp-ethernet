@@ -367,7 +367,7 @@ module eth_tb
     end
 
     if (!error_found) begin
-      $display("Test PASS");
+      $display("SUCCESS");
     end
 
   $finish;
