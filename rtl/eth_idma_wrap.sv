@@ -103,7 +103,6 @@ module eth_idma_wrap #(
   `AXI_TYPEDEF_AR_CHAN_T(axi_ar_chan_t, addr_t, id_t, user_t)
 
   /// AXI Stream typedefs
-  /// AXI Stream typedefs
   `IDMA_AXI_STREAM_TYPEDEF_S_CHAN_T(axis_t_chan_t, data_t, strb_t, strb_t, id_t, id_t, user_t)
   `IDMA_AXI_STREAM_TYPEDEF_REQ_T(axi_stream_req_t, axis_t_chan_t)
   `IDMA_AXI_STREAM_TYPEDEF_RSP_T(axi_stream_rsp_t)
