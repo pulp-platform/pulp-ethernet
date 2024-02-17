@@ -62,11 +62,6 @@ module eth_idma_tb
   typedef logic [STRB_WIDTH-1:0]  reg_bus_strb_t;
 
   `REG_BUS_TYPEDEF_ALL(reg_bus, reg_bus_addr_t, reg_bus_data_t, reg_bus_strb_t)
- 
-  /// AXI Stream typedefs
-  `IDMA_AXI_STREAM_TYPEDEF_S_CHAN_T(axis_t_chan_t, data_t, strb_t, strb_t, id_t, id_t, user_t)
-  `IDMA_AXI_STREAM_TYPEDEF_REQ_T(axi_stream_req_t, axis_t_chan_t)
-  `IDMA_AXI_STREAM_TYPEDEF_RSP_T(axi_stream_rsp_t)
 
   logic       s_clk;
   logic       s_rst_n;
@@ -218,8 +213,6 @@ module eth_idma_tb
     .RejectZeroTransfers ( RejectZeroTransfers ),
     .axi_req_t           ( axi_req_t           ),
     .axi_rsp_t           ( axi_rsp_t           ),
-    .axi_stream_req_t    ( axi_stream_req_t    ),
-    .axi_stream_rsp_t    ( axi_stream_rsp_t    ),
     .reg_req_t           ( reg_bus_req_t       ),
     .reg_rsp_t           ( reg_bus_rsp_t       )
   ) i_tx_eth_idma_wrap (
@@ -262,8 +255,6 @@ module eth_idma_tb
     .RejectZeroTransfers ( RejectZeroTransfers ),
     .axi_req_t           ( axi_req_t           ),
     .axi_rsp_t           ( axi_rsp_t           ),
-    .axi_stream_req_t    ( axi_stream_req_t    ),
-    .axi_stream_rsp_t    ( axi_stream_rsp_t    ),
     .reg_req_t           ( reg_bus_req_t       ),
     .reg_rsp_t           ( reg_bus_rsp_t       )
   )i_rx_eth_idma_wrap (
