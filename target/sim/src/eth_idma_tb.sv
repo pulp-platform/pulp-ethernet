@@ -27,6 +27,7 @@ module eth_idma_tb
 
   /// timing parameters
   localparam time SYS_TCK       = 8ns;
+  localparam time TCK125        = 8ns;
   localparam time SYS_TA        = 2ns;
   localparam time SYS_TT        = 6ns;
 
@@ -115,6 +116,8 @@ module eth_idma_tb
   } write_meta_channel_t;
 
   logic       s_clk;
+  logic       s_clk_125MHz_0;
+  logic       s_clk_125MHz_90;
   logic       s_rst_n;
   logic       done  = 0;
   logic       error_found = 0;
@@ -278,6 +281,8 @@ module eth_idma_tb
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
      /// Etherent Internal clocks
+    .eth_clk_i           ( s_clk_125MHz_0      ), // 125MHz in-phase
+    .eth_clk90_i         ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i        ( eth_rxck            ),
     .phy_rxd_i           ( eth_rxd             ),
     .phy_rx_ctl_i        ( eth_rxctl           ),
@@ -327,6 +332,8 @@ module eth_idma_tb
   )i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
+    .eth_clk_i        ( s_clk_125MHz_0  ), // 125MHz in-phase
+    .eth_clk90_i      ( s_clk_125MHz_90 ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i     ( eth_txck        ),
     .phy_rxd_i        ( eth_txd         ),
     .phy_rx_ctl_i     ( eth_txctl       ),
@@ -349,11 +356,32 @@ module eth_idma_tb
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
+   
+  /// Ethernet Internal Clock generation
+  initial begin
+    while (!done) begin
+      s_clk_125MHz_0 <= 1;
+      #(TCK125/2);
+      s_clk_125MHz_0 <= 0;
+      #(TCK125/2);
+    end
+  end
 
-   initial begin
+  initial begin
+    while (!done) begin
+      s_clk_125MHz_90 <= 0;
+      #(TCK125/4);
+      s_clk_125MHz_90 <= 1;
+      #(TCK125/2);
+      s_clk_125MHz_90 <= 0;
+       #(TCK125/4);
+    end
+  end
+
+  initial begin
       
-      @(posedge s_rst_n);
-      @(posedge s_clk);
+    @(posedge s_rst_n);
+    @(posedge s_clk);
 
     $readmemh("/scratch/chaol/git_test/feb_16_idma_fix/fe-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     $readmemh("/scratch/chaol/git_test/feb_16_idma_fix/fe-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
