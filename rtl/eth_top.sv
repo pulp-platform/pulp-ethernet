@@ -11,24 +11,25 @@
 `include "register_interface/assign.svh"
 
 module eth_top #(
-  /// AXI Stream in request struct
-  parameter type axi_stream_req_t = eth_idma_pkg::axi_stream_req_t,
-  /// AXI Stream in response struct
-  parameter type axi_stream_rsp_t = eth_idma_pkg::axi_stream_rsp_t,
+
   /// AXI Stream Data Width
-  parameter int unsigned DataWidth = 64,
+  parameter int unsigned DataWidth       = 64,
   /// AXI Stream Id Width
-  parameter int unsigned IdWidth = 0,
+  parameter int unsigned IdWidth         = 0,
   /// AXI Stream Dest Width = 0
-  parameter int unsigned DestWidth = 0,
+  parameter int unsigned DestWidth       = 0,
   /// AXI Stream User Width
-  parameter int unsigned UserWidth = 1,
+  parameter int unsigned UserWidth       = 1,
+  /// Register address width
+  parameter int unsigned RegAddrWidth    = 4,
+    /// AXI Stream in request struct
+  parameter type axi_stream_req_t        = logic,
+  /// AXI Stream in response struct
+  parameter type axi_stream_rsp_t        = logic,
   /// REGBUS
-  //parameter type reg2hw_itf_t = eth_idma_reg_pkg::eth_idma_reg2hw_t,
-  //parameter type hw2reg_itf_t = eth_idma_reg_pkg::eth_idma_hw2reg_t,
-  parameter type reg2hw_itf_t = logic,
-  parameter type hw2reg_itf_t = logic,
-  parameter int AW_REGBUS = 4
+  parameter type reg2hw_itf_t            = logic,
+  parameter type hw2reg_itf_t            = logic
+  
 ) (
   // Internal 125 MHz clock
   input  wire                                  clk_i        ,
@@ -89,7 +90,7 @@ module eth_top #(
     .axi_stream_rsp_t  ( s_framing_rsp_t ),
     .reg2hw_itf_t      ( reg2hw_itf_t    ),
     .hw2reg_itf_t      ( hw2reg_itf_t    ),
-    .AW_REGBUS         ( AW_REGBUS       )
+    .AW_REGBUS         ( RegAddrWidth    )
   ) i_framing_top (
     .rst_ni         ( rst_ni      ),
     .clk_i          ( clk_i       ),

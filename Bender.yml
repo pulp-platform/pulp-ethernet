@@ -15,7 +15,7 @@ dependencies:
   register_interface : { git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.2 }
   common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.21.0 }
   axi_stream: { git: "git@github.com:pulp-platform/axi_stream.git", rev: "54891ff40455ca94a37641b9da4604647878cc07" }
-  idma: { git: "git@github.com:pulp-platform/iDMA.git", rev: "18fa40f0b12927622c6a0ff771fb0142d20bcb3d" } 
+  idma: { git: "git@github.com:pulp-platform/iDMA.git", rev: "v0.6.0-beta" } 
   
 
 export_include_dirs:
@@ -45,7 +45,6 @@ sources:
   - rtl/ssio_ddr_in.sv
    # Level 2
   - rtl/framing_top.sv
-  - rtl/eth_idma_pkg.sv
   - rtl/eth_top.sv
   - rtl/eth_clk_gen.sv
   - rtl/eth_idma_wrap.sv

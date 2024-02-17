@@ -18,15 +18,11 @@ module eth_idma_tb
   parameter int unsigned BufferDepth         = 32'd3,
   parameter int unsigned TFLenWidth          = 32'd32,
   parameter int unsigned MemSysDepth         = 32'd0,
-  parameter bit          RAWCouplingAvail    = 1'b0,
-  parameter bit          MaskInvalidData     = 1'b1,
   parameter bit          HardwareLegalizer   = 1'b1,
-  parameter bit          RejectZeroTransfers = 1'b1,
-  parameter bit          ErrorHandling       = 1'b0
+  parameter bit          RejectZeroTransfers = 1'b1
 );
   
   import idma_pkg::*;
-  import eth_idma_pkg::*;
   import reg_test::*;
 
   /// timing parameters
@@ -34,22 +30,96 @@ module eth_idma_tb
   localparam time SYS_TA        = 2ns;
   localparam time SYS_TT        = 6ns;
 
-  /// regbus
-  localparam int unsigned REG_BUS_DW  = 32;
-  localparam int unsigned REG_BUS_AW  = 32;
-   
-  /// parse error handling caps
-  localparam error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
+  /// Register interface parameters
+  localparam int AW_REGBUS           = 32;
+  localparam int DW_REGBUS           = 32;
+  localparam int unsigned STRB_WIDTH = DW_REGBUS/8;
 
-  /// ethernet pads
+  /// Dependent parameters
+  localparam int unsigned StrbWidth     = DataWidth / 8;
+  localparam int unsigned OffsetWidth   = $clog2(StrbWidth);
+
+  /// AXI4+ATOP typedefs
+  typedef logic [AddrWidth-1:0]   addr_t;
+  typedef logic [AxiIdWidth-1:0]  id_t;
+  typedef logic [UserWidth-1:0]   user_t;
+  typedef logic [StrbWidth-1:0]   strb_t;
+  typedef logic [DataWidth-1:0]   data_t;
+  typedef logic [TFLenWidth-1:0]  tf_len_t;
+  
+  `AXI_TYPEDEF_AW_CHAN_T(axi_aw_chan_t, addr_t, id_t, user_t)
+  `AXI_TYPEDEF_W_CHAN_T(axi_w_chan_t, data_t, strb_t, user_t)
+  `AXI_TYPEDEF_B_CHAN_T(axi_b_chan_t, id_t, user_t) 
+
+  `AXI_TYPEDEF_AR_CHAN_T(axi_ar_chan_t, addr_t, id_t, user_t)
+  `AXI_TYPEDEF_R_CHAN_T(axi_r_chan_t, data_t, id_t, user_t) 
+
+  `AXI_TYPEDEF_REQ_T(axi_req_t, axi_aw_chan_t, axi_w_chan_t, axi_ar_chan_t)
+  `AXI_TYPEDEF_RESP_T(axi_rsp_t, axi_b_chan_t, axi_r_chan_t)
+
+  /// Regsiter bus typedefs
+  typedef logic [AW_REGBUS-1:0]   reg_bus_addr_t;
+  typedef logic [DW_REGBUS-1:0]   reg_bus_data_t;
+  typedef logic [STRB_WIDTH-1:0]  reg_bus_strb_t;
+
+  `REG_BUS_TYPEDEF_ALL(reg_bus, reg_bus_addr_t, reg_bus_data_t, reg_bus_strb_t)
+ 
+  /// AXI Stream typedefs
+  `IDMA_AXI_STREAM_TYPEDEF_S_CHAN_T(axis_t_chan_t, data_t, strb_t, strb_t, id_t, id_t, user_t)
+  `IDMA_AXI_STREAM_TYPEDEF_REQ_T(axi_stream_req_t, axis_t_chan_t)
+  `IDMA_AXI_STREAM_TYPEDEF_RSP_T(axi_stream_rsp_t)
+
+  /// Meta Channel Widths
+  localparam int unsigned axi_aw_chan_width = axi_pkg::aw_width(AddrWidth, AxiIdWidth, UserWidth);
+  localparam int unsigned axi_ar_chan_width = axi_pkg::ar_width(AddrWidth, AxiIdWidth, UserWidth); 
+  localparam int unsigned axis_t_chan_width = $bits(axis_t_chan_t);
+ 
+  /// iDMA req and rsp typedefs
+  `IDMA_TYPEDEF_OPTIONS_T(options_t, id_t)
+  `IDMA_TYPEDEF_REQ_T(idma_req_t, tf_len_t, addr_t, options_t)
+  `IDMA_TYPEDEF_ERR_PAYLOAD_T(err_payload_t, addr_t)
+  `IDMA_TYPEDEF_RSP_T(idma_rsp_t, err_payload_t)
+
+  function int unsigned max_width(input int unsigned a, b);
+      return (a > b) ? a : b;
+  endfunction
+
+  typedef struct packed {
+    axi_ar_chan_t ar_chan;
+    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axi_ar_chan_width:0] padding;
+  } axi_read_ar_chan_padded_t;
+
+  typedef struct packed {
+    axis_t_chan_t t_chan;
+    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
+  } axis_read_t_chan_padded_t;
+
+  typedef union packed {
+    axi_read_ar_chan_padded_t axi;
+    axis_read_t_chan_padded_t axis;
+  } read_meta_channel_t;
+
+  typedef struct packed {
+    axi_aw_chan_t aw_chan;
+    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axi_aw_chan_width:0] padding;
+  } axi_write_aw_chan_padded_t;
+
+  typedef struct packed {
+    axis_t_chan_t t_chan;
+    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
+  } axis_write_t_chan_padded_t;
+
+  typedef union packed {
+    axi_write_aw_chan_padded_t axi;
+    axis_write_t_chan_padded_t axis;
+  } write_meta_channel_t;
+
   logic       s_clk;
   logic       s_rst_n;
   logic       done  = 0;
   logic       error_found = 0;
 
-  logic [REG_BUS_DW-1:0] tx_req_ready, tx_rsp_valid; 
-  logic [REG_BUS_DW-1:0] rx_req_ready, rx_rsp_valid;
-
+  /// ethernet pads
   logic       eth_rxck;
   logic       eth_rxctl;
   logic [3:0] eth_rxd;
@@ -58,6 +128,9 @@ module eth_idma_tb
   logic [3:0] eth_txd;
   logic       eth_tx_rstn, eth_rx_rstn;
 
+  logic [AW_REGBUS-1:0] tx_req_ready, tx_rsp_valid; 
+  logic [DW_REGBUS-1:0] rx_req_ready, rx_rsp_valid;
+
   logic tx_idma_req_valid, tx_idma_req_ready, tx_idma_rsp_valid, tx_idma_rsp_ready;
   logic rx_idma_req_valid, rx_idma_req_ready, rx_idma_rsp_valid, rx_idma_rsp_ready;
 
@@ -65,32 +138,27 @@ module eth_idma_tb
   axi_req_t axi_tx_req_mem, axi_rx_req_mem;
   axi_rsp_t axi_tx_rsp_mem, axi_rx_rsp_mem;
 
-  /// error handler
-  idma_eh_req_t idma_eh_req;
-  logic         eh_req_valid;
-  logic         eh_req_ready;
-
   /// busy signal
   idma_busy_t   tx_busy, rx_busy;
   
   /// -------------------- REG Drivers -----------------------  
   typedef reg_test::reg_driver #(
-    .AW(REG_BUS_AW),
-    .DW(REG_BUS_DW),
+    .AW(AW_REGBUS),
+    .DW(DW_REGBUS),
     .TT(SYS_TT),
     .TA(SYS_TA)
   ) reg_bus_drv_t;
 
   REG_BUS #(
-    .DATA_WIDTH(REG_BUS_DW),
-    .ADDR_WIDTH(REG_BUS_AW)
+    .DATA_WIDTH(DW_REGBUS),
+    .ADDR_WIDTH(AW_REGBUS)
   )  reg_bus_tx (
     .clk_i(s_clk)
   );
 
   REG_BUS #(
-    .DATA_WIDTH(REG_BUS_DW),
-    .ADDR_WIDTH(REG_BUS_AW)
+    .DATA_WIDTH(DW_REGBUS),
+    .ADDR_WIDTH(AW_REGBUS)
   )  reg_bus_rx (
     .clk_i(s_clk)
   );
@@ -193,9 +261,19 @@ module eth_idma_tb
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
-    .RAWCouplingAvail    ( RAWCouplingAvail    ),
-    .HardwareLegalizer   ( HardwareLegalizer   ),
-    .RejectZeroTransfers ( RejectZeroTransfers )
+    .RejectZeroTransfers ( RejectZeroTransfers ),
+    .axi_req_t           ( axi_req_t           ),
+    .axi_rsp_t           ( axi_rsp_t           ),
+    .write_meta_channel_t( write_meta_channel_t),
+    .read_meta_channel_t ( read_meta_channel_t ),
+    .idma_req_t          ( idma_req_t          ),
+    .idma_rsp_t          ( idma_rsp_t          ),
+    .axi_stream_req_t    ( axi_stream_req_t    ),
+    .axi_stream_rsp_t    ( axi_stream_rsp_t    ),
+    .axis_t_chan_t       ( axis_t_chan_t       ),
+    .idma_busy_t         ( idma_busy_t         ),
+    .reg_req_t           ( reg_bus_req_t       ),
+    .reg_rsp_t           ( reg_bus_rsp_t       )
   ) i_tx_eth_idma_wrap (
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
@@ -216,9 +294,6 @@ module eth_idma_tb
     .reg_req_i           ( reg_bus_tx_req      ),
     .reg_rsp_o           ( reg_bus_tx_rsp      ),
     .testmode_i          ( 1'b0                ),
-    .idma_eh_req_i       ( idma_eh_req         ), // error handling disabled now
-    .eh_req_valid_i      ( eh_req_valid        ),
-    .eh_req_ready_o      ( eh_req_ready        ),
     .axi_req_o           ( axi_tx_req_mem      ),
     .axi_rsp_i           ( axi_tx_rsp_mem      ),
     .idma_busy_o         ( tx_busy             )
@@ -236,9 +311,19 @@ module eth_idma_tb
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
-    .RAWCouplingAvail    ( RAWCouplingAvail    ),
-    .HardwareLegalizer   ( HardwareLegalizer   ),
-    .RejectZeroTransfers ( RejectZeroTransfers )
+    .RejectZeroTransfers ( RejectZeroTransfers ),
+    .axi_req_t           ( axi_req_t           ),
+    .axi_rsp_t           ( axi_rsp_t           ),
+    .write_meta_channel_t( write_meta_channel_t),
+    .read_meta_channel_t ( read_meta_channel_t ),
+    .idma_req_t          ( idma_req_t          ),
+    .idma_rsp_t          ( idma_rsp_t          ),
+    .axi_stream_req_t    ( axi_stream_req_t    ),
+    .axi_stream_rsp_t    ( axi_stream_rsp_t    ),
+    .axis_t_chan_t       ( axis_t_chan_t       ),
+    .idma_busy_t         ( idma_busy_t         ),
+    .reg_req_t           ( reg_bus_req_t       ),
+    .reg_rsp_t           ( reg_bus_rsp_t       )
   )i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
@@ -258,9 +343,6 @@ module eth_idma_tb
     .reg_req_i        ( reg_bus_rx_req  ),
     .reg_rsp_o        ( reg_bus_rx_rsp  ),
     .testmode_i       ( 1'b0            ),
-    .idma_eh_req_i    (                 ), // error handling disabled now
-    .eh_req_valid_i   (                 ),
-    .eh_req_ready_o   (                 ),
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
     .idma_busy_o      ( rx_busy         )
@@ -273,8 +355,8 @@ module eth_idma_tb
       @(posedge s_rst_n);
       @(posedge s_clk);
 
-    $readmemh("/scratch/chaol/git_test/axis_1000/ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/git_test/axis_1000/ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/git_test/feb_16_idma_fix/fe-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/git_test/feb_16_idma_fix/fe-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
     
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
