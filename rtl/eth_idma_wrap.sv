@@ -35,9 +35,6 @@ module eth_idma_wrap #(
   /// AXI4+ATOP Request and Response channel type
   parameter type axi_req_t                   = logic,
   parameter type axi_rsp_t                   = logic,
-  /// AXI Stream Request and Response channel type
-  parameter type axi_stream_req_t            = logic,
-  parameter type axi_stream_rsp_t            = logic,
   /// Register Request and Response type
   parameter type reg_req_t                   = logic,
   parameter type reg_rsp_t                   = logic
@@ -110,6 +107,8 @@ module eth_idma_wrap #(
 
   /// AXI Stream typedefs
   `IDMA_AXI_STREAM_TYPEDEF_S_CHAN_T(axis_t_chan_t, data_t, strb_t, strb_t, id_t, id_t, user_t)
+  `IDMA_AXI_STREAM_TYPEDEF_REQ_T(axi_stream_req_t, axis_t_chan_t)
+  `IDMA_AXI_STREAM_TYPEDEF_RSP_T(axi_stream_rsp_t)
 
   /// Meta Channel Widths
   localparam int unsigned axi_aw_chan_width = axi_pkg::aw_width(AddrWidth, AxiIdWidth, UserWidth);
