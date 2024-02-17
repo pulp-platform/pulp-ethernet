@@ -51,7 +51,6 @@ module eth_idma_tb
   `AXI_TYPEDEF_AW_CHAN_T(axi_aw_chan_t, addr_t, id_t, user_t)
   `AXI_TYPEDEF_W_CHAN_T(axi_w_chan_t, data_t, strb_t, user_t)
   `AXI_TYPEDEF_B_CHAN_T(axi_b_chan_t, id_t, user_t) 
-
   `AXI_TYPEDEF_AR_CHAN_T(axi_ar_chan_t, addr_t, id_t, user_t)
   `AXI_TYPEDEF_R_CHAN_T(axi_r_chan_t, data_t, id_t, user_t) 
 
@@ -69,51 +68,6 @@ module eth_idma_tb
   `IDMA_AXI_STREAM_TYPEDEF_S_CHAN_T(axis_t_chan_t, data_t, strb_t, strb_t, id_t, id_t, user_t)
   `IDMA_AXI_STREAM_TYPEDEF_REQ_T(axi_stream_req_t, axis_t_chan_t)
   `IDMA_AXI_STREAM_TYPEDEF_RSP_T(axi_stream_rsp_t)
-
-  /// Meta Channel Widths
-  localparam int unsigned axi_aw_chan_width = axi_pkg::aw_width(AddrWidth, AxiIdWidth, UserWidth);
-  localparam int unsigned axi_ar_chan_width = axi_pkg::ar_width(AddrWidth, AxiIdWidth, UserWidth); 
-  localparam int unsigned axis_t_chan_width = $bits(axis_t_chan_t);
- 
-  /// iDMA req and rsp typedefs
-  `IDMA_TYPEDEF_OPTIONS_T(options_t, id_t)
-  `IDMA_TYPEDEF_REQ_T(idma_req_t, tf_len_t, addr_t, options_t)
-  `IDMA_TYPEDEF_ERR_PAYLOAD_T(err_payload_t, addr_t)
-  `IDMA_TYPEDEF_RSP_T(idma_rsp_t, err_payload_t)
-
-  function int unsigned max_width(input int unsigned a, b);
-      return (a > b) ? a : b;
-  endfunction
-
-  typedef struct packed {
-    axi_ar_chan_t ar_chan;
-    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axi_ar_chan_width:0] padding;
-  } axi_read_ar_chan_padded_t;
-
-  typedef struct packed {
-    axis_t_chan_t t_chan;
-    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
-  } axis_read_t_chan_padded_t;
-
-  typedef union packed {
-    axi_read_ar_chan_padded_t axi;
-    axis_read_t_chan_padded_t axis;
-  } read_meta_channel_t;
-
-  typedef struct packed {
-    axi_aw_chan_t aw_chan;
-    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axi_aw_chan_width:0] padding;
-  } axi_write_aw_chan_padded_t;
-
-  typedef struct packed {
-    axis_t_chan_t t_chan;
-    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
-  } axis_write_t_chan_padded_t;
-
-  typedef union packed {
-    axi_write_aw_chan_padded_t axi;
-    axis_write_t_chan_padded_t axis;
-  } write_meta_channel_t;
 
   logic       s_clk;
   logic       s_clk_125MHz_0;
@@ -267,14 +221,8 @@ module eth_idma_tb
     .RejectZeroTransfers ( RejectZeroTransfers ),
     .axi_req_t           ( axi_req_t           ),
     .axi_rsp_t           ( axi_rsp_t           ),
-    .write_meta_channel_t( write_meta_channel_t),
-    .read_meta_channel_t ( read_meta_channel_t ),
-    .idma_req_t          ( idma_req_t          ),
-    .idma_rsp_t          ( idma_rsp_t          ),
     .axi_stream_req_t    ( axi_stream_req_t    ),
     .axi_stream_rsp_t    ( axi_stream_rsp_t    ),
-    .axis_t_chan_t       ( axis_t_chan_t       ),
-    .idma_busy_t         ( idma_busy_t         ),
     .reg_req_t           ( reg_bus_req_t       ),
     .reg_rsp_t           ( reg_bus_rsp_t       )
   ) i_tx_eth_idma_wrap (
@@ -319,14 +267,8 @@ module eth_idma_tb
     .RejectZeroTransfers ( RejectZeroTransfers ),
     .axi_req_t           ( axi_req_t           ),
     .axi_rsp_t           ( axi_rsp_t           ),
-    .write_meta_channel_t( write_meta_channel_t),
-    .read_meta_channel_t ( read_meta_channel_t ),
-    .idma_req_t          ( idma_req_t          ),
-    .idma_rsp_t          ( idma_rsp_t          ),
     .axi_stream_req_t    ( axi_stream_req_t    ),
     .axi_stream_rsp_t    ( axi_stream_rsp_t    ),
-    .axis_t_chan_t       ( axis_t_chan_t       ),
-    .idma_busy_t         ( idma_busy_t         ),
     .reg_req_t           ( reg_bus_req_t       ),
     .reg_rsp_t           ( reg_bus_rsp_t       )
   )i_rx_eth_idma_wrap (
@@ -383,8 +325,8 @@ module eth_idma_tb
     @(posedge s_rst_n);
     @(posedge s_clk);
 
-    $readmemh("/scratch/chaol/git_test/feb_16_idma_fix/fe-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/git_test/feb_16_idma_fix/fe-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/git_test/alsaqr-eth/ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/git_test/alsaqr-eth/ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
     
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address

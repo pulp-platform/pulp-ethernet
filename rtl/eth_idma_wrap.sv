@@ -4,6 +4,9 @@
 //
 // Chaoqun Liang <chaoqun.liang@unibo.it>
  
+`include "axi/typedef.svh"
+`include "idma/typedef.svh"
+
 module eth_idma_wrap #(
   /// Data width
   parameter int unsigned DataWidth           = 32'd32,
@@ -32,19 +35,9 @@ module eth_idma_wrap #(
   /// AXI4+ATOP Request and Response channel type
   parameter type axi_req_t                   = logic,
   parameter type axi_rsp_t                   = logic,
-  /// 1D iDMA Request and Response type
-  parameter type idma_req_t                  = logic,
-  parameter type idma_rsp_t                  = logic,
-  parameter type idma_busy_t                 = logic,
-  /// Address Write Channel type
-  parameter type write_meta_channel_t        = logic,
-  /// Address Read Channel type
-  parameter type read_meta_channel_t         = logic,
   /// AXI Stream Request and Response channel type
   parameter type axi_stream_req_t            = logic,
   parameter type axi_stream_rsp_t            = logic,
-  parameter type axis_t_chan_t               = logic,
- 
   /// Register Request and Response type
   parameter type reg_req_t                   = logic,
   parameter type reg_rsp_t                   = logic
@@ -75,16 +68,16 @@ module eth_idma_wrap #(
   output axi_req_t                axi_req_o,
   input  axi_rsp_t                axi_rsp_i,
   /// iDMA Busy Signal
-  output idma_busy_t              idma_busy_o,
+  output idma_pkg::idma_busy_t    idma_busy_o,
   /// Register Configuration Interface
   input  reg_req_t                reg_req_i,
   output reg_rsp_t                reg_rsp_o
 );
   import eth_idma_reg_pkg::*;
-
-  logic  idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;  
+  import idma_pkg::*;
     
   localparam int unsigned RegAddrWidth = 8; 
+  localparam int unsigned StrbWidth     = DataWidth / 8;
 
   eth_idma_reg2hw_t reg2hw; // Write
   eth_idma_hw2reg_t hw2reg; // Read
@@ -102,7 +95,68 @@ module eth_idma_wrap #(
     .hw2reg(hw2reg), // Read
     .devmode_i(1'b1)
   );
+
+  /// Address type
+  typedef logic [AddrWidth-1:0]   addr_t;
+  typedef logic [DataWidth-1:0]   data_t;
+  typedef logic [StrbWidth-1:0]   strb_t;
+  typedef logic [UserWidth-1:0]   user_t;
+  typedef logic [AxiIdWidth-1:0]  id_t;
+  typedef logic [TFLenWidth-1:0]  tf_len_t;
+
+  /// AXI typedefs
+  `AXI_TYPEDEF_AW_CHAN_T(axi_aw_chan_t, addr_t, id_t, user_t)
+  `AXI_TYPEDEF_AR_CHAN_T(axi_ar_chan_t, addr_t, id_t, user_t)
+
+  /// AXI Stream typedefs
+  `IDMA_AXI_STREAM_TYPEDEF_S_CHAN_T(axis_t_chan_t, data_t, strb_t, strb_t, id_t, id_t, user_t)
+
+  /// Meta Channel Widths
+  localparam int unsigned axi_aw_chan_width = axi_pkg::aw_width(AddrWidth, AxiIdWidth, UserWidth);
+  localparam int unsigned axi_ar_chan_width = axi_pkg::ar_width(AddrWidth, AxiIdWidth, UserWidth); 
+  localparam int unsigned axis_t_chan_width = $bits(axis_t_chan_t);
   
+  /// iDMA req and rsp typedefs
+  `IDMA_TYPEDEF_OPTIONS_T(options_t, id_t)
+  `IDMA_TYPEDEF_REQ_T(idma_req_t, tf_len_t, addr_t, options_t)
+  `IDMA_TYPEDEF_ERR_PAYLOAD_T(err_payload_t, addr_t)
+  `IDMA_TYPEDEF_RSP_T(idma_rsp_t, err_payload_t)
+  function int unsigned max_width(input int unsigned a, b);
+      return (a > b) ? a : b;
+  endfunction
+
+  typedef struct packed {
+    axi_ar_chan_t ar_chan;
+    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axi_ar_chan_width:0] padding;
+  } axi_read_ar_chan_padded_t;
+
+  typedef struct packed {
+    axis_t_chan_t t_chan;
+    logic[max_width(axi_ar_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
+  } axis_read_t_chan_padded_t;
+
+  typedef union packed {
+    axi_read_ar_chan_padded_t axi;
+    axis_read_t_chan_padded_t axis;
+  } read_meta_channel_t;
+
+  typedef struct packed {
+    axi_aw_chan_t aw_chan;
+    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axi_aw_chan_width:0] padding;
+  } axi_write_aw_chan_padded_t;
+
+  typedef struct packed {
+    axis_t_chan_t t_chan;
+    logic[max_width(axi_aw_chan_width, axis_t_chan_width)-axis_t_chan_width:0] padding;
+  } axis_write_t_chan_padded_t;
+
+  typedef union packed {
+    axi_write_aw_chan_padded_t axi;
+    axis_write_t_chan_padded_t axis;
+  } write_meta_channel_t;
+  
+  logic  idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;  
+
   /// AXI request and response
   axi_req_t     axi_read_req,axi_write_req;
   axi_rsp_t     axi_read_rsp,axi_write_rsp;
