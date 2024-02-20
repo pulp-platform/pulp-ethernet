@@ -50,6 +50,9 @@ module eth_idma_wrap #(
 )(
   input  logic                       clk_i,
   input  logic                       rst_ni,
+  /// Etherent Internal clocks
+  input  logic                       eth_clk_i, 
+  input  logic                       eth_clk90_i,
   /// Ethernet: 1000BASE-T RGMII
   input  logic                       phy_rx_clk_i,
   input  logic    [3:0]              phy_rxd_i,
@@ -84,7 +87,6 @@ module eth_idma_wrap #(
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
 
-  logic  eth_clk, eth_clk90;
   logic  idma_req_valid, req_ready, idma_rsp_ready, rsp_valid;
 
   localparam idma_pkg::error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
@@ -204,13 +206,6 @@ module eth_idma_wrap #(
     .busy_o               ( idma_busy_o          )
   );
 
-  eth_clk_gen i_eth_clk_gen(
-    .ref_clk_i        ( clk_i      ),
-    .rst_ni           ( rst_ni     ),
-    .clk_eth_125_o    ( eth_clk    ),
-    .clk_eth_125_90_o ( eth_clk90  )
-  );
-
   eth_top #(
     .axi_stream_req_t   (  axi_stream_req_t  ),
     .axi_stream_rsp_t   (  axi_stream_rsp_t  ),
@@ -223,8 +218,8 @@ module eth_idma_wrap #(
     .hw2reg_itf_t       (  eth_idma_hw2reg_t )
   ) i_eth_top (
     .rst_ni             (  rst_ni            ),
-    .clk_i              (  eth_clk           ),
-    .clk90_int          (  eth_clk90         ),
+    .clk_i              (  eth_clk_i         ),
+    .clk90_int          (  eth_clk90_i       ),
     .phy_rx_clk         (  phy_rx_clk_i      ),
     .phy_rxd            (  phy_rxd_i         ),
     .phy_rx_ctl         (  phy_rx_ctl_i      ),
@@ -259,7 +254,7 @@ module eth_idma_wrap #(
     .src_valid_i    ( idma_axis_write_req.tvalid ),
     .src_ready_o    ( idma_axis_write_rsp.tready ),
     .dst_rst_ni     ( rst_ni                     ),
-    .dst_clk_i      ( eth_clk                    ),
+    .dst_clk_i      ( eth_clk_i                  ),
     .dst_data_o     ( eth_axis_tx_req.t          ),
     .dst_valid_o    ( eth_axis_tx_req.tvalid     ),
     .dst_ready_i    ( eth_axis_tx_rsp.tready     )
@@ -271,7 +266,7 @@ module eth_idma_wrap #(
     .LOG_DEPTH   ( RxFifoLogDepth )
   ) i_cdc_fifo_rx (
     .src_rst_ni     ( rst_ni                    ),
-    .src_clk_i      ( eth_clk                   ),
+    .src_clk_i      ( eth_clk_i                 ),
     .src_data_i     ( eth_axis_rx_rsp.t         ),
     .src_valid_i    ( eth_axis_rx_rsp.tvalid    ),
     .src_ready_o    ( eth_axis_rx_req.tready    ),
