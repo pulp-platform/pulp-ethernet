@@ -38,6 +38,7 @@ module eth_tb
 
   /// timing parameters
   localparam time SYS_TCK       = 8ns;
+  localparam time TCK125        = 8ns;
   localparam time SYS_TA        = 2ns;
   localparam time SYS_TT        = 6ns;
 
@@ -50,6 +51,8 @@ module eth_tb
 
   /// ethernet pads
   logic       s_clk;
+  logic       s_clk_125MHz_0;
+  logic       s_clk_125MHz_90;
   logic       s_rst_n;
   logic       done  = 0;
   logic       error_found = 0;
@@ -206,7 +209,8 @@ module eth_tb
   ) i_tx_eth_idma_wrap (
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
-     /// Etherent Internal clocks
+    .eth_clk_i           ( s_clk_125MHz_0      ), // 125MHz in-phase
+    .eth_clk90_i         ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i        ( eth_rxck            ),
     .phy_rxd_i           ( eth_rxd             ),
     .phy_rx_ctl_i        ( eth_rxctl           ),
@@ -249,6 +253,8 @@ module eth_tb
   )i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
+    .eth_clk_i        ( s_clk_125MHz_0  ), // 125MHz in-phase
+    .eth_clk90_i      ( s_clk_125MHz_90 ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i     ( eth_txck        ),
     .phy_rxd_i        ( eth_txd         ),
     .phy_rx_ctl_i     ( eth_txctl       ),
@@ -274,6 +280,26 @@ module eth_tb
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
+  
+   initial begin
+     while (!done) begin
+      s_clk_125MHz_0 <= 1;
+      #(TCK125/2);
+      s_clk_125MHz_0 <= 0;
+      #(TCK125/2);
+     end
+   end
+
+  initial begin
+    while (!done) begin
+      s_clk_125MHz_90 <= 0;
+      #(TCK125/4);
+      s_clk_125MHz_90 <= 1;
+      #(TCK125/2);
+      s_clk_125MHz_90 <= 0;
+       #(TCK125/4);
+    end
+   end
 
    initial begin
 
@@ -282,6 +308,8 @@ module eth_tb
 
     $readmemh("../stimuli/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     $readmemh("../stimuli/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+
+
 
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address

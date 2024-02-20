@@ -1,4 +1,4 @@
-// Copyright 2023 ETH Zurich and University of Bologna.
+/// Copyright 2023 ETH Zurich and University of Bologna.
 // Solderpad Hardware License, Version 0.51, see LICENSE for details.
 // SPDX-License-Identifier: SHL-0.51
 //
@@ -11,56 +11,55 @@
 `include "register_interface/assign.svh"
 
 module eth_top #(
-
-  /// AXI Stream Data Width
-  parameter int unsigned DataWidth       = 64,
-  /// AXI Stream Id Width
-  parameter int unsigned IdWidth         = 0,
-  /// AXI Stream Dest Width = 0
-  parameter int unsigned DestWidth       = 0,
-  /// AXI Stream User Width
-  parameter int unsigned UserWidth       = 1,
-  /// Register address width
-  parameter int unsigned RegAddrWidth    = 4,
-    /// AXI Stream in request struct
-  parameter type axi_stream_req_t        = logic,
+  /// AXI Stream in request struct
+  parameter type axi_stream_req_t = eth_idma_pkg::axi_stream_req_t,
   /// AXI Stream in response struct
-  parameter type axi_stream_rsp_t        = logic,
+  parameter type axi_stream_rsp_t = eth_idma_pkg::axi_stream_rsp_t,
+  /// AXI Stream Data Width
+  parameter int unsigned DataWidth = 64,
+  /// AXI Stream Id Width
+  parameter int unsigned IdWidth = 0,
+  /// AXI Stream Dest Width = 0
+  parameter int unsigned DestWidth = 0,
+  /// AXI Stream User Width
+  parameter int unsigned UserWidth = 1,
   /// REGBUS
-  parameter type reg2hw_itf_t            = logic,
-  parameter type hw2reg_itf_t            = logic
-  
+  //parameter type reg2hw_itf_t = eth_idma_reg_pkg::eth_idma_reg2hw_t,
+  //parameter type hw2reg_itf_t = eth_idma_reg_pkg::eth_idma_hw2reg_t,
+  parameter type reg2hw_itf_t = logic,
+  parameter type hw2reg_itf_t = logic,
+  parameter int AW_REGBUS = 4
 ) (
   // Internal 125 MHz clock
-  input  wire                                  clk_i        ,
-  input  wire                                  rst_ni       ,
-  input  wire                                  clk90_int    ,
+  input  wire                                  clk_i,
+  input  wire                                  rst_ni,
+  input  wire                                  clk90_int,
   // Ethernet: 1000BASE-T RGMII
-  input  wire                                  phy_rx_clk   ,
-  input  wire     [3:0]                        phy_rxd      ,
-  input  wire                                  phy_rx_ctl   ,
-  output wire                                  phy_tx_clk   ,
-  output wire     [3:0]                        phy_txd      ,
-  output wire                                  phy_tx_ctl   ,
-  output wire                                  phy_reset_n  ,
-  input  wire                                  phy_int_n    ,
-  input  wire                                  phy_pme_n    ,
+  input  wire                                  phy_rx_clk,
+  input  wire     [3:0]                        phy_rxd,
+  input  wire                                  phy_rx_ctl,
+  output wire                                  phy_tx_clk,
+  output wire     [3:0]                        phy_txd,
+  output wire                                  phy_tx_ctl,
+  output wire                                  phy_reset_n,
+  input  wire                                  phy_int_n,
+  input  wire                                  phy_pme_n,
   // MDIO
-  input  wire                                  phy_mdio_i   ,
-  output reg                                   phy_mdio_o   ,
-  output reg                                   phy_mdio_oe  ,
-  output wire                                  phy_mdc      ,
+  input  wire                                  phy_mdio_i,
+  output reg                                   phy_mdio_o,
+  output reg                                   phy_mdio_oe,
+  output wire                                  phy_mdc,
   // AXIS TX/RX
   input  axi_stream_req_t                      tx_axis_req_i,
   output axi_stream_rsp_t                      tx_axis_rsp_o,
   output axi_stream_req_t                      rx_axis_req_o,
   input  axi_stream_rsp_t                      rx_axis_rsp_i,
-  
-  input  logic                                idma_req_ready,
-  input  logic                                idma_rsp_valid,
+
+  input  logic                                 idma_req_ready,
+  input  logic                                 idma_rsp_valid,
   // Reg configs
-  input  reg2hw_itf_t                          reg2hw_i     ,
-  output hw2reg_itf_t                          hw2reg_o    
+  input  reg2hw_itf_t                          reg2hw_i,
+  output hw2reg_itf_t                          hw2reg_o
 );
 
 // ---------------- axis streams for the framing module ----------------------
@@ -90,7 +89,7 @@ module eth_top #(
     .axi_stream_rsp_t  ( s_framing_rsp_t ),
     .reg2hw_itf_t      ( reg2hw_itf_t    ),
     .hw2reg_itf_t      ( hw2reg_itf_t    ),
-    .AW_REGBUS         ( RegAddrWidth    )
+    .AW_REGBUS         ( AW_REGBUS       )
   ) i_framing_top (
     .rst_ni         ( rst_ni      ),
     .clk_i          ( clk_i       ),
