@@ -1,7 +1,8 @@
-// Copyright 2023 ETH Zurich and University of Bologna.
+// Copyright 2024 ETH Zurich and University of Bologna.
 // Solderpad Hardware License, Version 0.51, see LICENSE for details.
 // SPDX-License-Identifier: SHL-0.51
-
+//
+// Chaoqun Liang <chaoqun.liang@unibo.it>
 
 `include "axi_stream/assign.svh"
 `include "axi_stream/typedef.svh"
@@ -13,13 +14,13 @@
 package eth_idma_pkg;
 
   /// Ethernet reg typedefs
-  parameter  int AW_REGBUS           = 32;
-  localparam int DW_REGBUS           = 32;
-  localparam int unsigned STRB_WIDTH = DW_REGBUS/8;
+  parameter  int unsigned AwRegbus           = 32;    
+  localparam int unsigned DwRegbus           = 32;     
+  localparam int unsigned StrbWidth          = DwRegbus/8;    
 
-  typedef logic [AW_REGBUS-1:0]   reg_bus_addr_t;
-  typedef logic [DW_REGBUS-1:0]   reg_bus_data_t;
-  typedef logic [STRB_WIDTH-1:0]  reg_bus_strb_t;
+  typedef logic [AwRegbus-1:0]   reg_bus_addr_t;
+  typedef logic [DwRegbus-1:0]   reg_bus_data_t;
+  typedef logic [StrbWidth-1:0]  reg_bus_strb_t;
 
   `REG_BUS_TYPEDEF_ALL(reg_bus, reg_bus_addr_t, reg_bus_data_t, reg_bus_strb_t)
 
@@ -29,13 +30,13 @@ package eth_idma_pkg;
   parameter int unsigned AxiIdWidth          = 5;
   parameter int unsigned TFLenWidth          = 32;
 
-  localparam int unsigned StrbWidth     = DataWidth / 8;
+  localparam int unsigned AxiStrbWidth     = DataWidth / 8;
   localparam int unsigned OffsetWidth   = $clog2(StrbWidth);
 
   typedef logic [AddrWidth-1:0]   addr_t;
   typedef logic [AxiIdWidth-1:0]  id_t;
   typedef logic [UserWidth-1:0]   user_t;
-  typedef logic [StrbWidth-1:0]   strb_t;
+  typedef logic [AxiStrbWidth-1:0]   strb_t;
   typedef logic [DataWidth-1:0]   data_t;
   typedef logic [TFLenWidth-1:0]  tf_len_t;
 

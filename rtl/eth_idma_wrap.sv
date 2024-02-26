@@ -50,7 +50,7 @@ module eth_idma_wrap #(
 )(
   input  logic                       clk_i,
   input  logic                       rst_ni,
-  /// Etherent Internal clocks
+  /// Ethernet Internal clocks
   input  logic                       eth_clk_i, 
   input  logic                       eth_clk90_i,
   /// Ethernet: 1000BASE-T RGMII

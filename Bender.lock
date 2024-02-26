@@ -15,13 +15,6 @@ packages:
     - common_cells
     - common_verification
     - tech_cells_generic
-  axi_mem_if:
-    revision: 3567273b4f67bd57a81a2a503394a49641bae53a
-    version: 0.2.1
-    source:
-      Git: git@github.com:pulp-platform/axi_mem_if.git
-    dependencies:
-    - axi
   axi_stream:
     revision: 54891ff40455ca94a37641b9da4604647878cc07
     version: 0.1.1
@@ -45,7 +38,7 @@ packages:
     dependencies: []
   idma:
     revision: a80fcace92b1562e7cd76c8615298b5623ba74d2
-    version: null
+    version: 0.6.0-beta
     source:
       Git: git@github.com:pulp-platform/iDMA.git
     dependencies:

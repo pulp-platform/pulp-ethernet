@@ -37,14 +37,14 @@ module eth_tb
   import reg_test::*;
 
   /// timing parameters
-  localparam time SYS_TCK       = 8ns;
-  localparam time TCK125        = 8ns;
-  localparam time SYS_TA        = 2ns;
-  localparam time SYS_TT        = 6ns;
+  localparam time SYS_TCK      = 8ns;
+  localparam time TCK125       = 8ns;
+  localparam time SYS_TA       = 2ns;
+  localparam time SYS_TT       = 6ns;
 
   /// regbus
-  localparam int unsigned REG_BUS_DW  = 32;
-  localparam int unsigned REG_BUS_AW  = 32;
+  localparam int unsigned RegBusDw  = 32;
+  localparam int unsigned RegBusAw  = 32;
 
   /// parse error handling caps
   localparam error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
@@ -54,11 +54,10 @@ module eth_tb
   logic       s_clk_125MHz_0;
   logic       s_clk_125MHz_90;
   logic       s_rst_n;
-  logic       done  = 0;
   logic       error_found = 0;
 
-  logic [REG_BUS_DW-1:0] tx_req_ready, tx_rsp_valid;
-  logic [REG_BUS_DW-1:0] rx_req_ready, rx_rsp_valid;
+  logic [RegBusDw-1:0] tx_req_ready, tx_rsp_valid;
+  logic [RegBusAw-1:0] rx_req_ready, rx_rsp_valid;
 
   logic       eth_rxck;
   logic       eth_rxctl;
@@ -85,22 +84,22 @@ module eth_tb
 
   /// -------------------- REG Drivers -----------------------
   typedef reg_test::reg_driver #(
-    .AW(REG_BUS_AW),
-    .DW(REG_BUS_DW),
+    .AW(RegBusAw),
+    .DW(RegBusDw),
     .TT(SYS_TT),
     .TA(SYS_TA)
   ) reg_bus_drv_t;
 
   REG_BUS #(
-    .DATA_WIDTH(REG_BUS_DW),
-    .ADDR_WIDTH(REG_BUS_AW)
+    .DATA_WIDTH(RegBusDw),
+    .ADDR_WIDTH(RegBusAw)
   )  reg_bus_tx (
     .clk_i(s_clk)
   );
 
   REG_BUS #(
-    .DATA_WIDTH(REG_BUS_DW),
-    .ADDR_WIDTH(REG_BUS_AW)
+    .DATA_WIDTH(RegBusDw),
+    .ADDR_WIDTH(RegBusAw)
   )  reg_bus_rx (
     .clk_i(s_clk)
   );
@@ -281,24 +280,21 @@ module eth_tb
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
   
-   initial begin
-     while (!done) begin
-      s_clk_125MHz_0 <= 1;
-      #(TCK125/2);
-      s_clk_125MHz_0 <= 0;
-      #(TCK125/2);
-     end
-   end
+    clk_rst_gen #(
+    .ClkPeriod    ( TCK125  ),
+    .RstClkCycles ( 5       )
+  ) i_clk_rst_125_gen (
+      .clk_o  ( s_clk_125MHz_0  ),
+      .rst_no (                 )
+  );
 
   initial begin
-    while (!done) begin
       s_clk_125MHz_90 <= 0;
       #(TCK125/4);
       s_clk_125MHz_90 <= 1;
       #(TCK125/2);
       s_clk_125MHz_90 <= 0;
        #(TCK125/4);
-    end
    end
 
    initial begin
