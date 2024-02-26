@@ -33,7 +33,6 @@ module eth_tb
 );
 
   import idma_pkg::*;
-  import eth_idma_pkg::*;
   import reg_test::*;
 
   /// timing parameters
@@ -42,23 +41,46 @@ module eth_tb
   localparam time SYS_TA       = 2ns;
   localparam time SYS_TT       = 6ns;
 
-  /// regbus
-  localparam int unsigned RegBusDw  = 32;
-  localparam int unsigned RegBusAw  = 32;
+  /// Dependent parameters
+  localparam int unsigned StrbWidth     = DataWidth / 8;
+  localparam int unsigned OffsetWidth   = $clog2(StrbWidth);
 
-  /// parse error handling caps
-  localparam error_cap_e ErrorCap = ErrorHandling ? ERROR_HANDLING : NO_ERROR_HANDLING;
+  /// AXI4+ATOP typedefs
+  typedef logic [AddrWidth-1:0]   addr_t;
+  typedef logic [AxiIdWidth-1:0]  id_t;
+  typedef logic [UserWidth-1:0]   user_t;
+  typedef logic [StrbWidth-1:0]   strb_t;
+  typedef logic [DataWidth-1:0]   data_t;
+  typedef logic [TFLenWidth-1:0]  tf_len_t;
+  
+  `AXI_TYPEDEF_AW_CHAN_T(axi_aw_chan_t, addr_t, id_t, user_t)
+  `AXI_TYPEDEF_W_CHAN_T(axi_w_chan_t, data_t, strb_t, user_t)
+  `AXI_TYPEDEF_B_CHAN_T(axi_b_chan_t, id_t, user_t) 
+  `AXI_TYPEDEF_AR_CHAN_T(axi_ar_chan_t, addr_t, id_t, user_t)
+  `AXI_TYPEDEF_R_CHAN_T(axi_r_chan_t, data_t, id_t, user_t) 
 
-  /// ethernet pads
+  `AXI_TYPEDEF_REQ_T(axi_req_t, axi_aw_chan_t, axi_w_chan_t, axi_ar_chan_t)
+  `AXI_TYPEDEF_RESP_T(axi_rsp_t, axi_b_chan_t, axi_r_chan_t)
+
+  /// Register interface parameters
+  localparam int unsigned RegBusDw           = 32;
+  localparam int unsigned RegBusAw           = 32;
+  localparam int unsigned RegBusStrb = RegBusDw/8;
+
+  /// Regsiter bus typedefs
+  typedef logic [RegBusAw-1:0]   reg_bus_addr_t;
+  typedef logic [RegBusDw-1:0]   reg_bus_data_t;
+  typedef logic [RegBusStrb-1:0]  reg_bus_strb_t;
+
+  `REG_BUS_TYPEDEF_ALL(reg_bus, reg_bus_addr_t, reg_bus_data_t, reg_bus_strb_t)
+
   logic       s_clk;
   logic       s_clk_125MHz_0;
   logic       s_clk_125MHz_90;
   logic       s_rst_n;
   logic       error_found = 0;
 
-  logic [RegBusDw-1:0] tx_req_ready, tx_rsp_valid;
-  logic [RegBusAw-1:0] rx_req_ready, rx_rsp_valid;
-
+  /// ethernet pads
   logic       eth_rxck;
   logic       eth_rxctl;
   logic [3:0] eth_rxd;
@@ -67,17 +89,15 @@ module eth_tb
   logic [3:0] eth_txd;
   logic       eth_tx_rstn, eth_rx_rstn;
 
+  logic [RegBusDw-1:0] tx_req_ready, tx_rsp_valid;
+  logic [RegBusAw-1:0] rx_req_ready, rx_rsp_valid;
+
   logic tx_idma_req_valid, tx_idma_req_ready, tx_idma_rsp_valid, tx_idma_rsp_ready;
   logic rx_idma_req_valid, rx_idma_req_ready, rx_idma_rsp_valid, rx_idma_rsp_ready;
 
   /// AXI4+ATOP request and response
   axi_req_t axi_tx_req_mem, axi_rx_req_mem;
   axi_rsp_t axi_tx_rsp_mem, axi_rx_rsp_mem;
-
-  /// error handler
-  idma_eh_req_t idma_eh_req;
-  logic         eh_req_valid;
-  logic         eh_req_ready;
 
   /// busy signal
   idma_busy_t   tx_busy, rx_busy;
@@ -194,7 +214,7 @@ module eth_tb
    );
 
   eth_idma_wrap#(
-    .DataWidth           ( DataWidth           ),
+    .DataWidth           ( DataWidth           ),    
     .AddrWidth           ( AddrWidth           ),
     .UserWidth           ( UserWidth           ),
     .AxiIdWidth          ( AxiIdWidth          ),
@@ -202,12 +222,15 @@ module eth_tb
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
-    .RAWCouplingAvail    ( RAWCouplingAvail    ),
-    .HardwareLegalizer   ( HardwareLegalizer   ),
-    .RejectZeroTransfers ( RejectZeroTransfers )
+    .RejectZeroTransfers ( RejectZeroTransfers ),
+    .axi_req_t           ( axi_req_t           ),
+    .axi_rsp_t           ( axi_rsp_t           ),
+    .reg_req_t           ( reg_bus_req_t       ),
+    .reg_rsp_t           ( reg_bus_rsp_t       )
   ) i_tx_eth_idma_wrap (
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
+     /// Ethernet Internal clocks
     .eth_clk_i           ( s_clk_125MHz_0      ), // 125MHz in-phase
     .eth_clk90_i         ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i        ( eth_rxck            ),
@@ -216,7 +239,7 @@ module eth_tb
     .phy_tx_clk_o        ( eth_txck            ),
     .phy_txd_o           ( eth_txd             ),
     .phy_tx_ctl_o        ( eth_txctl           ),
-    .phy_resetn_o        ( eth_tx_rstn         ),
+    .phy_resetn_o        ( eth_tx_rstn         ),  
     .phy_intn_i          ( 1'b1                ),
     .phy_pme_i           ( 1'b1                ),
     .phy_mdio_i          ( 1'b0                ),
@@ -226,9 +249,6 @@ module eth_tb
     .reg_req_i           ( reg_bus_tx_req      ),
     .reg_rsp_o           ( reg_bus_tx_rsp      ),
     .testmode_i          ( 1'b0                ),
-    .idma_eh_req_i       ( idma_eh_req         ), // error handling disabled now
-    .eh_req_valid_i      ( eh_req_valid        ),
-    .eh_req_ready_o      ( eh_req_ready        ),
     .axi_req_o           ( axi_tx_req_mem      ),
     .axi_rsp_i           ( axi_tx_rsp_mem      ),
     .idma_busy_o         ( tx_busy             )
@@ -238,7 +258,7 @@ module eth_tb
   reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
 
   eth_idma_wrap #(
-    .DataWidth           ( DataWidth           ),
+    .DataWidth           ( DataWidth           ),    
     .AddrWidth           ( AddrWidth           ),
     .UserWidth           ( UserWidth           ),
     .AxiIdWidth          ( AxiIdWidth          ),
@@ -246,9 +266,11 @@ module eth_tb
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
-    .RAWCouplingAvail    ( RAWCouplingAvail    ),
-    .HardwareLegalizer   ( HardwareLegalizer   ),
-    .RejectZeroTransfers ( RejectZeroTransfers )
+    .RejectZeroTransfers ( RejectZeroTransfers ),
+    .axi_req_t           ( axi_req_t           ),
+    .axi_rsp_t           ( axi_rsp_t           ),
+    .reg_req_t           ( reg_bus_req_t       ),
+    .reg_rsp_t           ( reg_bus_rsp_t       )
   )i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
@@ -260,19 +282,16 @@ module eth_tb
     .phy_tx_clk_o     ( eth_rxck        ),
     .phy_txd_o        ( eth_rxd         ),
     .phy_tx_ctl_o     ( eth_rxctl       ),
-    .phy_resetn_o     ( eth_rx_rstn     ),
+    .phy_resetn_o     ( eth_rx_rstn     ),  
     .phy_intn_i       ( 1'b1            ),
     .phy_pme_i        ( 1'b1            ),
     .phy_mdio_i       ( 1'b0            ),
-    .phy_mdio_o       (                 ),
-    .phy_mdio_oe      (                 ),
-    .phy_mdc_o        (                 ),
+    .phy_mdio_o       (                 ), 
+    .phy_mdio_oe      (                 ), 
+    .phy_mdc_o        (                 ), 
     .reg_req_i        ( reg_bus_rx_req  ),
     .reg_rsp_o        ( reg_bus_rx_rsp  ),
     .testmode_i       ( 1'b0            ),
-    .idma_eh_req_i    (                 ), // error handling disabled now
-    .eh_req_valid_i   (                 ),
-    .eh_req_ready_o   (                 ),
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
     .idma_busy_o      ( rx_busy         )
