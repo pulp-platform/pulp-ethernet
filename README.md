@@ -17,15 +17,21 @@ used.
 `pulp-ethernet` is intended for use with https://github.com/pulp-platform/ariane
 (a RISCV Linux-capable soft core).
 
+## Generate iDMA
+
+```
+make eth-idma-gen
+```
+
 ## Compile (Questa)
 
 ```
-make eth-hw-build
+make eth-sim-build
 ```
 
 ## Simulate (Questa)
 ```
-make eth-hw-sim
+make eth-vsim-sim-run
 ```
 
 ### Debugging
