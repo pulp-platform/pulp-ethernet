@@ -128,44 +128,33 @@ always @(posedge rx_clk) begin
 end
 
 // PHY speed detection
-reg [2:0] rx_prescale = 3'd0;
+reg [2:0] rx_prescale;
 
-always_ff @(posedge rx_clk or posedge gtx_rst) begin
-    if (gtx_rst) begin
-        rx_prescale <= 3'd0;
-    end else begin
-        rx_prescale <= rx_prescale + 3'd1;
-    end
+always @(posedge rx_clk) begin
+    rx_prescale <= rx_prescale + 3'd1;
 end
 
 reg rx_prescale_sync_1;
 reg rx_prescale_sync_2;
 reg rx_prescale_sync_3;
 
-always_ff @(posedge gtx_clk or posedge gtx_rst) begin
-    if (gtx_rst) begin
-        rx_prescale_sync_1 <= 1'b0;
-        rx_prescale_sync_2 <= 1'b0;
-        rx_prescale_sync_3 <= 1'b0;
-    end else begin
-        rx_prescale_sync_1 <= rx_prescale[2];
-        rx_prescale_sync_2 <= rx_prescale_sync_1;
-        rx_prescale_sync_3 <= rx_prescale_sync_2;
-    end
+always @(posedge gtx_clk) begin
+    rx_prescale_sync_1 <= rx_prescale[2];
+    rx_prescale_sync_2 <= rx_prescale_sync_1;
+    rx_prescale_sync_3 <= rx_prescale_sync_2;
 end
-
 
 reg [6:0] rx_speed_count_1;
 reg [1:0] rx_speed_count_2;
 
-always_ff @(posedge gtx_clk or posedge gtx_rst) begin
+always @(posedge gtx_clk) begin
     if (gtx_rst) begin
         rx_speed_count_1 <= 0;
         rx_speed_count_2 <= 0;
         speed_reg <= 2'b10;
     end else begin
         rx_speed_count_1 <= rx_speed_count_1 + 1;
-
+        
         if (rx_prescale_sync_2 ^ rx_prescale_sync_3) begin
             rx_speed_count_2 <= rx_speed_count_2 + 1;
         end

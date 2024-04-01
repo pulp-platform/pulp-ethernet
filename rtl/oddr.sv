@@ -40,7 +40,6 @@ module oddr #
 )
 (
     input  wire             clk,
-    input  wire             rst,
 
     input  wire [WIDTH-1:0] d1,
     input  wire [WIDTH-1:0] d2,
@@ -115,27 +114,25 @@ end else if (TARGET == "ALTERA") begin
         .dataout(q)
     );
 end else begin
+    reg [WIDTH-1:0] d_reg_1 = {WIDTH{1'b0}};
+    reg [WIDTH-1:0] d_reg_2 = {WIDTH{1'b0}};
 
-    for (n = 0; n < WIDTH; n = n + 1) begin : oddr
-        logic q1, q2;
+    reg [WIDTH-1:0] q_reg = {WIDTH{1'b0}};
 
-        tc_clk_mux2 i_ddrmux (
-            .clk_o     ( q[n] ),
-            .clk0_i    ( q1  ),
-            .clk1_i    ( q2  ),
-            .clk_sel_i ( clk )
-        );
+    always @(posedge clk) begin
+        d_reg_1 <= d1;
+        d_reg_2 <= d2;
+    end
 
-        always_ff @(posedge clk or negedge rst) begin
-            if (~rst) begin
-                q1 <= 1'b0;
-                q2 <= 1'b0;
-            end else begin
-                q1 <= d1[n];
-                q2 <= d2[n];
-            end
-        end
-    end  // oddr
+    always @(posedge clk) begin
+        q_reg <= d1;
+    end
+
+    always @(negedge clk) begin
+        q_reg <= d_reg_2;
+    end
+
+    assign q = q_reg;
 end
 
 endgenerate

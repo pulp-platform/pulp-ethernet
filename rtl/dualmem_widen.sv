@@ -15,24 +15,24 @@ module dualmem_widen(clka, clkb, dina, dinb, addra, addrb, wea, web, douta, dout
    genvar r;
    wire [47:0]        dout;
 
-/*
+/*   
 `ifndef verilator
  `define RAMB16
 `endif
 */
-
+   
 `ifdef GENESYSII
  `define RAMB16
 `endif
 
 `ifdef RAMB16
-   //FPGA XILINX MEM
+   
    generate for (r = 0; r < 2; r=r+1)
      RAMB16_S9_S36
      RAMB16_S9_S36_inst
        (
         .CLKA   ( clka                     ),     // Port A Clock
-        .DOA    ( douta[r*8 +: 8]          ),     // Port A 8-bit Data Output
+        .DOA    ( douta[r*8 +: 8]          ),     // Port A 1-bit Data Output
         .DOPA   (                          ),
         .ADDRA  ( addra                    ),     // Port A 14-bit Address Input
         .DIA    ( dina[r*8 +: 8]           ),     // Port A 1-bit Data Input
@@ -54,27 +54,24 @@ module dualmem_widen(clka, clkb, dina, dinb, addra, addrb, wea, web, douta, dout
 
 `else // !`ifdef RAMB16
 
- //`ifdef GF22_BEHAV
-   // RAM BEHAVIOURAL GF22
+// This bit is a placeholder
 
-    generate for (r = 0; r < 2; r=r+1)
-
-        mem_wrap_tx mem_wrap_tx_inst
-          (
-           .clkA  ( clka             ),
-           .clkB  ( clkb             ),
-           .weB   ( web[r]           ),
-           .enaA  ( ena              ),
-           .enaB  ( enb              ),
-           .addrA ( addra            ),
-           .addrB ( addrb            ),
-           .diB   ( dinb[r*32 +: 32] ), // port B is write only
-           .doA   ( douta[r*8 +: 8]  )  // port A is read only
-           );
-
-     endgenerate
-
-`endif // !`ifdef RAMB16
-
-
+infer_dpram #(.RAM_SIZE(11), .BYTE_WIDTH(8)) ram1 // RAM_SIZE is in words
+(
+.ram_clk_a(clka),
+.ram_en_a(|ena),
+.ram_we_a({wea[1],wea[1],wea[1],wea[1],wea[0],wea[0],wea[0],wea[0]}),
+.ram_addr_a(addra),
+.ram_wrdata_a({dina,dina,dina,dina}),
+.ram_rddata_a({dout,douta}),
+.ram_clk_b(clkb),
+.ram_en_b(|enb),
+.ram_we_b({web[1],web[1],web[1],web[1],web[0],web[0],web[0],web[0]}),
+.ram_addr_b({2'b0,addrb}),
+.ram_wrdata_b(dinb),
+.ram_rddata_b(doutb)
+ );
+   
+`endif
+   
 endmodule // dualmem

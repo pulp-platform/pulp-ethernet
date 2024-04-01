@@ -27,8 +27,8 @@ THE SOFTWARE.
 /*
  * Generic source synchronous DDR input
  */
-module ssio_ddr_in 
-#(
+module ssio_ddr_in #
+(
     // target ("SIM", "GENERIC", "XILINX", "ALTERA")
     parameter TARGET = "GENERIC",
     // IODDR style ("IODDR", "IODDR2")
@@ -57,102 +57,12 @@ module ssio_ddr_in
 wire clk_int;
 wire clk_io;
 
-generate
+// pass through RX clock to input buffers
+assign clk_io = input_clk;
 
-if (TARGET == "XILINX") begin
-
-    // use Xilinx clocking primitives
-
-    if (CLOCK_INPUT_STYLE == "BUFG") begin
-
-        // buffer RX clock
-        BUFG
-        clk_bufg (
-            .I(input_clk),
-            .O(clk_int)
-        );
-
-        // pass through RX clock to logic and input buffers
-        assign clk_io = clk_int;
-        assign output_clk = clk_int;
-
-    end else if (CLOCK_INPUT_STYLE == "BUFR") begin
-
-        assign clk_int = input_clk;
-
-        // pass through RX clock to input buffers
-        BUFIO
-        clk_bufio (
-            .I(clk_int),
-            .O(clk_io)
-        );
-
-        // pass through RX clock to logic
-        BUFR #(
-            .BUFR_DIVIDE("BYPASS")
-        )
-        clk_bufr (
-            .I(clk_int),
-            .O(output_clk),
-            .CE(1'b1),
-            .CLR(1'b0)
-        );
-        
-    end else if (CLOCK_INPUT_STYLE == "BUFIO") begin
-
-        assign clk_int = input_clk;
-
-        // pass through RX clock to input buffers
-        BUFIO
-        clk_bufio (
-            .I(clk_int),
-            .O(clk_io)
-        );
-
-        // pass through RX clock to MAC
-        BUFG
-        clk_bufg (
-            .I(clk_int),
-            .O(output_clk)
-        );
-
-    end else if (CLOCK_INPUT_STYLE == "BUFIO2") begin
-
-        // pass through RX clock to input buffers
-        BUFIO2 #(
-            .DIVIDE(1),
-            .DIVIDE_BYPASS("TRUE"),
-            .I_INVERT("FALSE"),
-            .USE_DOUBLER("FALSE")
-        )
-        clk_bufio (
-            .I(input_clk),
-            .DIVCLK(clk_int),
-            .IOCLK(clk_io),
-            .SERDESSTROBE()
-        );
-
-        // pass through RX clock to MAC
-        BUFG
-        clk_bufg (
-            .I(clk_int),
-            .O(output_clk)
-        );
-
-    end
-
-end else begin
-
-    // pass through RX clock to input buffers
-    assign clk_io = input_clk;
-
-    // pass through RX clock to logic
-    assign clk_int = input_clk;
-    assign output_clk = clk_int;
-
-end
-
-endgenerate
+// pass through RX clock to logic
+assign clk_int = input_clk;
+assign output_clk = clk_int;
 
 iddr #(
     .TARGET(TARGET),

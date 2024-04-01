@@ -111,7 +111,7 @@ reg rgmii_tx_clk_fall;
 
 reg [5:0] count_reg, count_next;
 
-always_ff @(posedge clk or posedge rst) begin
+always @(posedge clk) begin
     if (rst) begin
         rgmii_tx_clk_1 <= 1'b1;
         rgmii_tx_clk_2 <= 1'b0;
@@ -213,7 +213,6 @@ oddr #(
 )
 clk_oddr_inst (
     .clk(USE_CLK90 == "TRUE" ? clk90 : clk),
-    .rst (~rst),
     .d1(rgmii_tx_clk_1),
     .d2(rgmii_tx_clk_2),
     .q(phy_rgmii_tx_clk)
@@ -226,7 +225,6 @@ oddr #(
 )
 data_oddr_inst (
     .clk(clk),
-    .rst (~rst),
     .d1({rgmii_txd_1, rgmii_tx_ctl_1}),
     .d2({rgmii_txd_2, rgmii_tx_ctl_2}),
     .q({phy_rgmii_txd, phy_rgmii_tx_ctl})

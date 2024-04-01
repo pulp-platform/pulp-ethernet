@@ -27,14 +27,9 @@ THE SOFTWARE.
 /*
  * FPGA core logic
  */
-
 module rgmii_core #
 (
-`ifdef GENESYSII
- parameter TARGET = "XILINX"
-`else
- parameter TARGET = "GENERIC"
-`endif
+    parameter TARGET = "XILINX"
 )
 (
     /*
@@ -73,6 +68,7 @@ module rgmii_core #
         * AXI output
         */
  
+    output wire        rx_clk,
     output wire [7:0]  rx_axis_tdata,
     output wire        rx_axis_tvalid,
     output wire        rx_axis_tlast,
@@ -93,7 +89,7 @@ eth_mac_1g_rgmii_fifo #(
     .TARGET(TARGET),
     .IODDR_STYLE("IODDR"),
     .CLOCK_INPUT_STYLE("BUFR"),
-    .USE_CLK90("FALSE"), //TRUE 
+    .USE_CLK90("TRUE"),
     .ENABLE_PADDING(1),
     .MIN_FRAME_LENGTH(64),
     .TX_FIFO_ADDR_WIDTH(12),
@@ -107,6 +103,7 @@ eth_mac_inst (
     .gtx_rst(rst),
     .logic_clk(clk),
     .logic_rst(rst),
+    .rx_clk(rx_clk),
 
     .tx_axis_tdata(tx_axis_tdata),
     .tx_axis_tvalid(tx_axis_tvalid),
@@ -116,7 +113,6 @@ eth_mac_inst (
 
     .rx_axis_tdata(rx_axis_tdata),
     .rx_axis_tvalid(rx_axis_tvalid),
-    .rx_axis_tready(1'b1),
     .rx_axis_tlast(rx_axis_tlast),
     .rx_axis_tuser(rx_axis_tuser),
 
@@ -140,7 +136,7 @@ eth_mac_inst (
     .rx_fifo_good_frame(),
     .speed(),
 
-    .ifg_delay(8'd12)
+    .ifg_delay(12)
 );
 
 endmodule

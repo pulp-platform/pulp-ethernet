@@ -63,6 +63,7 @@ module rgmii_soc (
        /*
         * AXI output
         */
+    output wire        rx_clk,
     output wire [7:0]  rx_axis_tdata,
     output wire        rx_axis_tvalid,
     output wire        rx_axis_tlast,
@@ -81,8 +82,6 @@ module rgmii_soc (
 wire [3:0] phy_rxd_delay;
 wire       phy_rx_ctl_delay;
 
-`ifdef GENESYSII
-   
 IDELAYCTRL
 idelayctrl_inst
 (
@@ -187,11 +186,6 @@ phy_rx_ctl_idelay
     .REGRST(1'b0)
 );
 
-`else // !`ifdef GENESYSII
-   assign phy_rx_ctl_delay = phy_rx_ctl;
-   assign phy_rxd_delay = phy_rxd;
-`endif
-
 rgmii_core
 core_inst (
     /*
@@ -200,6 +194,7 @@ core_inst (
      */
     .clk(clk_int),
     .clk90(clk90_int),
+    .rx_clk(rx_clk),
     .rst(rst_int),
     /*
      * Ethernet: 1000BASE-T RGMII
