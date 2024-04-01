@@ -17,18 +17,13 @@ sources:
   # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
   # levels 1 and 0, etc. Files within a level are ordered alphabetically.
   # Level 0
-  - rtl/axis_async_fifo.sv
   - rtl/axis_gmii_rx.sv
   - rtl/axis_gmii_tx.sv
-  - rtl/simple_dual_two_clocks.v
-  - rtl/mem_wrap_tx.sv
-  - rtl/mem_wrap_rx.sv
   - rtl/dualmem_widen8.sv
   - rtl/dualmem_widen.sv
   - rtl/eth_mac_1g_rgmii_fifo.sv
   - rtl/eth_mac_1g_rgmii.sv
   - rtl/eth_mac_1g.sv
-  - rtl/eth_rgmii.sv
   - rtl/framing_top.sv
   - rtl/iddr.sv
   - rtl/oddr.sv
@@ -38,13 +33,6 @@ sources:
   - rtl/rgmii_soc.sv
   - rtl/ssio_ddr_in.sv
 
-  - target : gf22_macro
-    defines:
-      TARGET_ASIC: ~
-    files:
-      - rtl/mem_wrap_tx.sv
-      - rtl/mem_wrap_rx.sv
-      - gf22/macro_wrap/r2pv_wrap_gf22.sv
 
   - target : eth_test
     files:
