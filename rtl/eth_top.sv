@@ -35,6 +35,7 @@ module eth_top #(
   input  wire                                  clk_i        ,
   input  wire                                  rst_ni       ,
   input  wire                                  clk90_int    ,
+  input  wire                                  clk200_int   ,
   // Ethernet: 1000BASE-T RGMII
   input  wire                                  phy_rx_clk   ,
   input  wire     [3:0]                        phy_rxd      ,
@@ -95,7 +96,7 @@ module eth_top #(
     .rst_ni         ( rst_ni      ),
     .clk_i          ( clk_i       ),
     .clk90_int      ( clk90_int   ),
-
+    .clk200_int     ( clk200_int  ),
     // Ethernet: 1000BASE-T RGMII
     .phy_rx_clk     ( phy_rx_clk  ),
     .phy_rxd        ( phy_rxd     ),
