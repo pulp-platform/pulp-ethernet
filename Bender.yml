@@ -15,7 +15,7 @@ dependencies:
   register_interface : { git: "https://github.com/pulp-platform/register_interface.git", version: 0.4.2 }
   common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: 1.21.0 }
   axi_stream: { git: "git@github.com:pulp-platform/axi_stream.git", rev: "54891ff40455ca94a37641b9da4604647878cc07" }
-  idma: { git: "git@github.com:pulp-platform/iDMA.git", rev: "v0.6.0-beta" } 
+  idma: { git: "git@github.com:pulp-platform/iDMA.git", version: 0.6.0 } 
   
 
 export_include_dirs:

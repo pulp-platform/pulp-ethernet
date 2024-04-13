@@ -4,6 +4,7 @@
 //
 // Authors:
 // - Thiemo Zaugg <zauggth@ethz.ch>
+// - Chaoqun Liang <chaoqun.liang@unibo.it>
 
 `include "axi_stream/assign.svh"
 `include "axi_stream/typedef.svh"

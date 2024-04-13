@@ -50,20 +50,13 @@ eth-nonfree-init:
 
 -include $(ETH_ROOT)/nonfree/nonfree.mk
 
-##############
-# HW GEN     #
-##############  
-
-eth-gen:
-	make -C $(DMA_ROOT) idma_hw_all IDMA_BACKEND_IDS=$(IDMA_BACKEND_IDS)
-	make -C $(DMA_ROOT) idma_sim_all IDMA_BACKEND_IDS=$(IDMA_BACKEND_IDS)
 
 ##############
 # Simulation #
 ##############                            
 
 $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl: Bender.yml
-	$(BENDER) script vsim -t test -t rtl \
+	$(BENDER) script vsim -t test -t rtl -t snitch_cluster \
 	--vlog-arg="-svinputport=compat" \
 	--vlog-arg="-override_timescale 1ns/1ps" \
 	--vlog-arg="-suppress 2583" > $@
