@@ -72,7 +72,9 @@ module axis_gmii_tx #
     input wire [7:0]  ifg_delay,
 
     /* debug */
-    output reg [31:0] fcs_reg
+    output reg [31:0] fcs_reg,
+
+    output reg        eth_irq
 );
 
 localparam [7:0]
@@ -90,6 +92,7 @@ localparam [2:0]
     STATE_IFG = 3'd7;
 
 reg [2:0] state_reg, state_next;
+reg eth_busy, eth_busy_prev;  
 
 // datapath control signals
 reg reset_crc;
@@ -135,7 +138,6 @@ eth_crc_8 (
 
 always @* begin
     state_next = STATE_IDLE;
-
     reset_crc = 1'b0;
     update_crc = 1'b0;
 
@@ -173,8 +175,8 @@ always @* begin
                 // idle state - wait for packet
                 reset_crc = 1'b1;
                 mii_odd_next = 1'b0;
-
                 if (s_axis_tvalid) begin
+                    eth_busy = 1'b1;
                     mii_odd_next = 1'b1;
                     frame_ptr_next = 16'd1;
                     gmii_txd_next = ETH_PRE;
@@ -319,7 +321,7 @@ always @* begin
                     if (s_axis_tlast) begin
                         s_axis_tready_next = 1'b0;
                         ifg_next = 8'b0;
-                            state_next = STATE_IFG;
+                        state_next = STATE_IFG;
                     end else begin
                         state_next = STATE_WAIT_END;
                     end
@@ -329,7 +331,7 @@ always @* begin
             end
             STATE_IFG: begin
                 // send IFG
-
+                eth_busy = 1'b0;
                 reset_crc = 1'b1;
 
                 mii_odd_next = 1'b1;
@@ -354,11 +356,10 @@ end
 always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
         state_reg <= STATE_IDLE;
-
+        eth_busy_prev <= 1'b0;
+        eth_irq <= 1'b0;
         frame_ptr_reg <= 16'd0;
-
         s_axis_tready_reg <= 1'b0;
-
         gmii_tx_en_reg <= 1'b0;
         gmii_tx_er_reg <= 1'b0;
 
@@ -372,7 +373,13 @@ always_ff @(posedge clk or posedge rst) begin
         gmii_txd_reg <= 'd0;
     end else begin
         state_reg <= state_next;
-
+        eth_busy_prev <= eth_busy;
+        // Check for falling edge from high to low
+        if (eth_busy_prev && !eth_busy) begin
+            eth_irq <= 1'b1; 
+        end else begin
+            eth_irq <= 1'b0;  
+        end
         frame_ptr_reg <= frame_ptr_next;
 
         s_axis_tready_reg <= s_axis_tready_next;

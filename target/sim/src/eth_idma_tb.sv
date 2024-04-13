@@ -92,6 +92,7 @@ module eth_idma_tb
 
   /// busy signal
   idma_busy_t   tx_busy, rx_busy;
+  logic         tx_eth_irq, rx_eth_irq;
   
   /// -------------------- REG Drivers -----------------------  
   typedef reg_test::reg_driver #(
@@ -242,7 +243,8 @@ module eth_idma_tb
     .testmode_i          ( 1'b0                ),
     .axi_req_o           ( axi_tx_req_mem      ),
     .axi_rsp_i           ( axi_tx_rsp_mem      ),
-    .idma_busy_o         ( tx_busy             )
+    .idma_busy_o         ( tx_busy             ),
+    .eth_irq_o           ( tx_eth_irq          )
   );
  
   reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
@@ -285,7 +287,8 @@ module eth_idma_tb
     .testmode_i       ( 1'b0            ),
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
-    .idma_busy_o      ( rx_busy         )
+    .idma_busy_o      ( rx_busy         ),
+    .eth_irq_o        ( rx_eth_irq      )
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
@@ -316,9 +319,11 @@ module eth_idma_tb
     @(posedge s_rst_n);
     @(posedge s_clk);
 
-    $readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-  
+    //$readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    //$readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+     $readmemh("/scratch/chaol/astral/fix_test/pulp-ethernet/target/sim/src/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+     $readmemh("/scratch/chaol/astral/fix_test/pulp-ethernet/target/sim/src/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
@@ -326,19 +331,19 @@ module eth_idma_tb
     reg_drv_tx.send_write( 'h04,  32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h10, 32'h0, 'hf, reg_error ); // SRC_ADDR
+    reg_drv_tx.send_write( 'h14, 32'h0, 'hf, reg_error ); // SRC_ADDR
     @(posedge s_clk);
      
-    reg_drv_tx.send_write( 'h14, 32'h0, 'hf, reg_error); // DST_ADDR 
+    reg_drv_tx.send_write( 'h18, 32'h0, 'hf, reg_error); // DST_ADDR 
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h18, 32'h40, 'hf, reg_error); // Size in bytes 
+    reg_drv_tx.send_write( 'h1c, 32'h40, 'hf, reg_error); // Size in bytes 
     @(posedge s_clk);
     
-    reg_drv_tx.send_write( 'h1c, 32'h0, 'hf, reg_error); // src protocol AXI
+    reg_drv_tx.send_write( 'h20, 32'h0, 'hf, reg_error); // src protocol AXI
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h20, 32'h5, 'hf, reg_error); // dst protocol AXIS
+    reg_drv_tx.send_write( 'h24, 32'h5, 'hf, reg_error); // dst protocol AXIS
     @(posedge s_clk);
 
     /// RX eth configs
@@ -348,48 +353,48 @@ module eth_idma_tb
     reg_drv_rx.send_write( 'h4, 32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
 
-    reg_drv_rx.send_write( 'h10, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
+    reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error); // DST_ADDR
+    reg_drv_rx.send_write( 'h18, 32'h0, 'hf, reg_error); // DST_ADDR
     @(posedge s_clk);
 
-    reg_drv_rx.send_write( 'h18, 32'h40, 'hf, reg_error); // Size in bytes, 48 for transmission including appended FCS 
+    reg_drv_rx.send_write( 'h1c, 32'h40, 'hf, reg_error); // Size in bytes, 48 for transmission including appended FCS 
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h1c, 32'h5, 'hf, reg_error); // src protocol
+    reg_drv_rx.send_write( 'h20, 32'h5, 'hf, reg_error); // src protocol
     @(posedge s_clk);
 
-    reg_drv_rx.send_write( 'h20, 32'h0, 'hf, reg_error); // dst protocol
+    reg_drv_rx.send_write( 'h24, 32'h0, 'hf, reg_error); // dst protocol
     @(posedge s_clk);
     
     /// Transaction configs
     while(1) begin
-      reg_drv_tx.send_read( 'h3c, tx_req_ready, reg_error);   // req ready 
+      reg_drv_tx.send_read( 'h40, tx_req_ready, reg_error);   // req ready 
       if( tx_req_ready ) begin
-        reg_drv_tx.send_write( 'h38, 32'h1, 'hf , reg_error);  // req valid - req start
+        reg_drv_tx.send_write( 'h3c, 32'h1, 'hf , reg_error);  // req valid - req start
         @(posedge s_clk);
         break;
       end
       @(posedge s_clk);
     end
    
-    reg_drv_tx.send_write( 'h38, 32'h0, 'hf, reg_error);  // req valid - lock in
-    reg_drv_tx.send_write( 'h40, 32'h1, 'hf, reg_error);  // rsp_ready - data transfer launch
+    reg_drv_tx.send_write( 'h3c, 32'h0, 'hf, reg_error);  // req valid - lock in
+    reg_drv_tx.send_write( 'h44, 32'h1, 'hf, reg_error);  // rsp_ready - data transfer launch
     @(posedge s_clk);
 
     while(1) begin
-      reg_drv_rx.send_read( 'h3c, rx_req_ready, reg_error);   // req ready
+      reg_drv_rx.send_read( 'h40, rx_req_ready, reg_error);   // req ready
       if( rx_req_ready ) begin
-        reg_drv_rx.send_write( 'h38, 32'h1, 'hf, reg_error);  // req_valid
+        reg_drv_rx.send_write( 'h3c, 32'h1, 'hf, reg_error);  // req_valid
         @(posedge s_clk);
         break;
       end
       @(posedge s_clk);
     end
 
-    reg_drv_rx.send_write( 'h38, 32'h0, 'hf, reg_error);  // req valid
-    reg_drv_rx.send_write( 'h40, 32'h1, 'hf, reg_error);  // rsp ready  
+    reg_drv_rx.send_write( 'h3c, 32'h0, 'hf, reg_error);  // req valid
+    reg_drv_rx.send_write( 'h44, 32'h1, 'hf, reg_error);  // rsp ready  
     @(posedge s_clk);
   
     repeat(160) @(posedge s_clk); // adjust based on num_bytes to write into rx sim mem

@@ -68,7 +68,9 @@ module axis_gmii_rx
     output wire        error_bad_fcs,
 
     /* debug */
-    output reg [31:0]  fcs_reg
+    output reg [31:0]  fcs_reg,
+
+    output reg         eth_irq
 );
 
 localparam [7:0]
@@ -82,6 +84,7 @@ localparam [2:0]
     STATE_CRC = 3'd3;
 
 reg [2:0] state_reg, state_next;
+reg eth_busy, eth_busy_prev;  
 
 // datapath control signals
 reg reset_crc;
@@ -174,6 +177,7 @@ always @* begin
                 reset_crc = 1'b1;
 
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
+                    eth_busy = 1'b1;
                     state_next = STATE_PAYLOAD;
                 end else begin
                     state_next = STATE_IDLE;
@@ -236,6 +240,7 @@ always @* begin
                 // wait for end of packet
 
                 if (~gmii_rx_dv) begin
+                    eth_busy = 1'b0;
                     state_next = STATE_IDLE;
                 end else begin
                     state_next = STATE_WAIT_LAST;
@@ -249,7 +254,8 @@ end
 always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
         state_reg <= STATE_IDLE;
-
+        eth_busy_prev <= 1'b0;
+        eth_irq <= 1'b0;
         m_axis_tvalid_reg <= 1'b0;
 
         error_bad_frame_reg <= 1'b0;
@@ -269,7 +275,13 @@ always_ff @(posedge clk or posedge rst) begin
         gmii_rx_dv_d4 <= 1'b0;
     end else begin
         state_reg <= state_next;
-
+        eth_busy_prev <= eth_busy;
+        // Check for falling edge from high to low
+        if (eth_busy_prev && !eth_busy) begin
+            eth_irq <= 1'b1; 
+        end else begin
+            eth_irq <= 1'b0;  
+        end
         m_axis_tvalid_reg <= m_axis_tvalid_next;
 
         error_bad_frame_reg <= error_bad_frame_next;

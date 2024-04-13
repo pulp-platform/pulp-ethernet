@@ -83,7 +83,9 @@ module rgmii_core #
      */
 
     output wire [31:0] rx_fcs_reg,
-    output wire [31:0] tx_fcs_reg
+    output wire [31:0] tx_fcs_reg,
+
+    output wire        eth_irq
 
 );
 
@@ -140,7 +142,8 @@ eth_mac_inst (
     .rx_fifo_good_frame(),
     .speed(),
 
-    .ifg_delay(8'd12)
+    .ifg_delay(8'd12),
+    .eth_irq(eth_irq)
 );
 
 endmodule

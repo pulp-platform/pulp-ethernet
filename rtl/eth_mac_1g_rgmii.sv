@@ -94,7 +94,8 @@ module eth_mac_1g_rgmii #
     /*
      * Configuration
      */
-    input wire [7:0]  ifg_delay
+    input wire [7:0]  ifg_delay,
+    output wire       eth_irq
 );
 
 wire [7:0]  mac_gmii_rxd;
@@ -266,7 +267,8 @@ eth_mac_1g_inst (
     .rx_error_bad_fcs(rx_error_bad_fcs),
     .rx_fcs_reg(rx_fcs_reg),
     .tx_fcs_reg(tx_fcs_reg),
-    .ifg_delay(ifg_delay)
+    .ifg_delay(ifg_delay),
+    .eth_irq(eth_irq)
 );
 
 endmodule
