@@ -153,11 +153,6 @@ package eth_idma_reg_pkg;
   } eth_idma_hw2reg_rx_fcs_reg_t;
 
   typedef struct packed {
-    logic [31:0] d;
-    logic        de;
-  } eth_idma_hw2reg_irq_reg_t;
-
-  typedef struct packed {
     logic        d;
     logic        de;
   } eth_idma_hw2reg_irq_reg_t;

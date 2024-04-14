@@ -72,15 +72,15 @@ module framing_top #(
 
   assign hw2reg_o.tx_fcs.de = 1'b1;
   assign hw2reg_o.rx_fcs.de = 1'b1;
-  assign hw2reg_o.irq.de    = 1'b1;
-
+  
   assign hw2reg_o.req_ready.de = 1'b1;
   assign hw2reg_o.rsp_valid.de = 1'b1;
+  assign hw2reg_o.irq.de       = 1'b1;
 
+  assign hw2reg_o.irq.d       = eth_irq;
   assign hw2reg_o.req_ready.d = idma_req_ready;
   assign hw2reg_o.rsp_valid.d = idma_rsp_valid;
-  assign hw2reg_o.irq.d       = eth_irq;
-
+  
 
   always_comb begin
     rx_axis_tdata_4_d  = rx_axis_tdata_5_q;

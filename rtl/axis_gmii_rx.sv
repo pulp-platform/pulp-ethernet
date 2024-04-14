@@ -178,7 +178,6 @@ always @* begin
                 reset_crc = 1'b1;
                 eth_busy_next = 1'b0;
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
-                    eth_busy = 1'b1;
                     state_next = STATE_PAYLOAD;
                 end else begin
                     state_next = STATE_IDLE;
@@ -241,7 +240,6 @@ always @* begin
                 eth_busy_next = 1'b1;
                 // wait for end of packet
                 if (~gmii_rx_dv) begin
-                    eth_busy = 1'b0;
                     state_next = STATE_IDLE;
                 end else begin
                     state_next = STATE_WAIT_LAST;

@@ -181,7 +181,6 @@ always @* begin
                 mii_odd_next = 1'b0;
                 eth_busy_next = 1'b0;
                 if (s_axis_tvalid) begin
-                    eth_busy = 1'b1;
                     mii_odd_next = 1'b1;
                     frame_ptr_next = 16'd1;
                     gmii_txd_next = ETH_PRE;
@@ -336,7 +335,6 @@ always @* begin
             end
             STATE_IFG: begin
                 // send IFG
-                eth_busy = 1'b0;
                 reset_crc = 1'b1;
                 eth_busy_next = 1'b0;
                 mii_odd_next = 1'b1;
