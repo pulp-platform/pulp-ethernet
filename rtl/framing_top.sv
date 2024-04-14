@@ -43,8 +43,7 @@ module framing_top #(
   input  logic                                          idma_rsp_valid,
   // REGBUS configs
   input  reg2hw_itf_t                                   reg2hw_i,
-  output hw2reg_itf_t                                   hw2reg_o,
-  output logic                                          eth_irq
+  output hw2reg_itf_t                                   hw2reg_o
 );
 
   import eth_idma_reg_pkg::* ;
@@ -73,12 +72,12 @@ module framing_top #(
   assign hw2reg_o.tx_fcs.de = 1'b1;
   assign hw2reg_o.rx_fcs.de = 1'b1;
   assign hw2reg_o.irq.de = 1'b1;
+
   assign hw2reg_o.req_ready.de = 1'b1;
   assign hw2reg_o.rsp_valid.de = 1'b1;
 
   assign hw2reg_o.req_ready.d = idma_req_ready;
   assign hw2reg_o.rsp_valid.d = idma_rsp_valid;
-  assign hw2reg_o.irq.d       = eth_irq;
 
 
   always_comb begin
@@ -214,7 +213,7 @@ module framing_top #(
     // Error registers
     .rx_fcs_reg    (hw2reg_o.rx_fcs.d    ),
     .tx_fcs_reg    (hw2reg_o.tx_fcs.d    ),
-    .eth_irq       (eth_irq              )
+    .eth_irq       (hw2reg_o.irq.d       )
   );
 
 endmodule // framing_top

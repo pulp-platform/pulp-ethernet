@@ -92,7 +92,6 @@ module eth_idma_tb
 
   /// busy signal
   idma_busy_t   tx_busy, rx_busy;
-  logic         tx_eth_irq, rx_eth_irq;
   
   /// -------------------- REG Drivers -----------------------  
   typedef reg_test::reg_driver #(
@@ -243,8 +242,7 @@ module eth_idma_tb
     .testmode_i          ( 1'b0                ),
     .axi_req_o           ( axi_tx_req_mem      ),
     .axi_rsp_i           ( axi_tx_rsp_mem      ),
-    .idma_busy_o         ( tx_busy             ),
-    .eth_irq_o           ( tx_eth_irq          )
+    .idma_busy_o         ( tx_busy             )
   );
  
   reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
@@ -287,8 +285,7 @@ module eth_idma_tb
     .testmode_i       ( 1'b0            ),
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
-    .idma_busy_o      ( rx_busy         ),
-    .eth_irq_o        ( rx_eth_irq      )
+    .idma_busy_o      ( rx_busy         )
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
