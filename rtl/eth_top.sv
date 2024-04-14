@@ -4,6 +4,7 @@
 //
 // Authors:
 // - Thiemo Zaugg <zauggth@ethz.ch>
+// - Chaoqun Liang <chaoqun.liang@unibo.it>
 
 `include "axi_stream/assign.svh"
 `include "axi_stream/typedef.svh"
@@ -63,6 +64,7 @@ module eth_top #(
   input  reg2hw_itf_t                          reg2hw_i     ,
   output hw2reg_itf_t                          hw2reg_o     ,
   output logic                                 eth_irq_o
+
 );
 
 // ---------------- axis streams for the framing module ----------------------

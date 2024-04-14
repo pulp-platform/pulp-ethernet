@@ -1,8 +1,3 @@
-## Generate iDMA with AXIS support  (Terminal)
-```
-make eth-gen
-```
-
 ## Compile (Questa)
 
 ```

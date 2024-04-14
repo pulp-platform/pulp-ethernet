@@ -96,6 +96,7 @@ localparam [2:0]
 reg [2:0] state_reg, state_next;
 reg eth_busy, eth_busy_next; 
 
+
 // datapath control signals
 reg reset_crc;
 reg update_crc;
@@ -180,6 +181,7 @@ always @* begin
                 mii_odd_next = 1'b0;
                 eth_busy_next = 1'b0;
                 if (s_axis_tvalid) begin
+                    eth_busy = 1'b1;
                     mii_odd_next = 1'b1;
                     frame_ptr_next = 16'd1;
                     gmii_txd_next = ETH_PRE;
@@ -334,6 +336,7 @@ always @* begin
             end
             STATE_IFG: begin
                 // send IFG
+                eth_busy = 1'b0;
                 reset_crc = 1'b1;
                 eth_busy_next = 1'b0;
                 mii_odd_next = 1'b1;
@@ -361,9 +364,7 @@ always_ff @(posedge clk or posedge rst) begin
         eth_busy <= 1'b0;
         eth_irq <= 1'b0;
         frame_ptr_reg <= 16'd0;
-
         s_axis_tready_reg <= 1'b0;
-
         gmii_tx_en_reg <= 1'b0;
         gmii_tx_er_reg <= 1'b0;
 
@@ -384,7 +385,7 @@ always_ff @(posedge clk or posedge rst) begin
         end else begin
             eth_irq <= 1'b0;  
         end
-        
+
         frame_ptr_reg <= frame_ptr_next;
 
         s_axis_tready_reg <= s_axis_tready_next;

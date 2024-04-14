@@ -26,10 +26,10 @@ module eth_idma_tb
   import reg_test::*;
 
   /// timing parameters
-  localparam time SYS_TCK       = 8ns;
+  localparam time SYS_TCK       = 5ns;
   localparam time TCK125        = 8ns;
   localparam time SYS_TA        = 2ns;
-  localparam time SYS_TT        = 6ns;
+  localparam time SYS_TT        = 3ns;
 
   /// Register interface parameters
   localparam int AW_REGBUS           = 32;
@@ -222,8 +222,8 @@ module eth_idma_tb
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
      /// Etherent Internal clocks
-    .eth_clk_i           ( s_clk_125MHz_0      ), // 125MHz in-phase
-    .eth_clk90_i         ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
+    .eth_clk125_i        ( s_clk_125MHz_0      ), // 125MHz in-phase
+    .eth_clk125q_i       ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i        ( eth_rxck            ),
     .phy_rxd_i           ( eth_rxd             ),
     .phy_rx_ctl_i        ( eth_rxctl           ),
@@ -265,8 +265,8 @@ module eth_idma_tb
   )i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
-    .eth_clk_i        ( s_clk_125MHz_0  ), // 125MHz in-phase
-    .eth_clk90_i      ( s_clk_125MHz_90 ), // 125 MHz with 90 phase shift
+    .eth_clk125_i     ( s_clk_125MHz_0  ), // 125MHz in-phase
+    .eth_clk125q_i    ( s_clk_125MHz_90 ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i     ( eth_txck        ),
     .phy_rxd_i        ( eth_txd         ),
     .phy_rx_ctl_i     ( eth_txctl       ),
@@ -316,9 +316,11 @@ module eth_idma_tb
     @(posedge s_rst_n);
     @(posedge s_clk);
 
+    //$readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    //$readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
     $readmemh("/scratch/chaol/astral/fix_test/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     $readmemh("/scratch/chaol/astral/fix_test/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-    
+   
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);

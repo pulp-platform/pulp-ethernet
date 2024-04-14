@@ -74,6 +74,7 @@ module rgmii_soc (
 
     output wire [31:0] rx_fcs_reg,
     output wire [31:0] tx_fcs_reg,
+    
     output wire        eth_irq
 
 );

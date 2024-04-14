@@ -19,17 +19,14 @@ QUESTA ?= questa-2022.3
 TBENCH ?= eth_idma_tb
 DUT    ?= eth_idma_wrap
 
-IDMA_BACKEND_IDS ?="rw_axi_rw_axis rw_axi"
-DMA_ROOT    ?= $(shell $(BENDER) path idma)
-
 # Design and simulation variables
-ETH_ROOT      ?= $(shell $(BENDER) path fe-ethernet)
+ETH_ROOT ?= $(shell pwd)
 
 QUESTA_FLAGS := -permissive -suppress 3009 -suppress 8386 -error 7 +UVM_NO_RELNOTES
 #QUESTA_FLAGS :=
 ifdef DEBUG
 	VOPT_FLAGS := $(QUESTA_FLAGS) +acc
-	VSIM_FLAGS := $(QUESTA_FLAGS)
+	VSIM_FLAGS := $(QUESTA_FLAGS) +acc
 	RUN_AND_EXIT := log -r /*; run -all
 else
 	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH). +noacc=p+$(DUT).
@@ -50,20 +47,13 @@ eth-nonfree-init:
 
 -include $(ETH_ROOT)/nonfree/nonfree.mk
 
-##############
-# HW GEN     #
-##############  
-
-eth-gen:
-	make -C $(DMA_ROOT) idma_hw_all IDMA_BACKEND_IDS=$(IDMA_BACKEND_IDS)
-	make -C $(DMA_ROOT) idma_sim_all IDMA_BACKEND_IDS=$(IDMA_BACKEND_IDS)
 
 ##############
 # Simulation #
 ##############                            
 
 $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl: Bender.yml
-	$(BENDER) script vsim -t test -t rtl \
+	$(BENDER) script vsim -t test -t rtl -t snitch_cluster \
 	--vlog-arg="-svinputport=compat" \
 	--vlog-arg="-override_timescale 1ns/1ps" \
 	--vlog-arg="-suppress 2583" > $@
