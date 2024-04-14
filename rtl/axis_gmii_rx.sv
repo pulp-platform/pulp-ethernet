@@ -68,7 +68,10 @@ module axis_gmii_rx
     output wire        error_bad_fcs,
 
     /* debug */
-    output reg [31:0]  fcs_reg
+    output reg [31:0]  fcs_reg,
+
+    /* interrupt */
+    output reg         eth_irq
 );
 
 localparam [7:0]
@@ -82,6 +85,7 @@ localparam [2:0]
     STATE_CRC = 3'd3;
 
 reg [2:0] state_reg, state_next;
+reg eth_busy, eth_busy_next; 
 
 // datapath control signals
 reg reset_crc;
@@ -147,7 +151,7 @@ eth_crc_8 (
 
 always @* begin
     state_next = STATE_IDLE;
-
+    eth_busy_next = 1'b0; 
     reset_crc = 1'b0;
     update_crc = 1'b0;
 
@@ -172,7 +176,7 @@ always @* begin
             STATE_IDLE: begin
                 // idle state - wait for packet
                 reset_crc = 1'b1;
-
+                eth_busy_next = 1'b0;
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
                     state_next = STATE_PAYLOAD;
                 end else begin
@@ -182,7 +186,7 @@ always @* begin
             STATE_PAYLOAD: begin
                 // read payload
                 update_crc = 1'b1;
-
+                eth_busy_next = 1'b1;
                 m_axis_tdata_next = gmii_rxd_d4;
                 m_axis_tvalid_next = 1'b1;
 
@@ -217,7 +221,7 @@ always @* begin
             STATE_CRC: begin
                 // wait for CRC
                 update_crc = 1'b1;
-
+                eth_busy_next = 1'b1;
                 m_axis_tdata_next = gmii_rxd_d4;
                 m_axis_tvalid_next = 1'b1;
 
@@ -233,8 +237,8 @@ always @* begin
                 end
             end
             STATE_WAIT_LAST: begin
+                eth_busy_next = 1'b1;
                 // wait for end of packet
-
                 if (~gmii_rx_dv) begin
                     state_next = STATE_IDLE;
                 end else begin
@@ -249,7 +253,8 @@ end
 always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
         state_reg <= STATE_IDLE;
-
+        eth_busy <= 1'b0;
+        eth_irq <= 1'b0;
         m_axis_tvalid_reg <= 1'b0;
 
         error_bad_frame_reg <= 1'b0;
@@ -269,7 +274,13 @@ always_ff @(posedge clk or posedge rst) begin
         gmii_rx_dv_d4 <= 1'b0;
     end else begin
         state_reg <= state_next;
-
+        eth_busy <= eth_busy_next;
+        // Check for falling edge from high to low
+        if (eth_busy && !eth_busy_next) begin
+            eth_irq <= 1'b1; 
+        end else begin
+            eth_irq <= 1'b0;  
+        end
         m_axis_tvalid_reg <= m_axis_tvalid_next;
 
         error_bad_frame_reg <= error_bad_frame_next;

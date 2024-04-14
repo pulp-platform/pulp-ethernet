@@ -26,12 +26,12 @@ module eth_idma_wrap #(
   parameter int unsigned MemSysDepth         = 32'd0,
   parameter bit CombinedShifter              = 1'b1,
   /// hardware legalization present
-  parameter bit HardwareLegalizer   = 1'b1,
+  parameter bit HardwareLegalizer            = 1'b1,
   /// Reject zero-length transfers
-  parameter bit RejectZeroTransfers = 1'b1,
+  parameter bit RejectZeroTransfers          = 1'b1,
   /// CDC FIFO
-  parameter int unsigned TxFifoLogDepth      = 32'd8,
-  parameter int unsigned RxFifoLogDepth      = 32'd8,
+  parameter int unsigned TxFifoLogDepth      = 32'd4,
+  parameter int unsigned RxFifoLogDepth      = 32'd4,
   /// AXI4+ATOP Request and Response channel type
   parameter type axi_req_t                   = logic,
   parameter type axi_rsp_t                   = logic,
@@ -68,7 +68,8 @@ module eth_idma_wrap #(
   output idma_pkg::idma_busy_t    idma_busy_o,
   /// Register Configuration Interface
   input  reg_req_t                reg_req_i,
-  output reg_rsp_t                reg_rsp_o
+  output reg_rsp_t                reg_rsp_o,
+  output logic                    eth_irq_o
 );
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
@@ -277,7 +278,8 @@ module eth_idma_wrap #(
     .idma_req_ready     (  idma_req_ready    ),
     .idma_rsp_valid     (  idma_rsp_valid    ),        
     .reg2hw_i           (  reg2hw            ),
-    .hw2reg_o           (  hw2reg            )
+    .hw2reg_o           (  hw2reg            ),
+    .eth_irq_o          (  eth_irq_o         )
   );
   
   // TX CDC FIFO

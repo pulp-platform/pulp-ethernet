@@ -84,8 +84,12 @@ module eth_mac_1g #
     /*
      * Configuration
      */
-    input wire [7:0]   ifg_delay
+    input wire [7:0]   ifg_delay,
+
+    output wire        eth_irq
 );
+
+wire tx_irq, rx_irq;
 
 axis_gmii_rx
 axis_gmii_rx_inst (
@@ -102,7 +106,8 @@ axis_gmii_rx_inst (
     .mii_select(rx_mii_select),
     .error_bad_frame(rx_error_bad_frame),
     .error_bad_fcs(rx_error_bad_fcs),
-    .fcs_reg(rx_fcs_reg)
+    .fcs_reg(rx_fcs_reg),
+    .eth_irq(rx_irq)
 );
 
 axis_gmii_tx #(
@@ -123,7 +128,10 @@ axis_gmii_tx_inst (
     .clk_enable(tx_clk_enable),
     .mii_select(tx_mii_select),
     .ifg_delay(ifg_delay),
-    .fcs_reg(tx_fcs_reg)
+    .fcs_reg(tx_fcs_reg),
+    .eth_irq(tx_irq)
 );
+
+assign eth_irq = tx_irq | rx_irq;
 
 endmodule

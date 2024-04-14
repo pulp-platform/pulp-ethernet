@@ -73,7 +73,8 @@ module rgmii_soc (
      */
 
     output wire [31:0] rx_fcs_reg,
-    output wire [31:0] tx_fcs_reg
+    output wire [31:0] tx_fcs_reg,
+    output wire        eth_irq
 
 );
 
@@ -226,7 +227,8 @@ core_inst (
     .rx_axis_tlast(rx_axis_tlast),
     .rx_axis_tuser(rx_axis_tuser),
     .rx_fcs_reg(rx_fcs_reg),
-    .tx_fcs_reg(tx_fcs_reg)
+    .tx_fcs_reg(tx_fcs_reg),
+    .eth_irq(eth_irq)
 );
 
 endmodule

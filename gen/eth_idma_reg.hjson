@@ -63,6 +63,17 @@
               }
           ]
         },
+        { name: "irq",
+          desc: "ethernet transmission done",
+          swaccess: "ro",
+          hwaccess: "hwo",
+          fields: [
+              { bits: "0", name: "irq",
+                desc: "etherent interrupt"
+                resval: "0"
+              }
+          ]
+        },
         { name: "src_addr",
           desc: "Source Address",
           swaccess: "rw",
