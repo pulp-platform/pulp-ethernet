@@ -50,6 +50,7 @@ module eth_idma_wrap_syth #(
   parameter type reg_rsp_t                   = logic
 )(
   input  logic                    clk_i,
+  input  logic                    clk_125_i,
   input  logic                    rst_ni, 
   input  logic                    pwr_on_rst_ni,
   /// Ethernet RGMII
@@ -104,8 +105,18 @@ module eth_idma_wrap_syth #(
   logic axi_isolate_sync;
   logic eth_irq;
 
+  logic clk_125MHz_90;
+
   reg_req_t reg_bus_req;
   reg_rsp_t reg_bus_rsp;
+
+  clk_gen_hyper i_clk_shift(
+    .clk_i     ( clk_125_i     ),    
+    .rst_ni    ( rst_ni        ),
+    .clk0_o    (               ),    
+    .clk90_o   ( clk_125MHz_90 ),   
+    .clk180_o  (               ),  
+  );
 
   sync #(
     .STAGES     ( SyncStages ),
@@ -198,15 +209,15 @@ module eth_idma_wrap_syth #(
     .clk_i,
     .rst_ni,
      /// Etherent Internal clocks
-    .eth_clk125_i        ( clk_125MHz_0        ), // 125MHz in-phase
+    .eth_clk125_i        ( clk_125_i           ), // 125MHz in-phase
     .eth_clk125q_i       ( clk_125MHz_90       ), // 125 MHz with 90 phase shift
-    .phy_rx_clk_i        ( eth_rxck            ),
-    .phy_rxd_i           ( eth_rxd             ),
-    .phy_rx_ctl_i        ( eth_rxctl           ),
-    .phy_tx_clk_o        ( eth_txck            ),
-    .phy_txd_o           ( eth_txd             ),
-    .phy_tx_ctl_o        ( eth_txctl           ),
-    .phy_resetn_o        ( eth_tx_rstn         ),  
+    .phy_rx_clk_i        ( phy_rx_clk_i        ),
+    .phy_rxd_i           ( phy_rxd_i           ),
+    .phy_rx_ctl_i        ( phy_rx_ctl_i        ),
+    .phy_tx_clk_o        ( phy_tx_clk_o        ),
+    .phy_txd_o           ( phy_txd_o           ),
+    .phy_tx_ctl_o        ( phy_tx_ctl_o        ),
+    .phy_resetn_o        ( phy_resetn_o        ),  
     .phy_intn_i          ( phy_intn_i          ),
     .phy_pme_i           ( phy_pme_i           ),
     .phy_mdio_i          ( phy_mdio_i          ),
