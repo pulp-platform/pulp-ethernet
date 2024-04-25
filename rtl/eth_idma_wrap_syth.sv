@@ -87,7 +87,7 @@ module eth_idma_wrap_syth #(
   input  logic             [LogDepth:0] async_axi_out_ar_rptr_i,
   input  logic [ AsyncAxiOutRWidth-1:0] async_axi_out_r_data_i,
   input  logic             [LogDepth:0] async_axi_out_r_wptr_i,
-  output logic             [LogDepth:0] async_axi_out_r_rptr_o
+  output logic             [LogDepth:0] async_axi_out_r_rptr_o,
   /// reg cdc
   input  logic                    reg_async_mst_req_i,
   output logic                    reg_async_mst_ack_o,
@@ -96,7 +96,7 @@ module eth_idma_wrap_syth #(
   input  logic                    reg_async_mst_ack_i,
   output l2_ecc_reg_rsp_t         reg_async_mst_data_o,
   // irq cdc
-  outpput logic                   eth_irq_o,
+  outpput logic                   eth_irq_o
 );
 
   axi_out_req_t axi_out_req, axi_out_isolate_req;
@@ -115,7 +115,7 @@ module eth_idma_wrap_syth #(
     .rst_ni    ( rst_ni        ),
     .clk0_o    (               ),    
     .clk90_o   ( clk_125MHz_90 ),   
-    .clk180_o  (               ),  
+    .clk180_o  (               )
   );
 
   sync #(
