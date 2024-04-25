@@ -7,10 +7,10 @@
 `include "axi/typedef.svh"
 
 module eth_idma_wrap_syth #(
-  parameter int unsigned AddrWidth  = SynthAxiAddrWidth,
-  parameter int unsigned DataWidth  = SynthAxiDataWidth,
-  parameter int unsigned UserWidth  = SynthAxiUserWidth,
-  parameter int unsigned AxiIdWidth = SynthAxiOutIdWidth,
+  parameter int unsigned AddrWidth  = 32'd32,
+  parameter int unsigned DataWidth  = 32'd32,
+  parameter int unsigned UserWidth  = 32'd1,
+  parameter int unsigned AxiIdWidth = 32'd1,
   /// Number of transaction that can be in-flight concurrently
   parameter int unsigned NumAxInFlight       = 32'd3,
   /// The depth of the internal reorder buffer
@@ -28,21 +28,21 @@ module eth_idma_wrap_syth #(
   parameter int unsigned TxFifoLogDepth      = 32'd4,
   parameter int unsigned RxFifoLogDepth      = 32'd4,
   
-  parameter int unsigned AsyncAxiOutAwWidth = SynthAsyncAxiOutAwWidth,
-  parameter int unsigned AsyncAxiOutWWidth  = SynthAsyncAxiOutWWidth,
-  parameter int unsigned AsyncAxiOutBWidth  = SynthAsyncAxiOutBWidth,
-  parameter int unsigned AsyncAxiOutArWidth = SynthAsyncAxiOutArWidth,
-  parameter int unsigned AsyncAxiOutRWidth  = SynthAsyncAxiOutRWidth
+  parameter int unsigned AsyncAxiOutAwWidth = 32'd32,
+  parameter int unsigned AsyncAxiOutWWidth  = 32'd32,
+  parameter int unsigned AsyncAxiOutBWidth  = 32'd32,
+  parameter int unsigned AsyncAxiOutArWidth = 32'd32,
+  parameter int unsigned AsyncAxiOutRWidth  = 32'd32,
 
-  parameter type         axi_out_aw_chan_t  = synth_axi_out_aw_chan_t,
-  parameter type         axi_out_w_chan_t   = synth_axi_out_w_chan_t,
-  parameter type         axi_out_b_chan_t   = synth_axi_out_b_chan_t,
-  parameter type         axi_out_ar_chan_t  = synth_axi_out_ar_chan_t,
-  parameter type         axi_out_r_chan_t   = synth_axi_out_r_chan_t,
-  parameter type         axi_out_req_t      = synth_axi_out_req_t,
-  parameter type         axi_out_resp_t     = synth_axi_out_resp_t,
-  parameter int unsigned LogDepth           = SynthLogDepth,
-  parameter int unsigned CdcSyncStages      = SynthCdcSyncStages,
+  parameter type         axi_out_aw_chan_t  = logic,
+  parameter type         axi_out_w_chan_t   = logic,
+  parameter type         axi_out_b_chan_t   = logic,
+  parameter type         axi_out_ar_chan_t  = logic,
+  parameter type         axi_out_r_chan_t   = logic,
+  parameter type         axi_out_req_t      = logic,
+  parameter type         axi_out_resp_t     = logic,
+  parameter int unsigned LogDepth           = 3,
+  parameter int unsigned CdcSyncStages      = 2,
   parameter int unsigned SyncStages         = 3,
   
   /// Register Request and Response type
