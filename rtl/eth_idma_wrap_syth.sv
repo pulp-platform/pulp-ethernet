@@ -96,7 +96,7 @@ module eth_idma_wrap_syth #(
   input  logic                    reg_async_mst_ack_i,
   output reg_rsp_t                reg_async_mst_data_o,
   // irq cdc
-  outpput logic                   eth_irq_o
+  output logic                    eth_irq_o
 );
 
   axi_out_req_t axi_out_req, axi_out_isolate_req;
@@ -201,10 +201,10 @@ module eth_idma_wrap_syth #(
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
     .RejectZeroTransfers ( RejectZeroTransfers ),
-    .axi_req_t           ( axi_req_t           ),
-    .axi_rsp_t           ( axi_rsp_t           ),
-    .reg_req_t           ( reg_bus_req_t       ),
-    .reg_rsp_t           ( reg_bus_rsp_t       )
+    .axi_req_t           ( axi_out_req_t       ),
+    .axi_rsp_t           ( axi_out_resp_t      ),
+    .reg_req_t           ( reg_req_t           ),
+    .reg_rsp_t           ( reg_rsp_t           )
   ) i_eth_idma_wrap (
     .clk_i,
     .rst_ni,
@@ -229,7 +229,7 @@ module eth_idma_wrap_syth #(
     .testmode_i          ( testmode_i          ),
     .axi_req_o           ( axi_out_isolate_req ),
     .axi_rsp_i           ( axi_out_isolate_rsp ),
-    .idma_busy_o         ( tx_busy             ),
+    .idma_busy_o         (                     ),
     .eth_irq_o           ( eth_irq             )
   );
 
