@@ -41,6 +41,7 @@ sources:
   - rtl/framing_top.sv
   - rtl/eth_top.sv
   - rtl/eth_idma_wrap.sv
+  - rtl/eth_idma_wrap_syth.sv
 
   - target: test
     files:
