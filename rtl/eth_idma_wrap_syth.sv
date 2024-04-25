@@ -91,10 +91,10 @@ module eth_idma_wrap_syth #(
   /// reg cdc
   input  logic                    reg_async_mst_req_i,
   output logic                    reg_async_mst_ack_o,
-  input  l2_ecc_reg_req_t         reg_async_mst_data_i,
+  input  reg_req_t                reg_async_mst_data_i,
   output logic                    reg_async_mst_req_o,
   input  logic                    reg_async_mst_ack_i,
-  output l2_ecc_reg_rsp_t         reg_async_mst_data_o,
+  output reg_rsp_t                reg_async_mst_data_o,
   // irq cdc
   outpput logic                   eth_irq_o
 );
@@ -250,5 +250,6 @@ module eth_idma_wrap_syth #(
     .async_req_o ( reg_async_mst_req_o  ),
     .async_ack_i ( reg_async_mst_ack_i  ),
     .async_data_o( reg_async_mst_data_o )
- );
+  );
+
 endmodule : eth_idma_wrap_syth
