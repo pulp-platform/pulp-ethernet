@@ -44,7 +44,6 @@ module eth_idma_wrap #(
   input  logic                    rst_ni, 
   /// Etherent clocks
   input  logic                    eth_clk125_i, 
-  input  logic                    eth_clk125q_i,
   /// Only for Genesys2 delay control
   input  logic                    eth_clk200_i,
   /// Ethernet: 1000BASE-T RGMII
@@ -159,6 +158,7 @@ module eth_idma_wrap #(
   } write_meta_channel_t;
   
   logic  idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;  
+  logic  clk_125_90;
 
   /// AXI request and response
   axi_req_t     axi_read_req,axi_write_req;
@@ -249,6 +249,15 @@ module eth_idma_wrap #(
     .axis_write_rsp_i     ( idma_axis_write_rsp  ),
     .busy_o               ( idma_busy_o          )
   );
+  
+  // phase shifter
+  clk_gen_hyper i_clk_shift(
+    .clk_i     ( eth_clk125_i  ),    
+    .rst_ni    ( rst_ni        ),
+    .clk0_o    (               ),    
+    .clk90_o   ( clk_125_90    ),   
+    .clk180_o  (               )
+  );
 
   eth_top #(
     .DataWidth          (  DataWidth         ), 
@@ -260,7 +269,7 @@ module eth_idma_wrap #(
   ) i_eth_top (
     .rst_ni             (  rst_ni            ),
     .clk_i              (  eth_clk125_i      ),
-    .clk90_int          (  eth_clk125q_i     ),
+    .clk90_int          (  clk_125_90        ),
     .clk200_int         (  eth_clk200_i      ),
     .phy_rx_clk         (  phy_rx_clk_i      ),
     .phy_rxd            (  phy_rxd_i         ),
