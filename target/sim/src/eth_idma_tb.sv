@@ -27,7 +27,7 @@ module eth_idma_tb
 
   /// timing parameters
   localparam time SYS_TCK       = 5ns;
-  localparam time TCK125        = 8ns;
+  localparam time ETH_TCK       = 4ns;
   localparam time SYS_TA        = 2ns;
   localparam time SYS_TT        = 3ns;
 
@@ -65,7 +65,7 @@ module eth_idma_tb
   `REG_BUS_TYPEDEF_ALL(reg_bus, reg_bus_addr_t, reg_bus_data_t, reg_bus_strb_t)
 
   logic       s_clk;
-  logic       s_clk_125MHz_0;
+  logic       eth_clk;
   logic       s_rst_n;
   logic       done  = 0;
   logic       error_found = 0;
@@ -221,7 +221,7 @@ module eth_idma_tb
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
      /// Etherent Internal clocks
-    .eth_clk125_i        ( s_clk_125MHz_0      ), // 125MHz in-phase
+    .eth_clk_i           ( eth_clk             ), 
     .phy_rx_clk_i        ( eth_rxck            ),
     .phy_rxd_i           ( eth_rxd             ),
     .phy_rx_ctl_i        ( eth_rxctl           ),
@@ -263,7 +263,7 @@ module eth_idma_tb
   )i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
-    .eth_clk125_i     ( s_clk_125MHz_0  ), // 125MHz in-phase
+    .eth_clk_i        ( eth_clk         ), 
     .phy_rx_clk_i     ( eth_txck        ),
     .phy_rxd_i        ( eth_txd         ),
     .phy_rx_ctl_i     ( eth_txctl       ),
@@ -290,10 +290,10 @@ module eth_idma_tb
   /// Ethernet Internal Clock generation
   initial begin
     while (!done) begin
-      s_clk_125MHz_0 <= 1;
-      #(TCK125/2);
-      s_clk_125MHz_0 <= 0;
-      #(TCK125/2);
+      eth_clk <= 1;
+      #(ETH_TCK/2);
+      eth_clk <= 0;
+      #(ETH_TCK/2);
     end
   end
 

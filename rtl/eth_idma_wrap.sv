@@ -43,7 +43,7 @@ module eth_idma_wrap #(
   input  logic                    clk_i,
   input  logic                    rst_ni, 
   /// Etherent clocks
-  input  logic                    eth_clk125_i, 
+  input  logic                    eth_clk_i, 
   /// Only for Genesys2 delay control
   input  logic                    eth_clk200_i,
   /// Ethernet: 1000BASE-T RGMII
@@ -158,7 +158,7 @@ module eth_idma_wrap #(
   } write_meta_channel_t;
   
   logic  idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;  
-  logic  clk_125_90;
+  logic  clk_125_0, clk_125_90;
 
   /// AXI request and response
   axi_req_t     axi_read_req,axi_write_req;
@@ -252,11 +252,10 @@ module eth_idma_wrap #(
   
   // phase shifter
   clk_gen_hyper i_clk_shift(
-    .clk_i     ( eth_clk125_i  ),    
+    .clk_i     ( eth_clk_i     ), // 250 Mhz    
     .rst_ni    ( rst_ni        ),
-    .clk0_o    (               ),    
-    .clk90_o   ( clk_125_90    ),   
-    .clk180_o  (               )
+    .clk0_o    ( clk_125_0     ),    
+    .clk90_o   ( clk_125_90    )
   );
 
   eth_top #(
@@ -268,7 +267,7 @@ module eth_idma_wrap #(
     .hw2reg_itf_t       (  eth_idma_hw2reg_t )
   ) i_eth_top (
     .rst_ni             (  rst_ni            ),
-    .clk_i              (  eth_clk125_i      ),
+    .clk_i              (  clk_125_0         ),
     .clk90_int          (  clk_125_90        ),
     .clk200_int         (  eth_clk200_i      ),
     .phy_rx_clk         (  phy_rx_clk_i      ),
@@ -306,7 +305,7 @@ module eth_idma_wrap #(
     .src_valid_i    ( idma_axis_write_req.tvalid ),
     .src_ready_o    ( idma_axis_write_rsp.tready ),
     .dst_rst_ni     ( rst_ni                     ),
-    .dst_clk_i      ( eth_clk125_i               ),
+    .dst_clk_i      ( clk_125_0                  ),
     .dst_data_o     ( eth_axis_tx_req.t          ),
     .dst_valid_o    ( eth_axis_tx_req.tvalid     ),
     .dst_ready_i    ( eth_axis_tx_rsp.tready     )
@@ -318,7 +317,7 @@ module eth_idma_wrap #(
     .LOG_DEPTH   ( RxFifoLogDepth )
   ) i_cdc_fifo_rx (
     .src_rst_ni     ( rst_ni                    ),
-    .src_clk_i      ( eth_clk125_i              ),
+    .src_clk_i      ( clk_125_0                 ),
     .src_data_i     ( eth_axis_rx_rsp.t         ),
     .src_valid_i    ( eth_axis_rx_rsp.tvalid    ),
     .src_ready_o    ( eth_axis_rx_req.tready    ),
