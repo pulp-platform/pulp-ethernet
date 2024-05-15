@@ -1,5 +1,5 @@
 package:
-  name: ethernet_idma
+  name: pulp-ethernet
 
   authors:
     - "Chaoqun Liang <chaoqun.liang@unibo.it>" 
@@ -11,12 +11,8 @@ dependencies:
   register_interface :  { git: "https://github.com/pulp-platform/register_interface.git",   version: 0.4.2  }
   common_cells:         { git: "https://github.com/pulp-platform/common_cells.git",         version: 1.21.0 }
   axi_stream:           { git: "https://github.com/pulp-platform/axi_stream.git",           rev: "54891ff"  }
-  idma:                 { git: "git@github.com:pulp-platform/iDMA.git",                     version: 0.6.0  } 
+  idma:                 { git: "git@github.com:pulp-platform/iDMA.git",                     version: 0.6.2  } 
   
-
-export_include_dirs:
-  - include
-
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this
   # package. Files in level 1 only depend on files in level 0, files in level 2 on files in

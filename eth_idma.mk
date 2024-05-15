@@ -29,7 +29,7 @@ ifdef DEBUG
 	VSIM_FLAGS := $(QUESTA_FLAGS) +acc
 	RUN_AND_EXIT := log -r /*; run -all
 else
-	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH). +noacc=p+$(DUT).
+	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH). +acc=p+$(DUT).
 	VSIM_FLAGS := $(QUESTA_FLAGS) -c
 	RUN_AND_EXIT := run -all; exit
 endif
