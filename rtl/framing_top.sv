@@ -230,7 +230,7 @@ module framing_top #(
     // Error registers
     .rx_fcs_reg    (hw2reg_o.rx_fcs.d    ),
     .tx_fcs_reg    (hw2reg_o.tx_fcs.d    ),
-    .eth_irq       (eth_irq              )
+    .eth_irq       (eth_tx_irq           )
   );
 
 endmodule // framing_top
