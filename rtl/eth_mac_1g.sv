@@ -89,7 +89,7 @@ module eth_mac_1g #
     output wire        eth_irq
 );
 
-wire tx_irq, rx_irq;
+wire tx_irq;
 
 axis_gmii_rx
 axis_gmii_rx_inst (
@@ -106,8 +106,7 @@ axis_gmii_rx_inst (
     .mii_select(rx_mii_select),
     .error_bad_frame(rx_error_bad_frame),
     .error_bad_fcs(rx_error_bad_fcs),
-    .fcs_reg(rx_fcs_reg),
-    .eth_irq(rx_irq)
+    .fcs_reg(rx_fcs_reg)
 );
 
 axis_gmii_tx #(
@@ -132,6 +131,6 @@ axis_gmii_tx_inst (
     .eth_irq(tx_irq)
 );
 
-assign eth_irq = tx_irq | rx_irq;
+assign eth_irq = tx_irq ;
 
 endmodule

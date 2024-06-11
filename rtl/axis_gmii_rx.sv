@@ -68,10 +68,7 @@ module axis_gmii_rx
     output wire        error_bad_fcs,
 
     /* debug */
-    output reg [31:0]  fcs_reg,
-
-    /* interrupt */
-    output reg         eth_irq
+    output reg [31:0]  fcs_reg
 );
 
 localparam [7:0]
@@ -253,8 +250,6 @@ end
 always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
         state_reg <= STATE_IDLE;
-        eth_busy <= 1'b0;
-        eth_irq <= 1'b0;
         m_axis_tvalid_reg <= 1'b0;
 
         error_bad_frame_reg <= 1'b0;
@@ -274,13 +269,8 @@ always_ff @(posedge clk or posedge rst) begin
         gmii_rx_dv_d4 <= 1'b0;
     end else begin
         state_reg <= state_next;
-        eth_busy <= eth_busy_next;
         // Check for falling edge from high to low
-        if (eth_busy && !eth_busy_next) begin
-            eth_irq <= 1'b1; 
-        end else begin
-            eth_irq <= 1'b0;  
-        end
+     
         m_axis_tvalid_reg <= m_axis_tvalid_next;
 
         error_bad_frame_reg <= error_bad_frame_next;
