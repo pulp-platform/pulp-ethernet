@@ -15,7 +15,7 @@
 # Author: Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>
 
 BENDER ?= bender
-QUESTA ?= questa-2022.3
+QUESTA ?= questa-2023.4
 TBENCH ?= eth_idma_tb
 DUT    ?= eth_idma_wrap
 
@@ -26,10 +26,10 @@ QUESTA_FLAGS := -permissive -suppress 3009 -suppress 8386 -error 7 +UVM_NO_RELNO
 #QUESTA_FLAGS :=
 ifdef DEBUG
 	VOPT_FLAGS := $(QUESTA_FLAGS) +acc
-	VSIM_FLAGS := $(QUESTA_FLAGS) +acc
+	VSIM_FLAGS := $(QUESTA_FLAGS) 
 	RUN_AND_EXIT := log -r /*; run -all
 else
-	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH). +acc=p+$(DUT).
+	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH). 
 	VSIM_FLAGS := $(QUESTA_FLAGS) -c
 	RUN_AND_EXIT := run -all; exit
 endif
