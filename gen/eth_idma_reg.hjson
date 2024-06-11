@@ -74,17 +74,6 @@
               }
           ]
         },
-        { name: "rx_irq",
-          desc: "ethernet starts receiving packets",
-          swaccess: "ro",
-          hwaccess: "hwo",
-          fields: [
-              { bits: "0", name: "tx_irq",
-                desc: "etherent TX interrupt"
-                resval: "0"
-              }
-          ]
-        },
         { name: "src_addr",
           desc: "Source Address",
           swaccess: "rw",
@@ -307,6 +296,17 @@
               desc: "idma response valid"
               resval: "0"
             }
+          ]
+        },
+        { name: "rx_irq",
+          desc: "ethernet starts receiving packets",
+          swaccess: "ro",
+          hwaccess: "hwo",
+          fields: [
+              { bits: "0", name: "tx_irq",
+                desc: "etherent TX interrupt"
+                resval: "0"
+              }
           ]
         },
   ]

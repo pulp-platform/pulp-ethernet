@@ -68,7 +68,6 @@ module eth_top #(
 
 );
   
-  assign eth_rx_irq_o = eth_rx_irq;
 // ---------------- axis streams for the framing module ----------------------
   localparam int unsigned FramingDataWidth = 8;
   localparam int unsigned FramingIdWidth   = 0;
@@ -90,17 +89,6 @@ module eth_top #(
   s_framing_rsp_t s_framing_tx_rsp, s_framing_rx_rsp;
 
 // ---------------- END: axis streams for the framing module ----------------------
-  logic eth_rx_irq, eth_rx_irq_prv;
-
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni)
-      eth_rx_irq_prev <= 0;
-    else
-      eth_rx_irq_prev <= phy_rx_ctl;
-  end
-  
-  assign eth_rx_irq = phy_rx_ctl & !eth_rx_irq_ff;
-
   framing_top #(
     .axi_stream_req_t  ( s_framing_req_t ),
     .axi_stream_rsp_t  ( s_framing_rsp_t ),
@@ -141,7 +129,8 @@ module eth_top #(
     // Reg Interface
     .reg2hw_i       ( reg2hw_i    ),
     .hw2reg_o       ( hw2reg_o    ),
-    .eth_irq        ( eth_tx_irq_o)
+    .eth_tx_irq_o   ( eth_tx_irq_o),
+    .eth_rx_irq_o   ( eth_rx_irq_o)
   );
 
   axi_stream_dw_downsizer #(

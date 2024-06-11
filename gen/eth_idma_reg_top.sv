@@ -89,7 +89,6 @@ module eth_idma_reg_top #(
   logic [31:0] tx_fcs_qs;
   logic [31:0] rx_fcs_qs;
   logic tx_irq_qs;
-  logic rx_irq_qs;
   logic [31:0] src_addr_qs;
   logic [31:0] src_addr_wd;
   logic src_addr_we;
@@ -173,6 +172,7 @@ module eth_idma_reg_top #(
   logic rsp_ready_wd;
   logic rsp_ready_we;
   logic rsp_valid_qs;
+  logic rx_irq_qs;
 
   // Register instances
   // R[maclo_addr]: V(False)
@@ -409,32 +409,6 @@ module eth_idma_reg_top #(
 
     // to register interface (read)
     .qs     (tx_irq_qs)
-  );
-
-
-  // R[rx_irq]: V(False)
-
-  prim_subreg #(
-    .DW      (1),
-    .SWACCESS("RO"),
-    .RESVAL  (1'h0)
-  ) u_rx_irq (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    .we     (1'b0),
-    .wd     ('0  ),
-
-    // from internal hardware
-    .de     (hw2reg.rx_irq.de),
-    .d      (hw2reg.rx_irq.d ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (),
-
-    // to register interface (read)
-    .qs     (rx_irq_qs)
   );
 
 
@@ -1207,6 +1181,32 @@ module eth_idma_reg_top #(
   );
 
 
+  // R[rx_irq]: V(False)
+
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("RO"),
+    .RESVAL  (1'h0)
+  ) u_rx_irq (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    .we     (1'b0),
+    .wd     ('0  ),
+
+    // from internal hardware
+    .de     (hw2reg.rx_irq.de),
+    .d      (hw2reg.rx_irq.d ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (),
+
+    // to register interface (read)
+    .qs     (rx_irq_qs)
+  );
+
+
 
 
   logic [19:0] addr_hit;
@@ -1217,21 +1217,21 @@ module eth_idma_reg_top #(
     addr_hit[ 2] = (reg_addr == ETH_IDMA_TX_FCS_OFFSET);
     addr_hit[ 3] = (reg_addr == ETH_IDMA_RX_FCS_OFFSET);
     addr_hit[ 4] = (reg_addr == ETH_IDMA_TX_IRQ_OFFSET);
-    addr_hit[ 5] = (reg_addr == ETH_IDMA_RX_IRQ_OFFSET);
-    addr_hit[ 6] = (reg_addr == ETH_IDMA_SRC_ADDR_OFFSET);
-    addr_hit[ 7] = (reg_addr == ETH_IDMA_DST_ADDR_OFFSET);
-    addr_hit[ 8] = (reg_addr == ETH_IDMA_LENGTH_OFFSET);
-    addr_hit[ 9] = (reg_addr == ETH_IDMA_SRC_PROTOCOL_OFFSET);
-    addr_hit[10] = (reg_addr == ETH_IDMA_DST_PROTOCOL_OFFSET);
-    addr_hit[11] = (reg_addr == ETH_IDMA_AXI_ID_OFFSET);
-    addr_hit[12] = (reg_addr == ETH_IDMA_OPT_SRC_OFFSET);
-    addr_hit[13] = (reg_addr == ETH_IDMA_OPT_DST_OFFSET);
-    addr_hit[14] = (reg_addr == ETH_IDMA_BEO_OFFSET);
-    addr_hit[15] = (reg_addr == ETH_IDMA_LAST_OFFSET);
-    addr_hit[16] = (reg_addr == ETH_IDMA_REQ_VALID_OFFSET);
-    addr_hit[17] = (reg_addr == ETH_IDMA_REQ_READY_OFFSET);
-    addr_hit[18] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
-    addr_hit[19] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
+    addr_hit[ 5] = (reg_addr == ETH_IDMA_SRC_ADDR_OFFSET);
+    addr_hit[ 6] = (reg_addr == ETH_IDMA_DST_ADDR_OFFSET);
+    addr_hit[ 7] = (reg_addr == ETH_IDMA_LENGTH_OFFSET);
+    addr_hit[ 8] = (reg_addr == ETH_IDMA_SRC_PROTOCOL_OFFSET);
+    addr_hit[ 9] = (reg_addr == ETH_IDMA_DST_PROTOCOL_OFFSET);
+    addr_hit[10] = (reg_addr == ETH_IDMA_AXI_ID_OFFSET);
+    addr_hit[11] = (reg_addr == ETH_IDMA_OPT_SRC_OFFSET);
+    addr_hit[12] = (reg_addr == ETH_IDMA_OPT_DST_OFFSET);
+    addr_hit[13] = (reg_addr == ETH_IDMA_BEO_OFFSET);
+    addr_hit[14] = (reg_addr == ETH_IDMA_LAST_OFFSET);
+    addr_hit[15] = (reg_addr == ETH_IDMA_REQ_VALID_OFFSET);
+    addr_hit[16] = (reg_addr == ETH_IDMA_REQ_READY_OFFSET);
+    addr_hit[17] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
+    addr_hit[18] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
+    addr_hit[19] = (reg_addr == ETH_IDMA_RX_IRQ_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -1279,85 +1279,85 @@ module eth_idma_reg_top #(
   assign machi_mdio_phy_mdio_oe_we = addr_hit[1] & reg_we & !reg_error;
   assign machi_mdio_phy_mdio_oe_wd = reg_wdata[19];
 
-  assign src_addr_we = addr_hit[6] & reg_we & !reg_error;
+  assign src_addr_we = addr_hit[5] & reg_we & !reg_error;
   assign src_addr_wd = reg_wdata[31:0];
 
-  assign dst_addr_we = addr_hit[7] & reg_we & !reg_error;
+  assign dst_addr_we = addr_hit[6] & reg_we & !reg_error;
   assign dst_addr_wd = reg_wdata[31:0];
 
-  assign length_we = addr_hit[8] & reg_we & !reg_error;
+  assign length_we = addr_hit[7] & reg_we & !reg_error;
   assign length_wd = reg_wdata[31:0];
 
-  assign src_protocol_we = addr_hit[9] & reg_we & !reg_error;
+  assign src_protocol_we = addr_hit[8] & reg_we & !reg_error;
   assign src_protocol_wd = reg_wdata[2:0];
 
-  assign dst_protocol_we = addr_hit[10] & reg_we & !reg_error;
+  assign dst_protocol_we = addr_hit[9] & reg_we & !reg_error;
   assign dst_protocol_wd = reg_wdata[2:0];
 
-  assign axi_id_we = addr_hit[11] & reg_we & !reg_error;
+  assign axi_id_we = addr_hit[10] & reg_we & !reg_error;
   assign axi_id_wd = reg_wdata[0];
 
-  assign opt_src_burst_we = addr_hit[12] & reg_we & !reg_error;
+  assign opt_src_burst_we = addr_hit[11] & reg_we & !reg_error;
   assign opt_src_burst_wd = reg_wdata[1:0];
 
-  assign opt_src_cache_we = addr_hit[12] & reg_we & !reg_error;
+  assign opt_src_cache_we = addr_hit[11] & reg_we & !reg_error;
   assign opt_src_cache_wd = reg_wdata[5:2];
 
-  assign opt_src_lock_we = addr_hit[12] & reg_we & !reg_error;
+  assign opt_src_lock_we = addr_hit[11] & reg_we & !reg_error;
   assign opt_src_lock_wd = reg_wdata[6];
 
-  assign opt_src_prot_we = addr_hit[12] & reg_we & !reg_error;
+  assign opt_src_prot_we = addr_hit[11] & reg_we & !reg_error;
   assign opt_src_prot_wd = reg_wdata[9:7];
 
-  assign opt_src_qos_we = addr_hit[12] & reg_we & !reg_error;
+  assign opt_src_qos_we = addr_hit[11] & reg_we & !reg_error;
   assign opt_src_qos_wd = reg_wdata[13:10];
 
-  assign opt_src_region_we = addr_hit[12] & reg_we & !reg_error;
+  assign opt_src_region_we = addr_hit[11] & reg_we & !reg_error;
   assign opt_src_region_wd = reg_wdata[17:14];
 
-  assign opt_dst_burst_we = addr_hit[13] & reg_we & !reg_error;
+  assign opt_dst_burst_we = addr_hit[12] & reg_we & !reg_error;
   assign opt_dst_burst_wd = reg_wdata[1:0];
 
-  assign opt_dst_cache_we = addr_hit[13] & reg_we & !reg_error;
+  assign opt_dst_cache_we = addr_hit[12] & reg_we & !reg_error;
   assign opt_dst_cache_wd = reg_wdata[5:2];
 
-  assign opt_dst_lock_we = addr_hit[13] & reg_we & !reg_error;
+  assign opt_dst_lock_we = addr_hit[12] & reg_we & !reg_error;
   assign opt_dst_lock_wd = reg_wdata[6];
 
-  assign opt_dst_prot_we = addr_hit[13] & reg_we & !reg_error;
+  assign opt_dst_prot_we = addr_hit[12] & reg_we & !reg_error;
   assign opt_dst_prot_wd = reg_wdata[9:7];
 
-  assign opt_dst_qos_we = addr_hit[13] & reg_we & !reg_error;
+  assign opt_dst_qos_we = addr_hit[12] & reg_we & !reg_error;
   assign opt_dst_qos_wd = reg_wdata[13:10];
 
-  assign opt_dst_region_we = addr_hit[13] & reg_we & !reg_error;
+  assign opt_dst_region_we = addr_hit[12] & reg_we & !reg_error;
   assign opt_dst_region_wd = reg_wdata[17:14];
 
-  assign beo_decouple_aw_we = addr_hit[14] & reg_we & !reg_error;
+  assign beo_decouple_aw_we = addr_hit[13] & reg_we & !reg_error;
   assign beo_decouple_aw_wd = reg_wdata[0];
 
-  assign beo_decouple_rw_we = addr_hit[14] & reg_we & !reg_error;
+  assign beo_decouple_rw_we = addr_hit[13] & reg_we & !reg_error;
   assign beo_decouple_rw_wd = reg_wdata[1];
 
-  assign beo_src_max_llen_we = addr_hit[14] & reg_we & !reg_error;
+  assign beo_src_max_llen_we = addr_hit[13] & reg_we & !reg_error;
   assign beo_src_max_llen_wd = reg_wdata[4:2];
 
-  assign beo_dst_max_llen_we = addr_hit[14] & reg_we & !reg_error;
+  assign beo_dst_max_llen_we = addr_hit[13] & reg_we & !reg_error;
   assign beo_dst_max_llen_wd = reg_wdata[7:5];
 
-  assign beo_src_reduce_len_we = addr_hit[14] & reg_we & !reg_error;
+  assign beo_src_reduce_len_we = addr_hit[13] & reg_we & !reg_error;
   assign beo_src_reduce_len_wd = reg_wdata[8];
 
-  assign beo_dst_reduce_len_we = addr_hit[14] & reg_we & !reg_error;
+  assign beo_dst_reduce_len_we = addr_hit[13] & reg_we & !reg_error;
   assign beo_dst_reduce_len_wd = reg_wdata[9];
 
-  assign last_we = addr_hit[15] & reg_we & !reg_error;
+  assign last_we = addr_hit[14] & reg_we & !reg_error;
   assign last_wd = reg_wdata[0];
 
-  assign req_valid_we = addr_hit[16] & reg_we & !reg_error;
+  assign req_valid_we = addr_hit[15] & reg_we & !reg_error;
   assign req_valid_wd = reg_wdata[0];
 
-  assign rsp_ready_we = addr_hit[18] & reg_we & !reg_error;
+  assign rsp_ready_we = addr_hit[17] & reg_we & !reg_error;
   assign rsp_ready_wd = reg_wdata[0];
 
   // Read data return
@@ -1389,34 +1389,30 @@ module eth_idma_reg_top #(
       end
 
       addr_hit[5]: begin
-        reg_rdata_next[0] = rx_irq_qs;
-      end
-
-      addr_hit[6]: begin
         reg_rdata_next[31:0] = src_addr_qs;
       end
 
-      addr_hit[7]: begin
+      addr_hit[6]: begin
         reg_rdata_next[31:0] = dst_addr_qs;
       end
 
-      addr_hit[8]: begin
+      addr_hit[7]: begin
         reg_rdata_next[31:0] = length_qs;
       end
 
-      addr_hit[9]: begin
+      addr_hit[8]: begin
         reg_rdata_next[2:0] = src_protocol_qs;
       end
 
-      addr_hit[10]: begin
+      addr_hit[9]: begin
         reg_rdata_next[2:0] = dst_protocol_qs;
       end
 
-      addr_hit[11]: begin
+      addr_hit[10]: begin
         reg_rdata_next[0] = axi_id_qs;
       end
 
-      addr_hit[12]: begin
+      addr_hit[11]: begin
         reg_rdata_next[1:0] = opt_src_burst_qs;
         reg_rdata_next[5:2] = opt_src_cache_qs;
         reg_rdata_next[6] = opt_src_lock_qs;
@@ -1425,7 +1421,7 @@ module eth_idma_reg_top #(
         reg_rdata_next[17:14] = opt_src_region_qs;
       end
 
-      addr_hit[13]: begin
+      addr_hit[12]: begin
         reg_rdata_next[1:0] = opt_dst_burst_qs;
         reg_rdata_next[5:2] = opt_dst_cache_qs;
         reg_rdata_next[6] = opt_dst_lock_qs;
@@ -1434,7 +1430,7 @@ module eth_idma_reg_top #(
         reg_rdata_next[17:14] = opt_dst_region_qs;
       end
 
-      addr_hit[14]: begin
+      addr_hit[13]: begin
         reg_rdata_next[0] = beo_decouple_aw_qs;
         reg_rdata_next[1] = beo_decouple_rw_qs;
         reg_rdata_next[4:2] = beo_src_max_llen_qs;
@@ -1443,24 +1439,28 @@ module eth_idma_reg_top #(
         reg_rdata_next[9] = beo_dst_reduce_len_qs;
       end
 
-      addr_hit[15]: begin
+      addr_hit[14]: begin
         reg_rdata_next[0] = last_qs;
       end
 
-      addr_hit[16]: begin
+      addr_hit[15]: begin
         reg_rdata_next[0] = req_valid_qs;
       end
 
-      addr_hit[17]: begin
+      addr_hit[16]: begin
         reg_rdata_next[0] = req_ready_qs;
       end
 
-      addr_hit[18]: begin
+      addr_hit[17]: begin
         reg_rdata_next[0] = rsp_ready_qs;
       end
 
-      addr_hit[19]: begin
+      addr_hit[18]: begin
         reg_rdata_next[0] = rsp_valid_qs;
+      end
+
+      addr_hit[19]: begin
+        reg_rdata_next[0] = rx_irq_qs;
       end
 
       default: begin
