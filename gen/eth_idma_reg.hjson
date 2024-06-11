@@ -303,8 +303,8 @@
           swaccess: "ro",
           hwaccess: "hwo",
           fields: [
-              { bits: "0", name: "tx_irq",
-                desc: "etherent TX interrupt"
+              { bits: "0", name: "rx_irq",
+                desc: "etherent RX interrupt"
                 resval: "0"
               }
           ]

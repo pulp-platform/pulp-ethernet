@@ -145,7 +145,7 @@ extern "C" {
 
 // ethernet starts receiving packets
 #define ETH_IDMA_RX_IRQ_REG_OFFSET 0x4c
-#define ETH_IDMA_RX_IRQ_TX_IRQ_BIT 0
+#define ETH_IDMA_RX_IRQ_RX_IRQ_BIT 0
 
 #ifdef __cplusplus
 }  // extern "C"
