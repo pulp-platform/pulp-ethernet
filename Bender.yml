@@ -1,5 +1,5 @@
 package:
-  name: ethernet_idma
+  name: pulp-ethernet
 
   authors:
     - "Chaoqun Liang <chaoqun.liang@unibo.it>" 
