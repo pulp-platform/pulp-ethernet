@@ -30,9 +30,8 @@ extern "C" {
 #define ETH_IDMA_RX_FCS_REG_OFFSET 0xc
 
 // ethernet transmission done
-#define ETH_IDMA_IRQ_REG_OFFSET 0x10
-#define ETH_IDMA_IRQ_IRQ_BIT 0
-
+#define ETH_IDMA_TX_IRQ_REG_OFFSET 0x10
+#define ETH_IDMA_TX_IRQ_TX_IRQ_BIT 0
 
 // Source Address
 #define ETH_IDMA_SRC_ADDR_REG_OFFSET 0x14
@@ -143,6 +142,10 @@ extern "C" {
 // idma response valid
 #define ETH_IDMA_RSP_VALID_REG_OFFSET 0x48
 #define ETH_IDMA_RSP_VALID_RSP_VALID_BIT 0
+
+// ethernet starts receiving packets
+#define ETH_IDMA_RX_IRQ_REG_OFFSET 0x4c
+#define ETH_IDMA_RX_IRQ_RX_IRQ_BIT 0
 
 #ifdef __cplusplus
 }  // extern "C"

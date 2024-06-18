@@ -129,7 +129,7 @@ module eth_top #(
     // Reg Interface
     .reg2hw_i       ( reg2hw_i    ),
     .hw2reg_o       ( hw2reg_o    ),
-    .eth_irq        ( eth_irq_o   )
+    .eth_irq_o      ( eth_irq_o   )
   );
 
   axi_stream_dw_downsizer #(

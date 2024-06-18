@@ -155,7 +155,7 @@ package eth_idma_reg_pkg;
   typedef struct packed {
     logic        d;
     logic        de;
-  } eth_idma_hw2reg_irq_reg_t;
+  } eth_idma_hw2reg_tx_irq_reg_t;
 
   typedef struct packed {
     logic        d;
@@ -176,6 +176,11 @@ package eth_idma_reg_pkg;
     logic        d;
     logic        de;
   } eth_idma_hw2reg_rsp_valid_reg_t;
+
+  typedef struct packed {
+    logic        d;
+    logic        de;
+  } eth_idma_hw2reg_rx_irq_reg_t;
 
   // Register -> HW type
   typedef struct packed {
@@ -199,13 +204,14 @@ package eth_idma_reg_pkg;
 
   // HW -> register type
   typedef struct packed {
-    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [75:43]
-    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [42:10]
-    eth_idma_hw2reg_irq_reg_t irq; // [9:8]
-    eth_idma_hw2reg_axi_id_reg_t axi_id; // [7:6]
-    eth_idma_hw2reg_last_reg_t last; // [5:4]
-    eth_idma_hw2reg_req_ready_reg_t req_ready; // [3:2]
-    eth_idma_hw2reg_rsp_valid_reg_t rsp_valid; // [1:0]
+    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [77:45]
+    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [44:12]
+    eth_idma_hw2reg_tx_irq_reg_t tx_irq; // [11:10]
+    eth_idma_hw2reg_axi_id_reg_t axi_id; // [9:8]
+    eth_idma_hw2reg_last_reg_t last; // [7:6]
+    eth_idma_hw2reg_req_ready_reg_t req_ready; // [5:4]
+    eth_idma_hw2reg_rsp_valid_reg_t rsp_valid; // [3:2]
+    eth_idma_hw2reg_rx_irq_reg_t rx_irq; // [1:0]
   } eth_idma_hw2reg_t;
 
   // Register offsets
@@ -213,7 +219,7 @@ package eth_idma_reg_pkg;
   parameter logic [BlockAw-1:0] ETH_IDMA_MACHI_MDIO_OFFSET = 7'h 4;
   parameter logic [BlockAw-1:0] ETH_IDMA_TX_FCS_OFFSET = 7'h 8;
   parameter logic [BlockAw-1:0] ETH_IDMA_RX_FCS_OFFSET = 7'h c;
-  parameter logic [BlockAw-1:0] ETH_IDMA_IRQ_OFFSET = 7'h 10;
+  parameter logic [BlockAw-1:0] ETH_IDMA_TX_IRQ_OFFSET = 7'h 10;
   parameter logic [BlockAw-1:0] ETH_IDMA_SRC_ADDR_OFFSET = 7'h 14;
   parameter logic [BlockAw-1:0] ETH_IDMA_DST_ADDR_OFFSET = 7'h 18;
   parameter logic [BlockAw-1:0] ETH_IDMA_LENGTH_OFFSET = 7'h 1c;
@@ -228,6 +234,7 @@ package eth_idma_reg_pkg;
   parameter logic [BlockAw-1:0] ETH_IDMA_REQ_READY_OFFSET = 7'h 40;
   parameter logic [BlockAw-1:0] ETH_IDMA_RSP_READY_OFFSET = 7'h 44;
   parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_OFFSET = 7'h 48;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RX_IRQ_OFFSET = 7'h 4c;
 
   // Register index
   typedef enum int {
@@ -235,7 +242,7 @@ package eth_idma_reg_pkg;
     ETH_IDMA_MACHI_MDIO,
     ETH_IDMA_TX_FCS,
     ETH_IDMA_RX_FCS,
-    ETH_IDMA_IRQ,
+    ETH_IDMA_TX_IRQ,
     ETH_IDMA_SRC_ADDR,
     ETH_IDMA_DST_ADDR,
     ETH_IDMA_LENGTH,
@@ -249,16 +256,17 @@ package eth_idma_reg_pkg;
     ETH_IDMA_REQ_VALID,
     ETH_IDMA_REQ_READY,
     ETH_IDMA_RSP_READY,
-    ETH_IDMA_RSP_VALID
+    ETH_IDMA_RSP_VALID,
+    ETH_IDMA_RX_IRQ
   } eth_idma_id_e;
 
   // Register width information to check illegal writes
-  parameter logic [3:0] ETH_IDMA_PERMIT [19] = '{
+  parameter logic [3:0] ETH_IDMA_PERMIT [20] = '{
     4'b 1111, // index[ 0] ETH_IDMA_MACLO_ADDR
     4'b 0111, // index[ 1] ETH_IDMA_MACHI_MDIO
     4'b 1111, // index[ 2] ETH_IDMA_TX_FCS
     4'b 1111, // index[ 3] ETH_IDMA_RX_FCS
-    4'b 0001, // index[ 4] ETH_IDMA_IRQ
+    4'b 0001, // index[ 4] ETH_IDMA_TX_IRQ
     4'b 1111, // index[ 5] ETH_IDMA_SRC_ADDR
     4'b 1111, // index[ 6] ETH_IDMA_DST_ADDR
     4'b 1111, // index[ 7] ETH_IDMA_LENGTH
@@ -272,7 +280,8 @@ package eth_idma_reg_pkg;
     4'b 0001, // index[15] ETH_IDMA_REQ_VALID
     4'b 0001, // index[16] ETH_IDMA_REQ_READY
     4'b 0001, // index[17] ETH_IDMA_RSP_READY
-    4'b 0001  // index[18] ETH_IDMA_RSP_VALID
+    4'b 0001, // index[18] ETH_IDMA_RSP_VALID
+    4'b 0001  // index[19] ETH_IDMA_RX_IRQ
   };
 
 endpackage

@@ -88,7 +88,7 @@ module eth_idma_reg_top #(
   logic machi_mdio_phy_mdio_oe_we;
   logic [31:0] tx_fcs_qs;
   logic [31:0] rx_fcs_qs;
-  logic irq_qs;
+  logic tx_irq_qs;
   logic [31:0] src_addr_qs;
   logic [31:0] src_addr_wd;
   logic src_addr_we;
@@ -172,6 +172,7 @@ module eth_idma_reg_top #(
   logic rsp_ready_wd;
   logic rsp_ready_we;
   logic rsp_valid_qs;
+  logic rx_irq_qs;
 
   // Register instances
   // R[maclo_addr]: V(False)
@@ -385,13 +386,13 @@ module eth_idma_reg_top #(
   );
 
 
-  // R[irq]: V(False)
+  // R[tx_irq]: V(False)
 
   prim_subreg #(
     .DW      (1),
     .SWACCESS("RO"),
     .RESVAL  (1'h0)
-  ) u_irq (
+  ) u_tx_irq (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
@@ -399,15 +400,15 @@ module eth_idma_reg_top #(
     .wd     ('0  ),
 
     // from internal hardware
-    .de     (hw2reg.irq.de),
-    .d      (hw2reg.irq.d ),
+    .de     (hw2reg.tx_irq.de),
+    .d      (hw2reg.tx_irq.d ),
 
     // to internal hardware
     .qe     (),
     .q      (),
 
     // to register interface (read)
-    .qs     (irq_qs)
+    .qs     (tx_irq_qs)
   );
 
 
@@ -1180,16 +1181,42 @@ module eth_idma_reg_top #(
   );
 
 
+  // R[rx_irq]: V(False)
+
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("RO"),
+    .RESVAL  (1'h0)
+  ) u_rx_irq (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    .we     (1'b0),
+    .wd     ('0  ),
+
+    // from internal hardware
+    .de     (hw2reg.rx_irq.de),
+    .d      (hw2reg.rx_irq.d ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (),
+
+    // to register interface (read)
+    .qs     (rx_irq_qs)
+  );
 
 
-  logic [18:0] addr_hit;
+
+
+  logic [19:0] addr_hit;
   always_comb begin
     addr_hit = '0;
     addr_hit[ 0] = (reg_addr == ETH_IDMA_MACLO_ADDR_OFFSET);
     addr_hit[ 1] = (reg_addr == ETH_IDMA_MACHI_MDIO_OFFSET);
     addr_hit[ 2] = (reg_addr == ETH_IDMA_TX_FCS_OFFSET);
     addr_hit[ 3] = (reg_addr == ETH_IDMA_RX_FCS_OFFSET);
-    addr_hit[ 4] = (reg_addr == ETH_IDMA_IRQ_OFFSET);
+    addr_hit[ 4] = (reg_addr == ETH_IDMA_TX_IRQ_OFFSET);
     addr_hit[ 5] = (reg_addr == ETH_IDMA_SRC_ADDR_OFFSET);
     addr_hit[ 6] = (reg_addr == ETH_IDMA_DST_ADDR_OFFSET);
     addr_hit[ 7] = (reg_addr == ETH_IDMA_LENGTH_OFFSET);
@@ -1204,6 +1231,7 @@ module eth_idma_reg_top #(
     addr_hit[16] = (reg_addr == ETH_IDMA_REQ_READY_OFFSET);
     addr_hit[17] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
     addr_hit[18] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
+    addr_hit[19] = (reg_addr == ETH_IDMA_RX_IRQ_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -1229,7 +1257,8 @@ module eth_idma_reg_top #(
                (addr_hit[15] & (|(ETH_IDMA_PERMIT[15] & ~reg_be))) |
                (addr_hit[16] & (|(ETH_IDMA_PERMIT[16] & ~reg_be))) |
                (addr_hit[17] & (|(ETH_IDMA_PERMIT[17] & ~reg_be))) |
-               (addr_hit[18] & (|(ETH_IDMA_PERMIT[18] & ~reg_be)))));
+               (addr_hit[18] & (|(ETH_IDMA_PERMIT[18] & ~reg_be))) |
+               (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be)))));
   end
 
   assign maclo_addr_we = addr_hit[0] & reg_we & !reg_error;
@@ -1356,7 +1385,7 @@ module eth_idma_reg_top #(
       end
 
       addr_hit[4]: begin
-        reg_rdata_next[0] = irq_qs;
+        reg_rdata_next[0] = tx_irq_qs;
       end
 
       addr_hit[5]: begin
@@ -1428,6 +1457,10 @@ module eth_idma_reg_top #(
 
       addr_hit[18]: begin
         reg_rdata_next[0] = rsp_valid_qs;
+      end
+
+      addr_hit[19]: begin
+        reg_rdata_next[0] = rx_irq_qs;
       end
 
       default: begin
