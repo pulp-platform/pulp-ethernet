@@ -33,6 +33,9 @@ package eth_idma_reg_pkg;
     struct packed {
       logic        q;
     } phy_mdio_oe;
+    struct packed {
+      logic        q;
+    } phy_mdio_i;
   } eth_idma_reg2hw_machi_mdio_reg_t;
 
   typedef struct packed {
@@ -184,8 +187,8 @@ package eth_idma_reg_pkg;
 
   // Register -> HW type
   typedef struct packed {
-    eth_idma_reg2hw_maclo_addr_reg_t maclo_addr; // [205:174]
-    eth_idma_reg2hw_machi_mdio_reg_t machi_mdio; // [173:154]
+    eth_idma_reg2hw_maclo_addr_reg_t maclo_addr; // [206:175]
+    eth_idma_reg2hw_machi_mdio_reg_t machi_mdio; // [174:154]
     eth_idma_reg2hw_src_addr_reg_t src_addr; // [153:122]
     eth_idma_reg2hw_dst_addr_reg_t dst_addr; // [121:90]
     eth_idma_reg2hw_length_reg_t length; // [89:58]

@@ -86,6 +86,9 @@ module eth_idma_reg_top #(
   logic machi_mdio_phy_mdio_oe_qs;
   logic machi_mdio_phy_mdio_oe_wd;
   logic machi_mdio_phy_mdio_oe_we;
+  logic machi_mdio_phy_mdio_i_qs;
+  logic machi_mdio_phy_mdio_i_wd;
+  logic machi_mdio_phy_mdio_i_we;
   logic [31:0] tx_fcs_qs;
   logic [31:0] rx_fcs_qs;
   logic tx_irq_qs;
@@ -331,6 +334,32 @@ module eth_idma_reg_top #(
 
     // to register interface (read)
     .qs     (machi_mdio_phy_mdio_oe_qs)
+  );
+
+
+  //   F[phy_mdio_i]: 20:20
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("RW"),
+    .RESVAL  (1'h0)
+  ) u_machi_mdio_phy_mdio_i (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    // from register interface
+    .we     (machi_mdio_phy_mdio_i_we),
+    .wd     (machi_mdio_phy_mdio_i_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0  ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.machi_mdio.phy_mdio_i.q ),
+
+    // to register interface (read)
+    .qs     (machi_mdio_phy_mdio_i_qs)
   );
 
 
@@ -1279,6 +1308,9 @@ module eth_idma_reg_top #(
   assign machi_mdio_phy_mdio_oe_we = addr_hit[1] & reg_we & !reg_error;
   assign machi_mdio_phy_mdio_oe_wd = reg_wdata[19];
 
+  assign machi_mdio_phy_mdio_i_we = addr_hit[1] & reg_we & !reg_error;
+  assign machi_mdio_phy_mdio_i_wd = reg_wdata[20];
+
   assign src_addr_we = addr_hit[5] & reg_we & !reg_error;
   assign src_addr_wd = reg_wdata[31:0];
 
@@ -1374,6 +1406,7 @@ module eth_idma_reg_top #(
         reg_rdata_next[17] = machi_mdio_phy_mdclk_qs;
         reg_rdata_next[18] = machi_mdio_phy_mdio_o_qs;
         reg_rdata_next[19] = machi_mdio_phy_mdio_oe_qs;
+        reg_rdata_next[20] = machi_mdio_phy_mdio_i_qs;
       end
 
       addr_hit[2]: begin
