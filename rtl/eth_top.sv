@@ -63,7 +63,8 @@ module eth_top #(
   // Reg configs
   input  reg2hw_itf_t                          reg2hw_i     ,
   output hw2reg_itf_t                          hw2reg_o     , 
-  output logic                                 eth_rx_irq_o
+  output logic                                 eth_rx_irq_o ,
+  output logic                                 eth_tx_irq_o
 
 );
   
@@ -128,7 +129,8 @@ module eth_top #(
     // Reg Interface
     .reg2hw_i       ( reg2hw_i    ),
     .hw2reg_o       ( hw2reg_o    ),
-    .eth_rx_irq_o   ( eth_rx_irq_o)
+    .eth_rx_irq_o   ( eth_rx_irq_o),
+    .eth_tx_irq_o   ( eth_tx_irq_o)
   );
 
   axi_stream_dw_downsizer #(
