@@ -210,6 +210,18 @@ module eth_idma_wrap #(
   assign idma_req_valid                          = reg2hw.req_valid.q;
   assign idma_rsp_ready                          = reg2hw.rsp_ready.q;
 
+  always_comb begin
+    hw2reg.req_valid.d = 1'b0;
+    hw2reg.rsp_ready.d = 1'b0;
+    hw2reg.req_valid.de = 1'b0;
+    hw2reg.rsp_ready.de = 1'b0;
+    if (!idma_req_ready && reg2hw.req_valid.q) begin
+      hw2reg.req_valid.de = 1'b1;
+      hw2reg.rsp_ready.d = 1'b1;
+      hw2reg.rsp_ready.de = 1'b1;
+    end
+  end
+
   idma_backend_rw_axi_rw_axis #(
     .DataWidth            ( DataWidth            ),
     .AddrWidth            ( AddrWidth            ),
@@ -291,7 +303,7 @@ module eth_idma_wrap #(
     .idma_req_ready     (  idma_req_ready    ),
     .idma_rsp_valid     (  idma_rsp_valid    ),        
     .reg2hw_i           (  reg2hw            ),
-    .hw2reg_o           (  hw2reg            ),
+    .hw2reg_o           (              ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
     .eth_tx_irq_o       (  eth_tx_irq_o      )
   );
@@ -299,7 +311,8 @@ module eth_idma_wrap #(
   // TX CDC FIFO
   cdc_fifo_gray #(
     .T           ( axis_t_chan_t   ),
-    .LOG_DEPTH   ( TxFifoLogDepth  )
+    .LOG_DEPTH   ( TxFifoLogDepth  ),
+    .SYNC_STAGES ( 3 )
   ) i_cdc_fifo_tx (
     .src_rst_ni     ( rst_ni                     ),
     .src_clk_i      ( clk_i                      ),
@@ -316,7 +329,8 @@ module eth_idma_wrap #(
   // RX CDC FIFO
   cdc_fifo_gray #(
     .T           ( axis_t_chan_t  ),
-    .LOG_DEPTH   ( RxFifoLogDepth )
+    .LOG_DEPTH   ( RxFifoLogDepth ),
+    .SYNC_STAGES ( 3 )
   ) i_cdc_fifo_rx (
     .src_rst_ni     ( rst_ni                    ),
     .src_clk_i      ( clk_125_0                 ),
