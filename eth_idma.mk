@@ -22,6 +22,8 @@ DUT    ?= eth_idma_wrap
 # Design and simulation variables
 ETH_ROOT ?= $(shell pwd)
 
+REG_DIR := $(shell $(BENDER) path register_interface)
+
 QUESTA_FLAGS := -permissive -suppress 3009 -suppress 8386 -error 7 +UVM_NO_RELNOTES
 #QUESTA_FLAGS :=
 ifdef DEBUG
@@ -76,3 +78,25 @@ eth-hw-sim:
 #################################
 
 .PHONY: eth-all eth-nonfree-init eth-sim-init eth-hw-build eth-hw-sim
+
+## @section register generation
+.PHONY: regen_regs
+
+# Define the path to regtool.py
+REGTOOL ?= $(REG_DIR)/vendor/lowrisc_opentitan/util/regtool.py
+
+# Register generation targets
+REGEN_TARGETS := $(ETH_ROOT)/gen/eth_idma_reg_pkg.sv \
+                 $(ETH_ROOT)/gen/eth_idma_reg_top.sv \
+                 $(ETH_ROOT)/gen/eth_idma_reg.h
+
+# Rule to generate .sv files
+$(ETH_ROOT)/gen/eth_idma_reg_pkg.sv $(ETH_ROOT)/gen/eth_idma_reg_top.sv: $(ETH_ROOT)/gen/eth_idma_reg.hjson
+	$(REGTOOL) -r -t $(ETH_ROOT)/gen $<
+
+# Rule to generate .h file
+$(ETH_ROOT)/gen/eth_idma_reg.h: $(ETH_ROOT)/gen/eth_idma_reg.hjson
+	$(REGTOOL) -D -o $@ $<
+
+# Main target
+regen_regs: $(REGEN_TARGETS)
