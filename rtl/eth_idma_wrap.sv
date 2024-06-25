@@ -246,6 +246,8 @@ module eth_idma_wrap #(
     .clk_i                ( clk_i             ),
     .rst_ni               ( rst_ni            ),
     .testmode_i           ( testmode_i        ),
+    .idma_eh_req_i        ( '0                ),
+    .eh_req_valid_i       ( '0                ),
     .idma_req_i           ( idma_reg_req      ),
     .req_valid_i          ( idma_req_valid    ), 
     .req_ready_o          ( idma_req_ready    ),  
