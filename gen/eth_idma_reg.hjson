@@ -253,7 +253,7 @@
         { name:"req_valid",
           desc: "idma request valid",
           swaccess: "rw",
-          hwaccess: "hro",
+          hwaccess: "hrw",
           fields: [
             { bits: "0",
               name: "req_valid",
@@ -277,7 +277,7 @@
         { name:"rsp_ready",
           desc: "idma response ready",
           swaccess: "rw",
-          hwaccess: "hro",
+          hwaccess: "hrw",
           fields: [
             { bits: "0",
               name: "rsp_ready",
