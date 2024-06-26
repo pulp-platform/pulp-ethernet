@@ -70,8 +70,8 @@ module eth_top #(
   
 // ---------------- axis streams for the framing module ----------------------
   localparam int unsigned FramingDataWidth = 8;
-  localparam int unsigned FramingIdWidth   = 0;
-  localparam int unsigned FramingDestWidth = 0;
+  localparam int unsigned FramingIdWidth   = IdWidth;
+  localparam int unsigned FramingDestWidth = DestWidth;
   localparam int unsigned FramingUserWidth = 1;
 
 // AXI stream channels typedefs

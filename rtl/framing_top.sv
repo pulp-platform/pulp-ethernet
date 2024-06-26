@@ -130,10 +130,16 @@ module framing_top #(
                          (mac_address == rx_dest_mac) | promiscuous;
       end
 
-    rx_axis_req_o.t.data = accept_frame_q ? rx_axis_tdata_0_q  : 'd0;
-    rx_axis_req_o.tvalid = accept_frame_q ? rx_axis_tvalid_0_q : 'd0;
-    rx_axis_req_o.t.last = accept_frame_q ? rx_axis_tlast_0_q  : 'd0;
-    rx_axis_req_o.t.user = accept_frame_q ? rx_axis_tuser_0_q  : 'd0;
+    rx_axis_req_o.t = '0;
+    rx_axis_req_o.tvalid = '0;
+    if (accept_frame_q) begin
+      rx_axis_req_o.t.data = rx_axis_tdata_0_q;
+      rx_axis_req_o.t.last = rx_axis_tlast_0_q;
+      rx_axis_req_o.t.user = rx_axis_tuser_0_q;
+      rx_axis_req_o.t.strb = 'd1;
+      rx_axis_req_o.t.keep = 'd1;
+      rx_axis_req_o.tvalid = rx_axis_tvalid_0_q;
+    end
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
