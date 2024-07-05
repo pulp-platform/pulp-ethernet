@@ -311,6 +311,9 @@ module eth_idma_wrap #(
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
     .eth_tx_irq_o       (  eth_tx_irq_o      )
   );
+
+ assign hw2reg.rsp_valid.d = idma_rsp_valid;
+ assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
   
   // TX CDC FIFO
   cdc_fifo_gray #(
