@@ -210,9 +210,6 @@ module eth_idma_wrap #(
   assign idma_req_valid                          = reg2hw.req_valid.q;
   assign idma_rsp_ready                          = reg2hw.rsp_ready.q;
   
-logic [12:0] delay_counter;
-logic handshake;
-
   always_comb begin
     hw2reg.req_valid.d = 1'b0;
     hw2reg.rsp_ready.d = 1'b0;
@@ -220,36 +217,8 @@ logic handshake;
     hw2reg.rsp_ready.de = 1'b0;
     if (!idma_req_ready && reg2hw.req_valid.q) begin
       hw2reg.req_valid.de = 1'b1;
-      // hw2reg.rsp_ready.d = 1'b1;
-      // hw2reg.rsp_ready.de = 1'b1;
-    end
-    if (delay_counter == 2000) begin
-        hw2reg.rsp_ready.d = 1'b1;
-        hw2reg.rsp_ready.de = 1'b1;
-    end
-  end
- // 180 no good after one r_valid
-// 400 is good 3
-// 1200 same as 400
-// 300 for 2
-
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      delay_counter <= 0;  
-      handshake <= 0; 
-    end else begin
-      if (idma_req_ready && reg2hw.req_valid.q && delay_counter == 0) begin
-        handshake <= 1; // Latch the condition
-      end
-      // Only increment the counter if the handshake is set
-      if (handshake) begin
-        if (delay_counter < 2000) begin
-          delay_counter <= delay_counter + 1;  
-        end else begin
-          delay_counter <= 0;  
-          handshake <= 0; 
-        end
-      end
+      hw2reg.rsp_ready.d = 1'b1;
+      hw2reg.rsp_ready.de = 1'b1;
     end
   end
 
