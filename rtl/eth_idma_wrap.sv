@@ -71,8 +71,7 @@ module eth_idma_wrap #(
   /// Register Configuration Interface
   input  reg_req_t                reg_req_i,
   output reg_rsp_t                reg_rsp_o,
-  output logic                    eth_rx_irq_o,
-  output logic                    eth_tx_irq_o
+  output logic                    eth_rx_irq_o
 );
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
@@ -307,9 +306,8 @@ module eth_idma_wrap #(
     .idma_req_ready     (  idma_req_ready    ),
     .idma_rsp_valid     (  idma_rsp_valid    ),        
     .reg2hw_i           (  reg2hw            ),
-    .hw2reg_o           (              ),
-    .eth_rx_irq_o       (  eth_rx_irq_o      ),
-    .eth_tx_irq_o       (  eth_tx_irq_o      )
+    .hw2reg_o           (                    ),
+    .eth_rx_irq_o       (  eth_rx_irq_o      )
   );
 
  assign hw2reg.rsp_valid.d = idma_rsp_valid;
