@@ -319,8 +319,8 @@ module eth_idma_tb
 
     //$readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     //$readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/astral/fix_test/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/astral/fix_test/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/astral/cheshire/handshake-eth/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/astral/cheshire/handshake-eth/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
    
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
@@ -367,35 +367,16 @@ module eth_idma_tb
     @(posedge s_clk);
     
     /// Transaction configs
-    while(1) begin
-      reg_drv_tx.send_read( 'h40, tx_req_ready, reg_error);   // req ready 
-      if( tx_req_ready ) begin
-        reg_drv_tx.send_write( 'h3c, 32'h1, 'hf , reg_error);  // req valid - req start
-        @(posedge s_clk);
-        break;
-      end
-      @(posedge s_clk);
-    end
-   
-    reg_drv_tx.send_write( 'h3c, 32'h0, 'hf, reg_error);  // req valid - lock in
-    reg_drv_tx.send_write( 'h44, 32'h1, 'hf, reg_error);  // rsp_ready - data transfer launch
+    reg_drv_tx.send_write( 'h3c, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
 
-    while(1) begin
-      reg_drv_rx.send_read( 'h40, rx_req_ready, reg_error);   // req ready
-      if( rx_req_ready ) begin
-        reg_drv_rx.send_write( 'h3c, 32'h1, 'hf, reg_error);  // req_valid
-        @(posedge s_clk);
-        break;
-      end
-      @(posedge s_clk);
-    end
-
+    reg_drv_rx.send_write( 'h3c, 32'h1, 'hf, reg_error);  // req_valid
     reg_drv_rx.send_write( 'h3c, 32'h0, 'hf, reg_error);  // req valid
     reg_drv_rx.send_write( 'h44, 32'h1, 'hf, reg_error);  // rsp ready  
     @(posedge s_clk);
   
-    repeat(160) @(posedge s_clk); // adjust based on num_bytes to write into rx sim mem
+    repeat(160) @(posedge s_clk); // adjust based on num_bytes to write into rx sim mem 
+    // can @posedge of rsp_valid 
 
     for (int j = 0; j < 64; j++) begin
       if (i_tx_axi_sim_mem.mem[j] != i_rx_axi_sim_mem.mem[j]) begin
