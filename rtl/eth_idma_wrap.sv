@@ -43,7 +43,8 @@ module eth_idma_wrap #(
   input  logic                    clk_i,
   input  logic                    rst_ni, 
   /// Etherent clocks
-  input  logic                    eth_clk_i, 
+  input  logic                    eth_clk125_i, 
+  input  logic                    eth_clk125q_i, 
   /// Only for Genesys2 delay control
   input  logic                    eth_clk200_i,
   /// Ethernet: 1000BASE-T RGMII
@@ -264,14 +265,6 @@ module eth_idma_wrap #(
     .busy_o               ( idma_busy_o          )
   );
   
-  // phase shifter
-  clk_gen_hyper i_clk_shift(
-    .clk_i     ( eth_clk_i     ), // 250 Mhz    
-    .rst_ni    ( rst_ni        ),
-    .clk0_o    ( clk_125_0     ),    
-    .clk90_o   ( clk_125_90    )
-  );
-
   eth_top #(
     .DataWidth          (  DataWidth         ), 
     .RegAddrWidth       (  RegAddrWidth      ),
@@ -283,8 +276,8 @@ module eth_idma_wrap #(
     .hw2reg_itf_t       (  eth_idma_hw2reg_t )
   ) i_eth_top (
     .rst_ni             (  rst_ni            ),
-    .clk_i              (  clk_125_0         ),
-    .clk90_int          (  clk_125_90        ),
+    .clk_i              (  eth_clk125_i      ),
+    .clk90_int          (  eth_clk125q_i     ),
     .clk200_int         (  eth_clk200_i      ),
     .phy_rx_clk         (  phy_rx_clk_i      ),
     .phy_rxd            (  phy_rxd_i         ),
@@ -325,7 +318,7 @@ module eth_idma_wrap #(
     .src_valid_i    ( idma_axis_write_req.tvalid ),
     .src_ready_o    ( idma_axis_write_rsp.tready ),
     .dst_rst_ni     ( rst_ni                     ),
-    .dst_clk_i      ( clk_125_0                  ),
+    .dst_clk_i      ( eth_clk125_i               ),
     .dst_data_o     ( eth_axis_tx_req.t          ),
     .dst_valid_o    ( eth_axis_tx_req.tvalid     ),
     .dst_ready_i    ( eth_axis_tx_rsp.tready     )
@@ -338,7 +331,7 @@ module eth_idma_wrap #(
     .SYNC_STAGES ( 3 )
   ) i_cdc_fifo_rx (
     .src_rst_ni     ( rst_ni                    ),
-    .src_clk_i      ( clk_125_0                 ),
+    .src_clk_i      ( eth_clk125_i              ),
     .src_data_i     ( eth_axis_rx_rsp.t         ),
     .src_valid_i    ( eth_axis_rx_rsp.tvalid    ),
     .src_ready_o    ( eth_axis_rx_req.tready    ),
