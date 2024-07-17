@@ -117,6 +117,7 @@ module eth_idma_tb
   );
  
   logic reg_error;
+  logic rx_irq;
   
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
@@ -286,7 +287,8 @@ module eth_idma_tb
     .testmode_i       ( 1'b0            ),
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
-    .idma_busy_o      ( rx_busy         )
+    .idma_busy_o      ( rx_busy         ),
+    .eth_rx_irq_o     ( rx_irq          )
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
@@ -344,7 +346,13 @@ module eth_idma_tb
     reg_drv_tx.send_write( 'h24, 32'h5, 'hf, reg_error); // dst protocol AXIS
     @(posedge s_clk);
 
+    /// Transaction configs
+    reg_drv_tx.send_write( 'h3c, 32'h1, 'hf , reg_error);  // req valid - req start
+    @(posedge s_clk);
+
     /// RX eth configs
+    
+    @(posedge  rx_irq);
     reg_drv_rx.send_write( 'h0, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
     
@@ -357,22 +365,17 @@ module eth_idma_tb
     reg_drv_rx.send_write( 'h18, 32'h0, 'hf, reg_error); // DST_ADDR
     @(posedge s_clk);
 
-    reg_drv_rx.send_write( 'h1c, 32'h40, 'hf, reg_error); // Size in bytes, 48 for transmission including appended FCS 
-    @(posedge s_clk);
+    // reg_drv_rx.send_write( 'h1c, 32'h40, 'hf, reg_error); // Size in bytes, 48 for transmission including appended FCS 
+    // @(posedge s_clk);
     
     reg_drv_rx.send_write( 'h20, 32'h5, 'hf, reg_error); // src protocol
     @(posedge s_clk);
 
     reg_drv_rx.send_write( 'h24, 32'h0, 'hf, reg_error); // dst protocol
     @(posedge s_clk);
-    
-    /// Transaction configs
-    reg_drv_tx.send_write( 'h3c, 32'h1, 'hf , reg_error);  // req valid - req start
-    @(posedge s_clk);
+  
 
     reg_drv_rx.send_write( 'h3c, 32'h1, 'hf, reg_error);  // req_valid
-    reg_drv_rx.send_write( 'h3c, 32'h0, 'hf, reg_error);  // req valid
-    reg_drv_rx.send_write( 'h44, 32'h1, 'hf, reg_error);  // rsp ready  
     @(posedge s_clk);
   
     repeat(160) @(posedge s_clk); // adjust based on num_bytes to write into rx sim mem 

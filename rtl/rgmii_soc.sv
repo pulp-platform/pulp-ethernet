@@ -75,8 +75,8 @@ module rgmii_soc (
     output wire [31:0] rx_fcs_reg,
     output wire [31:0] tx_fcs_reg,
     
-    output wire        eth_irq
-
+    output wire        eth_irq,
+    output wire[15:0]  eth_len
 );
 
 // IODELAY elements for RGMII interface to PHY
@@ -229,7 +229,8 @@ core_inst (
     .rx_axis_tuser(rx_axis_tuser),
     .rx_fcs_reg(rx_fcs_reg),
     .tx_fcs_reg(tx_fcs_reg),
-    .eth_irq(eth_irq)
+    .eth_irq(eth_irq),
+    .eth_len(eth_len)
 );
 
 endmodule

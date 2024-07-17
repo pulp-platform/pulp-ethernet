@@ -68,7 +68,14 @@ module axis_gmii_rx
     output wire        error_bad_fcs,
 
     /* debug */
-    output reg [31:0]  fcs_reg
+    output reg [31:0]  fcs_reg,
+    // íncoming packet length
+    output reg [15:0] eth_len,
+  output  reg [4:0] meta_cycle,
+output reg [7:0] eth_len_hi,
+output reg [7:0] eth_len_lo,
+output reg [2:0] state_reg,
+output reg [7:0] gmii_rxd_d4
 );
 
 localparam [7:0]
@@ -77,11 +84,14 @@ localparam [7:0]
 
 localparam [2:0]
     STATE_IDLE = 3'd0,
-    STATE_PAYLOAD = 3'd1,
-    STATE_WAIT_LAST = 3'd2,
-    STATE_CRC = 3'd3;
+    STATE_META = 3'd1,
+    STATE_PAYLOAD = 3'd2,
+    STATE_WAIT_LAST = 3'd3,
+    STATE_CRC = 3'd4;
 
-reg [2:0] state_reg, state_next;
+
+//reg [2:0] state_reg, state_next;
+reg [2:0] state_next;
 reg eth_busy, eth_busy_next; 
 
 // datapath control signals
@@ -95,7 +105,7 @@ reg [7:0] gmii_rxd_d0;
 reg [7:0] gmii_rxd_d1;
 reg [7:0] gmii_rxd_d2;
 reg [7:0] gmii_rxd_d3;
-reg [7:0] gmii_rxd_d4;
+//reg [7:0] gmii_rxd_d4;
 
 reg       gmii_rx_dv_d0;
 reg       gmii_rx_dv_d1;
@@ -175,9 +185,21 @@ always @* begin
                 reset_crc = 1'b1;
                 eth_busy_next = 1'b0;
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
-                    state_next = STATE_PAYLOAD;
+                    state_next = STATE_META;
                 end else begin
                     state_next = STATE_IDLE;
+                end
+            end
+            STATE_META: begin
+                if (meta_cycle == 12)
+                    eth_len_hi = gmii_rxd_d4 ;
+                else if (meta_cycle == 13 ) begin
+                        eth_len_lo = gmii_rxd_d4;
+                        eth_len = { eth_len_hi, eth_len_lo};
+                        state_next = STATE_PAYLOAD;
+                    end
+                else begin
+                    state_next = STATE_META;
                 end
             end
             STATE_PAYLOAD: begin
@@ -262,12 +284,20 @@ always_ff @(posedge clk or posedge rst) begin
         mii_locked <= 1'b0;
         mii_odd <= 1'b0;
 
+        meta_cycle <= 0;
+
         gmii_rx_dv_d0 <= 1'b0;
         gmii_rx_dv_d1 <= 1'b0;
         gmii_rx_dv_d2 <= 1'b0;
         gmii_rx_dv_d3 <= 1'b0;
         gmii_rx_dv_d4 <= 1'b0;
     end else begin
+
+         if (state_reg == STATE_META) begin
+            if ( meta_cycle <= 13) begin
+                meta_cycle = meta_cycle + 1;
+            end
+        end
         state_reg <= state_next;
         // Check for falling edge from high to low
      

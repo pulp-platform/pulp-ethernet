@@ -45,7 +45,8 @@ module framing_top #(
   input  reg2hw_itf_t                                   reg2hw_i,
   output hw2reg_itf_t                                   hw2reg_o,
   output logic                                          eth_rx_irq_o,
-  output logic                                          eth_tx_irq_o  
+  //output logic                                        eth_tx_irq_o  
+  output wire[15:0]                                     eth_len
 );
 
   import eth_idma_reg_pkg::* ;
@@ -79,10 +80,10 @@ module framing_top #(
   assign hw2reg_o.req_ready.de = 1'b1;
   assign hw2reg_o.rsp_valid.de = 1'b1;
   assign hw2reg_o.rx_irq.de   = 1'b1;
-  assign hw2reg_o.tx_irq.de   = 1'b1;
+ // assign hw2reg_o.tx_irq.de   = 1'b1;
 
   assign hw2reg_o.rx_irq.d    = eth_rx_irq;
-  assign hw2reg_o.tx_irq.d    = eth_tx_irq;
+  //assign hw2reg_o.tx_irq.d    = eth_tx_irq;
   assign hw2reg_o.req_ready.d = idma_req_ready;
   assign hw2reg_o.rsp_valid.d = idma_rsp_valid;
   
@@ -95,7 +96,7 @@ module framing_top #(
   
   assign eth_rx_irq = phy_rx_ctl & !eth_rx_irq_prv;
   assign eth_rx_irq_o = eth_rx_irq;
-  assign eth_tx_irq_o = eth_tx_irq;
+  //assign eth_tx_irq_o = eth_tx_irq;
 
   always_comb begin
     rx_axis_tdata_4_d  = rx_axis_tdata_5_q;
@@ -236,7 +237,8 @@ module framing_top #(
     // Error registers
     .rx_fcs_reg    (hw2reg_o.rx_fcs.d    ),
     .tx_fcs_reg    (hw2reg_o.tx_fcs.d    ),
-    .eth_irq       (eth_tx_irq           )
+    //.eth_irq       (eth_tx_irq           ),
+    .eth_len       (eth_len)
   );
 
 endmodule // framing_top
