@@ -32,7 +32,7 @@ module eth_idma_wrap #(
   parameter bit RejectZeroTransfers          = 1'b1,
   /// CDC FIFO
   parameter int unsigned TxFifoLogDepth      = 32'd5,
-  parameter int unsigned RxFifoLogDepth      = 32'd4,
+  parameter int unsigned RxFifoLogDepth      = 32'd3,
   /// AXI4+ATOP Request and Response channel type
   parameter type axi_req_t                   = logic,
   parameter type axi_rsp_t                   = logic,
@@ -98,7 +98,7 @@ module eth_idma_wrap #(
   );
   
   logic rx_req_en;
-  
+
   /// Address type
   typedef logic [AddrWidth-1:0]   addr_t;
   typedef logic [DataWidth-1:0]   data_t;
@@ -322,8 +322,20 @@ module eth_idma_wrap #(
 
   // if on-chip devvice works as TX, dma length is set by the core
   // otherwise, dma lengths should be set by hardware as RX
-  
-  assign idma_reg_req.length = rx_req_en? eth_len :reg2hw.length.q;
+  always_comb begin
+    if(rx_req_en) begin
+      if (eth_len > 0 && eth_len <= 16'h05DC) begin
+        idma_reg_req.length = eth_len;
+        hw2reg.length.de = 1;
+        hw2reg.length.d = eth_len;
+      end else if (eth_len > 16'h0600)begin
+        idma_reg_req.length = 16'h002a;
+        hw2reg.length.de = 1;
+        hw2reg.length.d = 16'h002a;
+      end
+    end else 
+      idma_reg_req.length = reg2hw.length.q;
+  end
 
   // TX CDC FIFO
   cdc_fifo_gray #(

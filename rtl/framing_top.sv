@@ -46,7 +46,7 @@ module framing_top #(
   output hw2reg_itf_t                                   hw2reg_o,
   output logic                                          eth_rx_irq_o,
   //output logic                                        eth_tx_irq_o  
-  output wire[15:0]                                     eth_len
+  output logic [15:0]                                   eth_len
 );
 
   import eth_idma_reg_pkg::* ;
