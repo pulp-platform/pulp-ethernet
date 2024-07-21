@@ -72,7 +72,8 @@ module eth_idma_wrap #(
   /// Register Configuration Interface
   input  reg_req_t                reg_req_i,
   output reg_rsp_t                reg_rsp_o,
-  output logic                    eth_rx_irq_o
+  output logic                    eth_rx_irq_o,
+  output logic                    dma_rx_en
 );
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
@@ -178,7 +179,7 @@ module eth_idma_wrap #(
   idma_req_t idma_reg_req;
   idma_rsp_t idma_reg_rsp;
   
-  
+
   assign idma_reg_req.src_addr                   = reg2hw.src_addr.q;
   assign idma_reg_req.dst_addr                   = reg2hw.dst_addr.q;
 
@@ -304,7 +305,8 @@ module eth_idma_wrap #(
     .reg2hw_i           (  reg2hw            ),
     .hw2reg_o           (                    ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
-    .eth_len            (  eth_len           )
+    .eth_len            (  eth_len           ),
+    .dma_en             (  dma_rx_en         )
   );
 
   assign hw2reg.rsp_valid.d = idma_rsp_valid;

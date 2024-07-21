@@ -118,6 +118,7 @@ module eth_idma_tb
  
   logic reg_error;
   logic rx_irq;
+  logic dma_en;
   
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
@@ -259,6 +260,7 @@ module eth_idma_tb
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
+    .RxFifoLogDepth      ( 6                   ),
     .RejectZeroTransfers ( RejectZeroTransfers ),
     .axi_req_t           ( axi_req_t           ),
     .axi_rsp_t           ( axi_rsp_t           ),
@@ -288,7 +290,8 @@ module eth_idma_tb
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
     .idma_busy_o      ( rx_busy         ),
-    .eth_rx_irq_o     ( rx_irq          )
+    .eth_rx_irq_o     ( rx_irq          ),
+    .dma_rx_en        ( dma_en          )
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
@@ -353,12 +356,15 @@ module eth_idma_tb
     /// RX eth configs
     
     @(posedge  rx_irq);
+    
     reg_drv_rx.send_write( 'h0, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
     
     reg_drv_rx.send_write( 'h4, 32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
-
+    
+    @(posedge  dma_en);
+    
     reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
     

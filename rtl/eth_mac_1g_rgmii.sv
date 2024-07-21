@@ -97,7 +97,8 @@ module eth_mac_1g_rgmii #
     input wire [7:0]  ifg_delay,
 
     output wire       eth_irq,
-    output wire[15:0] eth_len
+    output wire[15:0] eth_len,
+    output wire       dma_en
 );
 
 wire [7:0]  mac_gmii_rxd;
@@ -271,7 +272,8 @@ eth_mac_1g_inst (
     .tx_fcs_reg(tx_fcs_reg),
     .ifg_delay(ifg_delay),
     .eth_irq(eth_irq),
-    .eth_len(eth_len)
+    .eth_len(eth_len),
+    .dma_en(dma_en)
 );
 
 endmodule

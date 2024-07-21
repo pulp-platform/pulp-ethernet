@@ -70,7 +70,8 @@ module axis_gmii_rx
     /* debug */
     output reg [31:0]  fcs_reg,
     // íncoming packet length
-    output reg [15:0]  eth_len
+    output reg [15:0]  eth_len,
+    output reg         dma_en
 );
 
 localparam [7:0]
@@ -164,6 +165,10 @@ always @* begin
     error_bad_fcs_next = 1'b0;
     fcs_next = fcs_reg;
     crc_cnt_next = crc_cnt;
+    eth_len_hi = 0;
+    eth_len_lo = 0;
+    eth_len = 0;
+    dma_en = 0;
 
     if (!clk_enable) begin
         // clock disabled - hold state
@@ -195,6 +200,7 @@ always @* begin
                 else if (payload_cycle == 13 ) begin
                         eth_len_lo = gmii_rxd_d4;
                         eth_len = { eth_len_hi, eth_len_lo };
+                        dma_en = 1;
                 end
 
                 if (gmii_rx_dv_d4 && gmii_rx_er_d4) begin

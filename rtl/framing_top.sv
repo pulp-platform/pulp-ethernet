@@ -46,7 +46,8 @@ module framing_top #(
   output hw2reg_itf_t                                   hw2reg_o,
   output logic                                          eth_rx_irq_o,
   //output logic                                        eth_tx_irq_o  
-  output logic [15:0]                                   eth_len
+  output logic [15:0]                                   eth_len,
+  output logic                                          dma_en
 );
 
   import eth_idma_reg_pkg::* ;
@@ -237,8 +238,8 @@ module framing_top #(
     // Error registers
     .rx_fcs_reg    (hw2reg_o.rx_fcs.d    ),
     .tx_fcs_reg    (hw2reg_o.tx_fcs.d    ),
-    //.eth_irq       (eth_tx_irq           ),
-    .eth_len       (eth_len)
+    .eth_len       (eth_len              ),
+    .dma_en        (dma_en               )
   );
 
 endmodule // framing_top
