@@ -39,3 +39,4 @@ logging is disabled. To enable full visibility, logging, and the Questa GUI, set
 | rsp_ready    | 1    | rw        | hrw       | 0           | 0             | 0x44   | iDMA response ready, handshake signal asserted by user so that iDMA will start moving data |
 | rsp_valid    | 1    | ro        | hrw       | 0           | 0             | 0x48   | iDMA response valid, handshake signal asserted by hw so that iDMA has finished data moving |
 | rx_irq       | 1    | ro        | hwo       | 0           | 0             | 0x4c   | ethernet starts receiving packets, packets arriving at phy interface |
+| dma_rx_en    | 1    | ro        | hwo       | 0           | 0             | 0x50   | indicates dma can be configured now in RX case|

@@ -176,6 +176,7 @@ module eth_idma_reg_top #(
   logic rsp_ready_we;
   logic rsp_valid_qs;
   logic rx_irq_qs;
+  logic dma_rx_en_qs;
 
   // Register instances
   // R[maclo_addr]: V(False)
@@ -1236,9 +1237,35 @@ module eth_idma_reg_top #(
   );
 
 
+  // R[dma_rx_en]: V(False)
+
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("RO"),
+    .RESVAL  (1'h0)
+  ) u_dma_rx_en (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    .we     (1'b0),
+    .wd     ('0  ),
+
+    // from internal hardware
+    .de     (hw2reg.dma_rx_en.de),
+    .d      (hw2reg.dma_rx_en.d ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (),
+
+    // to register interface (read)
+    .qs     (dma_rx_en_qs)
+  );
 
 
-  logic [19:0] addr_hit;
+
+
+  logic [20:0] addr_hit;
   always_comb begin
     addr_hit = '0;
     addr_hit[ 0] = (reg_addr == ETH_IDMA_MACLO_ADDR_OFFSET);
@@ -1261,6 +1288,7 @@ module eth_idma_reg_top #(
     addr_hit[17] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
     addr_hit[18] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
     addr_hit[19] = (reg_addr == ETH_IDMA_RX_IRQ_OFFSET);
+    addr_hit[20] = (reg_addr == ETH_IDMA_DMA_RX_EN_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -1287,7 +1315,8 @@ module eth_idma_reg_top #(
                (addr_hit[16] & (|(ETH_IDMA_PERMIT[16] & ~reg_be))) |
                (addr_hit[17] & (|(ETH_IDMA_PERMIT[17] & ~reg_be))) |
                (addr_hit[18] & (|(ETH_IDMA_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be)))));
+               (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be))) |
+               (addr_hit[20] & (|(ETH_IDMA_PERMIT[20] & ~reg_be)))));
   end
 
   assign maclo_addr_we = addr_hit[0] & reg_we & !reg_error;
@@ -1494,6 +1523,10 @@ module eth_idma_reg_top #(
 
       addr_hit[19]: begin
         reg_rdata_next[0] = rx_irq_qs;
+      end
+
+      addr_hit[20]: begin
+        reg_rdata_next[0] = dma_rx_en_qs;
       end
 
       default: begin

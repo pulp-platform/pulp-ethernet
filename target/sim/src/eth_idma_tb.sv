@@ -290,8 +290,7 @@ module eth_idma_tb
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
     .idma_busy_o      ( rx_busy         ),
-    .eth_rx_irq_o     ( rx_irq          ),
-    .dma_rx_en        ( dma_en          )
+    .eth_rx_irq_o     ( rx_irq          )
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
@@ -363,8 +362,13 @@ module eth_idma_tb
     reg_drv_rx.send_write( 'h4, 32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
     
-    @(posedge  dma_en);
-    
+    while(1) begin
+      reg_drv_rx.send_read( 'h50, dma_en, reg_error);   // req ready 
+      if( dma_en )
+        break;
+      @(posedge s_clk);
+    end
+
     reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
     
