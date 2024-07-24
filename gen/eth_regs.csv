@@ -1,0 +1,24 @@
+Name,Bits,SW Access,HW Access,HWQE Access,Default Value,Offset,Comment
+maclo_addr,32,rw,hro,0,0,0x0,"lower 4 bytes of the devices MAC address"
+machi_mdio,32,rw,hro,0,0,0x4,"upper 2 bytes of the devices MAC address, promiscuous flag, MDIO interface"
+tx_fcs,32,ro,hwo,0,0,0x8,"FCS TX status"
+rx_fcs,32,ro,hwo,0,0,0xc,"FCS RX status"
+tx_irq,1,ro,hwo,0,0,0x10,"etherent TX interrupt"
+src_addr,32,rw,hro,0,0,0x14,"iDMA Source Address"
+dst_addr,32,rw,hro,0,0,0x18,"iDMA Desitnation Address"
+length,32,rw,hrw,0,0,0x1c,"iDMA Number of bytes to move"
+src_protocol,3,rw,hro,0,0,0x20,"iDMA source protocol"
+dst_protocol,3,rw,hro,0,0,0x24,"iDMA source protocol"
+axi_id,1,rw,hrw,0,0,0x28,"iDMA transaction ID"
+opt_src,18,rw,hro,0,0,0x2c,"iDMA source options"
+dst_src,18,rw,hro,0,0,0x30,"iDMA destination options"
+beo,10,rw,hro,0,0,0x34,"iDMA backend options"
+last,1,rw,hrw,0,0,0x38,"iDMA last transfer"
+req_valid,1,rw,hrw,0,0,0x3c,"iDMA request valid, handshake signal asserted by user for data movement request"
+req_ready,1,ro,hrw,0,0,0x40,"iDMA request ready, handshake signal asserted by hw that indicates iDMA is ready to accept request"
+rsp_ready,1,rw,hrw,0,0,0x44,"iDMA response ready, handshake signal asserted by user so that iDMA will start moving data"
+rsp_valid,1,ro,hrw,0,0,0x48,"iDMA response valid, handshake signal asserted by hw so that iDMA has finished data moving"
+rx_irq,1,ro,hwo,0,0,0x4c,"ethernet starts receiving packets, packets arriving at phy interface"
+
+
+
