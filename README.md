@@ -16,11 +16,6 @@ logging is disabled. To enable full visibility, logging, and the Questa GUI, set
 `DEBUG=1` when executing the steps above.
 
 ## registers
-# My Project
-
-## Data
-
-Here is some sample data:
 
 | Name         | Bits | SW Access | HW Access | HWQE Access | Default Value | Offset | Comment |
 |--------------|------|-----------|-----------|-------------|---------------|--------|---------|
