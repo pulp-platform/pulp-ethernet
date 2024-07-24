@@ -289,7 +289,7 @@ always_ff @(posedge clk or posedge rst) begin
 
          if (state_reg == STATE_PAYLOAD) begin
             if ( payload_cycle < 14) begin
-                payload_cycle = payload_cycle + 1;
+                payload_cycle <= payload_cycle + 1;
             end
         end
         state_reg <= state_next;
