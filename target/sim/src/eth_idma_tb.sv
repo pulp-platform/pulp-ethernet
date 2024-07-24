@@ -79,8 +79,7 @@ module eth_idma_tb
   logic [3:0] eth_txd;
   logic       eth_tx_rstn, eth_rx_rstn;
 
-  logic [AW_REGBUS-1:0] tx_req_ready, tx_rsp_valid; 
-  logic [DW_REGBUS-1:0] rx_req_ready, rx_rsp_valid;
+  logic dma_en;
 
   logic tx_idma_req_valid, tx_idma_req_ready, tx_idma_rsp_valid, tx_idma_rsp_ready;
   logic rx_idma_req_valid, rx_idma_req_ready, rx_idma_rsp_valid, rx_idma_rsp_ready;
@@ -116,7 +115,6 @@ module eth_idma_tb
  
   logic reg_error;
   logic rx_irq;
-  logic dma_en;
   
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
@@ -257,8 +255,7 @@ module eth_idma_tb
     .axi_req_o        ( axi_rx_req_mem  ),
     .axi_rsp_i        ( axi_rx_rsp_mem  ),
     .idma_busy_o      ( rx_busy         ),
-    .eth_rx_irq_o     ( rx_irq          ),
-    .dma_rx_en        ( dma_en          )
+    .eth_rx_irq_o     ( rx_irq          )
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
@@ -316,7 +313,13 @@ module eth_idma_tb
     reg_drv_rx.send_write( 'h4, 32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
     
-    @(posedge dma_en);
+    while(1) begin
+      reg_drv_rx.send_read( 'h50, dma_en, reg_error);   // req ready 
+      if( dma_en )
+        break;
+      @(posedge s_clk);
+    end
+
     reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
     

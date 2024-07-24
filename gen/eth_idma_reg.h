@@ -148,6 +148,10 @@ extern "C" {
 #define ETH_IDMA_RX_IRQ_REG_OFFSET 0x4c
 #define ETH_IDMA_RX_IRQ_RX_IRQ_BIT 0
 
+// this signal indicates dma can be configured now
+#define ETH_IDMA_DMA_RX_EN_REG_OFFSET 0x50
+#define ETH_IDMA_DMA_RX_EN_DMA_RX_EN_BIT 0
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

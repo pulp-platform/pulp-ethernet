@@ -312,6 +312,17 @@
               }
           ]
         },
+        { name: "dma_rx_en",
+          desc: "this signal indicates dma can be configured now",
+          swaccess: "ro",
+          hwaccess: "hwo",
+          fields: [
+              { bits: "0", name: "dma_rx_en",
+                desc: "dma can be configured now"
+                resval: "0"
+              }
+          ]
+        },
   ]
 }
 
