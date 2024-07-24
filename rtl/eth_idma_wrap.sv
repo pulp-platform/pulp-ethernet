@@ -71,7 +71,8 @@ module eth_idma_wrap #(
   /// Register Configuration Interface
   input  reg_req_t                reg_req_i,
   output reg_rsp_t                reg_rsp_o,
-  output logic                    eth_rx_irq_o
+  output logic                    eth_rx_irq_o,
+  output logic                    dma_rx_en
 );
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
@@ -96,6 +97,7 @@ module eth_idma_wrap #(
     .devmode_i(1'b1)
   );
 
+  logic rx_req_en;
   /// Address type
   typedef logic [AddrWidth-1:0]   addr_t;
   typedef logic [DataWidth-1:0]   data_t;
@@ -159,6 +161,7 @@ module eth_idma_wrap #(
   
   logic  idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;  
   logic  clk_125_0, clk_125_90;
+  logic [15:0] eth_len;
 
   /// AXI request and response
   axi_req_t     axi_read_req,axi_write_req;
@@ -174,7 +177,6 @@ module eth_idma_wrap #(
   idma_req_t idma_reg_req;
   idma_rsp_t idma_reg_rsp;
 
-  assign idma_reg_req.length                     = reg2hw.length.q;
   assign idma_reg_req.src_addr                   = reg2hw.src_addr.q;
   assign idma_reg_req.dst_addr                   = reg2hw.dst_addr.q;
 
@@ -307,11 +309,40 @@ module eth_idma_wrap #(
     .idma_rsp_valid     (  idma_rsp_valid    ),        
     .reg2hw_i           (  reg2hw            ),
     .hw2reg_o           (                    ),
-    .eth_rx_irq_o       (  eth_rx_irq_o      )
+    .eth_rx_irq_o       (  eth_rx_irq_o      ),
+    .eth_len            (  eth_len           ),
+    .dma_en             (  dma_rx_en         )
   );
 
- assign hw2reg.rsp_valid.d = idma_rsp_valid;
- assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
+  assign hw2reg.rsp_valid.d = idma_rsp_valid;
+  assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (~rst_ni) begin
+      rx_req_en <= 0;
+    end else if (eth_rx_irq_o) begin
+      rx_req_en <= 1;
+    end else if (!idma_req_ready) begin
+      rx_req_en <= 0;
+    end
+  end
+
+  // if on-chip devvice works as TX, dma length is set by the core
+  // otherwise, dma lengths should be set by hardware as RX
+  always_comb begin
+    if(rx_req_en) begin
+      if (eth_len > 0 && eth_len <= 16'h05DC) begin
+        idma_reg_req.length = eth_len;
+        hw2reg.length.de = 1;
+        hw2reg.length.d = eth_len;
+      end else if (eth_len > 16'h0600)begin
+        idma_reg_req.length = 16'h002a;
+        hw2reg.length.de = 1;
+        hw2reg.length.d = 16'h002a;
+      end
+    end else 
+      idma_reg_req.length = reg2hw.length.q;
+  end
   
   // TX CDC FIFO
   cdc_fifo_gray #(

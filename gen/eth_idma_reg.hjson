@@ -38,6 +38,9 @@
               },
               { bits: "19", name: "phy_mdio_oe",
                 desc: "MDIO output enable"
+              },
+              { bits: "20", name: "phy_mdio_i",
+                desc: "MDIO input"
               }
           ]
         },
@@ -101,7 +104,7 @@
         { name: "length",
           desc: "Number of bytes",
           swaccess: "rw",
-          hwaccess: "hro",
+          hwaccess: "hrw",
           fields: [
             { bits: "31:0",
               name: "num_bytes",

@@ -28,7 +28,7 @@ QUESTA_FLAGS := -permissive -suppress 3009 -suppress 8386 -error 7 +UVM_NO_RELNO
 #QUESTA_FLAGS :=
 ifdef DEBUG
 	VOPT_FLAGS := $(QUESTA_FLAGS) +acc
-	VSIM_FLAGS := $(QUESTA_FLAGS) 
+	VSIM_FLAGS := $(QUESTA_FLAGS) +acc
 	RUN_AND_EXIT := log -r /*; run -all
 else
 	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH). 

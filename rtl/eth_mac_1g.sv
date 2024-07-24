@@ -86,7 +86,9 @@ module eth_mac_1g #
      */
     input wire [7:0]   ifg_delay,
 
-    output wire        eth_irq
+    output wire        eth_irq,
+    output wire[15:0]  eth_len,
+    output wire        dma_en
 );
 
 wire tx_irq;
@@ -106,7 +108,9 @@ axis_gmii_rx_inst (
     .mii_select(rx_mii_select),
     .error_bad_frame(rx_error_bad_frame),
     .error_bad_fcs(rx_error_bad_fcs),
-    .fcs_reg(rx_fcs_reg)
+    .fcs_reg(rx_fcs_reg),
+    .eth_len(eth_len),
+    .dma_en(dma_en)
 );
 
 axis_gmii_tx #(
