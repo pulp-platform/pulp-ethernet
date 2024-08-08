@@ -327,65 +327,61 @@ module eth_idma_tb
     $readmemh("/scratch/chaol/astral/cheshire/handshake-eth/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
    
     /// TX eth configs
-    reg_drv_tx.send_write( 'h00, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
+    reg_drv_tx.send_write( 'h00, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h04,  32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    reg_drv_tx.send_write( 'h04,  16'h2301, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h14, 32'h0, 'hf, reg_error ); // SRC_ADDR
+    reg_drv_tx.send_write( 'h1c, 32'h0, 'hf, reg_error ); // SRC_ADDR
     @(posedge s_clk);
      
-    reg_drv_tx.send_write( 'h18, 32'h0, 'hf, reg_error); // DST_ADDR 
+    reg_drv_tx.send_write( 'h20, 32'h0, 'hf, reg_error); // DST_ADDR 
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h1c, 32'h40, 'hf, reg_error); // Size in bytes 
+    reg_drv_tx.send_write( 'h24, 'h40, 'hf, reg_error); // Size in bytes 
     @(posedge s_clk);
     
-    reg_drv_tx.send_write( 'h20, 32'h0, 'hf, reg_error); // src protocol AXI
+    reg_drv_tx.send_write( 'h28, 32'h0, 'hf, reg_error); // src protocol AXI
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h24, 32'h5, 'hf, reg_error); // dst protocol AXIS
+    reg_drv_tx.send_write( 'h2c, 32'h5, 'hf, reg_error); // dst protocol AXIS
     @(posedge s_clk);
 
     /// Transaction configs
-    reg_drv_tx.send_write( 'h3c, 32'h1, 'hf , reg_error);  // req valid - req start
+    reg_drv_tx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
 
     /// RX eth configs
     
     @(posedge  rx_irq);
     
-    reg_drv_rx.send_write( 'h0, 32'h98001032, 'hf, reg_error); //lower 32bits of MAC address
+    reg_drv_rx.send_write( 'h0, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h4, 32'h00002070, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    reg_drv_rx.send_write( 'h4, 'h2301, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
     
     while(1) begin
-      reg_drv_rx.send_read( 'h50, dma_en, reg_error);   // req ready 
+      reg_drv_rx.send_read( 'h54, dma_en, reg_error);   // req ready 
       if( dma_en )
         break;
       @(posedge s_clk);
     end
 
-    reg_drv_rx.send_write( 'h14, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
+    reg_drv_rx.send_write( 'h1c, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h18, 32'h0, 'hf, reg_error); // DST_ADDR
+    reg_drv_rx.send_write( 'h20, 32'h0, 'hf, reg_error); // DST_ADDR
     @(posedge s_clk);
 
-    // reg_drv_rx.send_write( 'h1c, 32'h40, 'hf, reg_error); // Size in bytes, 48 for transmission including appended FCS 
-    // @(posedge s_clk);
-    
-    reg_drv_rx.send_write( 'h20, 32'h5, 'hf, reg_error); // src protocol
+    reg_drv_rx.send_write( 'h28, 32'h5, 'hf, reg_error); // src protocol
     @(posedge s_clk);
 
-    reg_drv_rx.send_write( 'h24, 32'h0, 'hf, reg_error); // dst protocol
+    reg_drv_rx.send_write( 'h2c, 32'h0, 'hf, reg_error); // dst protocol
     @(posedge s_clk);
   
-
-    reg_drv_rx.send_write( 'h3c, 32'h1, 'hf, reg_error);  // req_valid
+    reg_drv_rx.send_write( 'h44, 32'h1, 'hf, reg_error);  // req_valid
     @(posedge s_clk);
   
     repeat(160) @(posedge s_clk); // adjust based on num_bytes to write into rx sim mem 

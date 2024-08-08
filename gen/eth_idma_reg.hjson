@@ -7,72 +7,115 @@
     ]
     regwidth: "32",
     registers: [
-        { name: "maclo_addr",
+        { name: "low_addr",
           desc: "lower 4 bytes of the devices MAC address",
           swaccess: "rw",
           hwaccess: "hro",
           fields: [
               { bits: "31:0", name: "lower_mac_address",
                 desc: "Lower 32 bit of the devices MAC address"
-                resval: "8980226"
+                resval: "0x00890702"
               }
           ]
         },
-        { name: "machi_mdio",
-          desc: "upper 2 bytes of the devices MAC address, promiscuous flag, MDIO interface",
+        { name: "machi",
+          desc: "upper 2 bytes of the devices MAC address, cooked, loopback, promiscuous flag, irq_en",
           swaccess: "rw",
           hwaccess: "hro",
           fields: [
-              { bits: "15:0", name: "upper_mac_address",
-                desc: "Upper 16 bit of the devices MAC address"
-                resval: "8961"
+              { bits: "15:0", name: "upper_addr",
+                desc: "Upper 16 bit of the devices MAC address",
+                resval: "0x2301"
               },
-              { bits: "16", name: "promiscuous",
-                desc: "promiscuous flag"
+              { bits: "16", name: "cooked",
+                desc: "obsolete flag",
+                resval: "0"
               },
-              { bits: "17", name: "phy_mdclk",
-                desc: "MDIO clock"
+              { bits: "17", name: "loopback",
+                desc: "enable the reception of loopback packet",
+                resval: "0"
               },
-              { bits: "18", name: "phy_mdio_o",
-                desc: "MDIO output"
+
+              { bits: "21:18", name: "spare",
+                desc: "promiscuous flag",
+                resval: "0"
               },
-              { bits: "19", name: "phy_mdio_oe",
-                desc: "MDIO output enable"
+              { bits: "22", name: "promiscuous",
+                desc: "enable the reception of all packets",
+                resval: "0"
               },
-              { bits: "20", name: "phy_mdio_i",
+              { bits: "23", name: "irq_en",
+                desc: "interrupt enbale",
+                resval: "0"
+              }   
+          ]
+        },
+        { name: "mdio",
+          desc: "mdio control register",
+          swaccess: "rw",
+          hwaccess: "hrw",
+          fields: [
+          { bits: "0", name: "mdio_clk",
+                desc: "MDIO clk",
+                resval: "0"
+              },
+              { bits: "1", name: "mdio_o",
+                desc: "MDIO output",
+                resval: "0"
+              },
+              { bits: "2", name: "mdio_oe",
+                desc: "MDIO output enable",
+                resval: "0"
+              },
+              { bits: "3", name: "mdio_i",
                 desc: "MDIO input"
               }
           ]
         },
-        { name: "tx_fcs",
-          desc: "The FCS TX status",
+        { name: "tx_busy",
+          desc: "TX busy",
           swaccess: "ro",
           hwaccess: "hwo",
           fields: [
-              { bits: "31:0", name: "tx_fcs_reg",
+              { bits: "0", name: "tx_busy",
+                desc: "TX busy transmitting packets"
+                resval: "0"
+              }
+          ]
+        },
+        { name: "tx_fcs",
+          desc: "TX frame check register",
+          swaccess: "ro",
+          hwaccess: "hwo",
+          fields: [
+              { bits: "31:0", name: "tx_fcs",
                 desc: "FCS TX status"
                 resval: "0"
               }
           ]
         },
         { name: "rx_fcs",
-          desc: "The FCS RX status",
+          desc: "RX frame check register",
           swaccess: "ro",
           hwaccess: "hwo",
           fields: [
-              { bits: "31:0", name: "rx_fcs_reg",
+              { bits: "31:0", name: "rx_fcs",
                 desc: "FCS RX status"
                 resval: "0"
               }
           ]
         },
-        { name: "tx_irq",
-          desc: "ethernet transmission done",
+        { name: "rsr",
+          desc: "receive status register",
           swaccess: "ro",
           hwaccess: "hwo",
           fields: [
-              { bits: "0", name: "tx_irq",
-                desc: "etherent TX interrupt"
+              { bits: "0", name: "rx_complete",
+                desc: "reception completes"
+                resval: "0"
+              }
+              { bits: "1", name: "rx_irq",
+                desc: "etherent rx interrupt"
                 resval: "0"
               }
           ]
@@ -85,7 +128,7 @@
             { bits: "31:0",
               name: "src_addr",
               desc: "Source Address"
-              resval: "0000"
+              resval: "0"
             }
           ]
         },
@@ -97,7 +140,7 @@
             { bits: "31:0",
               name: "dst_addr",
               desc: "Destination Address"
-              resval: "0000"
+              resval: "0"
             }
           ]
         },
@@ -106,10 +149,10 @@
           swaccess: "rw",
           hwaccess: "hrw",
           fields: [
-            { bits: "31:0",
+            { bits: "11:0",
               name: "num_bytes",
               desc: "Number of bytes"
-              resval: "0000"
+              resval: "0"
             }
           ]
         },
@@ -121,7 +164,7 @@
             { bits: "2:0",
               name: "src_protocol",
               desc: "iDMA source protocol"
-              resval: "000"
+              resval: "0"
             }
           ]
         },
@@ -133,7 +176,7 @@
             { bits: "2:0",
               name: "dst_protocol",
               desc: "iDMA destination protocol "
-              resval: "000"
+              resval: "0"
             }
           ]
         },
@@ -299,17 +342,6 @@
               desc: "idma response valid"
               resval: "0"
             }
-          ]
-        },
-        { name: "rx_irq",
-          desc: "ethernet starts receiving packets",
-          swaccess: "ro",
-          hwaccess: "hwo",
-          fields: [
-              { bits: "0", name: "rx_irq",
-                desc: "etherent RX interrupt"
-                resval: "0"
-              }
           ]
         },
         { name: "dma_rx_en",

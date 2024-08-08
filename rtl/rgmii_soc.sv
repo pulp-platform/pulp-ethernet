@@ -75,7 +75,8 @@ module rgmii_soc (
     output wire [31:0] rx_fcs_reg,
     output wire [31:0] tx_fcs_reg,
     
-    output wire        eth_irq,
+    output wire        tx_busy,
+    output wire        rx_complete,
     output wire[15:0]  eth_len,
     output wire        dma_en
 );
@@ -230,7 +231,8 @@ core_inst (
     .rx_axis_tuser(rx_axis_tuser),
     .rx_fcs_reg(rx_fcs_reg),
     .tx_fcs_reg(tx_fcs_reg),
-    .eth_irq(eth_irq),
+    .tx_busy(tx_busy),
+    .rx_complete(rx_complete),
     .eth_len(eth_len),
     .dma_en(dma_en)
 );

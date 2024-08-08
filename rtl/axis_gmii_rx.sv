@@ -66,6 +66,7 @@ module axis_gmii_rx
      */
     output wire        error_bad_frame,
     output wire        error_bad_fcs,
+    output reg         rx_complete,
 
     /* debug */
     output reg [31:0]  fcs_reg,
@@ -91,6 +92,7 @@ reg [7:0] eth_len_hi,eth_len_lo;
 // datapath control signals
 reg reset_crc;
 reg update_crc;
+reg rx_complete_next;
 
 reg mii_odd;
 reg mii_locked;
@@ -165,6 +167,7 @@ always @* begin
     error_bad_fcs_next = 1'b0;
     fcs_next = fcs_reg;
     crc_cnt_next = crc_cnt;
+    rx_complete_next = 1'b0;
     eth_len_hi = 0;
     eth_len_lo = 0;
     eth_len = 0;
@@ -182,6 +185,7 @@ always @* begin
                 // idle state - wait for packet
                 reset_crc = 1'b1;
                 eth_busy_next = 1'b0;
+                rx_complete_next = 1'b0;
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
                     state_next = STATE_PAYLOAD;
                 end else begin
@@ -192,6 +196,7 @@ always @* begin
                 // read payload
                 update_crc = 1'b1;
                 eth_busy_next = 1'b1;
+                rx_complete_next = 1'b0;
                 m_axis_tdata_next = gmii_rxd_d4;
                 m_axis_tvalid_next = 1'b1;
                 
@@ -243,6 +248,7 @@ always @* begin
                     // end of packet + CRC bytes
                     fcs_next = crc_next;
                     m_axis_tlast_next = 1'b1;
+                    rx_complete_next = 1'b1;
                     state_next = STATE_IDLE;
                 end else begin
                     fcs_next = 32'b0;
@@ -279,6 +285,7 @@ always_ff @(posedge clk or posedge rst) begin
         mii_odd <= 1'b0;
 
         payload_cycle <= 0;
+        rx_complete <= 1'b0;
 
         gmii_rx_dv_d0 <= 1'b0;
         gmii_rx_dv_d1 <= 1'b0;
@@ -302,6 +309,7 @@ always_ff @(posedge clk or posedge rst) begin
 
         fcs_reg <= fcs_next;
         crc_cnt <= crc_cnt_next;
+        rx_complete <= rx_complete_next;
         // datapath
         if (reset_crc) begin
             crc_state <= 32'hFFFFFFFF;

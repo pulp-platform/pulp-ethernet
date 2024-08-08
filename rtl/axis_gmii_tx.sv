@@ -75,7 +75,7 @@ module axis_gmii_tx #
     output reg [31:0] fcs_reg,
 
     /* interrupt */
-    output reg         eth_irq
+    output reg        eth_busy
 
 );
 
@@ -94,8 +94,8 @@ localparam [2:0]
     STATE_IFG = 3'd7;
 
 reg [2:0] state_reg, state_next;
-reg eth_busy, eth_busy_next; 
-
+reg eth_busy_next; 
+reg eth_irq;
 
 // datapath control signals
 reg reset_crc;
