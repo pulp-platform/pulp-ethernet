@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-origin	https://github.com/alexforencich/verilog-ethernet.git
+origin  https://github.com/alexforencich/verilog-ethernet.git
 commit ebe31e811cee9db615a7d5ec8472f972f3368b90
 Author: Alex Forencich <alex@alexforencich.com>
 Date:   Thu Nov 8 13:15:47 2018 -0800
@@ -75,7 +75,7 @@ module axis_gmii_tx #
     output reg [31:0] fcs_reg,
 
     /* interrupt */
-    output reg         eth_irq
+    output reg        eth_busy
 
 );
 
@@ -94,8 +94,8 @@ localparam [2:0]
     STATE_IFG = 3'd7;
 
 reg [2:0] state_reg, state_next;
-reg eth_busy, eth_busy_next; 
-
+reg eth_busy_next; 
+reg eth_irq;
 
 // datapath control signals
 reg reset_crc;

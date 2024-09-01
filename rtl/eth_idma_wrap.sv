@@ -97,6 +97,7 @@ module eth_idma_wrap #(
   );
 
   logic rx_req_en;
+  
   /// Address type
   typedef logic [AddrWidth-1:0]   addr_t;
   typedef logic [DataWidth-1:0]   data_t;

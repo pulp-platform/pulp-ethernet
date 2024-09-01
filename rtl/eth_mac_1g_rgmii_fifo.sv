@@ -108,7 +108,8 @@ module eth_mac_1g_rgmii_fifo #
      * Configuration
      */
     input wire [7:0]   ifg_delay,
-    output wire        eth_irq,
+    output wire        tx_busy,
+    output wire        rx_complete,
     output wire[15:0]  eth_len,
     output wire        dma_en
 );
@@ -201,7 +202,8 @@ eth_mac_1g_rgmii_inst (
     .tx_fcs_reg(tx_fcs_reg),
     .speed(speed_int),
     .ifg_delay(ifg_delay),
-    .eth_irq(eth_irq),
+    .tx_busy(tx_busy),
+    .rx_complete(rx_complete),
     .eth_len(eth_len),
     .dma_en(dma_en)
 );
