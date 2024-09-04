@@ -99,8 +99,6 @@ module eth_idma_reg_top #(
   logic mdio_mdio_oe_wd;
   logic mdio_mdio_oe_we;
   logic mdio_mdio_i_qs;
-  logic mdio_mdio_i_wd;
-  logic mdio_mdio_i_we;
   logic tx_busy_qs;
   logic [31:0] tx_fcs_qs;
   logic [31:0] rx_fcs_qs;
@@ -460,15 +458,14 @@ module eth_idma_reg_top #(
   //   F[mdio_i]: 3:3
   prim_subreg #(
     .DW      (1),
-    .SWACCESS("RW"),
+    .SWACCESS("RO"),
     .RESVAL  (1'h0)
   ) u_mdio_mdio_i (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
-    // from register interface
-    .we     (mdio_mdio_i_we),
-    .wd     (mdio_mdio_i_wd),
+    .we     (1'b0),
+    .wd     ('0  ),
 
     // from internal hardware
     .de     (hw2reg.mdio.mdio_i.de),
@@ -1495,9 +1492,6 @@ module eth_idma_reg_top #(
 
   assign mdio_mdio_oe_we = addr_hit[2] & reg_we & !reg_error;
   assign mdio_mdio_oe_wd = reg_wdata[2];
-
-  assign mdio_mdio_i_we = addr_hit[2] & reg_we & !reg_error;
-  assign mdio_mdio_i_wd = reg_wdata[3];
 
   assign src_addr_we = addr_hit[7] & reg_we & !reg_error;
   assign src_addr_wd = reg_wdata[31:0];
