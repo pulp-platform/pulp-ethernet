@@ -118,7 +118,7 @@ module eth_idma_tb
  
   logic reg_error;
   logic rx_irq;
-  logic dma_en;
+  logic dma_en,mdio_value;
   
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
@@ -351,8 +351,6 @@ module eth_idma_tb
     /// Transaction configs
     reg_drv_tx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
-
-    /// RX eth configs
     
     @(posedge  rx_irq);
     
