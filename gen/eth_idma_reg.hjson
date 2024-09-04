@@ -68,7 +68,9 @@
                 resval: "0"
               },
               { bits: "3", name: "mdio_i",
-                desc: "MDIO input"
+                desc: "MDIO input",
+                swaccess: "ro",
+                hwaccess: "hrw"
               }
           ]
         },
