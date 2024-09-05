@@ -161,6 +161,38 @@ package eth_idma_reg_pkg;
   } eth_idma_reg2hw_rsp_valid_reg_t;
 
   typedef struct packed {
+    logic [31:0] d;
+    logic        de;
+  } eth_idma_hw2reg_low_addr_reg_t;
+
+  typedef struct packed {
+    struct packed {
+      logic [15:0] d;
+      logic        de;
+    } upper_addr;
+    struct packed {
+      logic        d;
+      logic        de;
+    } cooked;
+    struct packed {
+      logic        d;
+      logic        de;
+    } loopback;
+    struct packed {
+      logic [3:0]  d;
+      logic        de;
+    } spare;
+    struct packed {
+      logic        d;
+      logic        de;
+    } promiscuous;
+    struct packed {
+      logic        d;
+      logic        de;
+    } irq_en;
+  } eth_idma_hw2reg_machi_reg_t;
+
+  typedef struct packed {
     struct packed {
       logic        d;
       logic        de;
@@ -268,6 +300,8 @@ package eth_idma_reg_pkg;
 
   // HW -> register type
   typedef struct packed {
+    eth_idma_hw2reg_low_addr_reg_t low_addr; // [169:137]
+    eth_idma_hw2reg_machi_reg_t machi; // [136:107]
     eth_idma_hw2reg_mdio_reg_t mdio; // [106:99]
     eth_idma_hw2reg_tx_busy_reg_t tx_busy; // [98:97]
     eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [96:64]

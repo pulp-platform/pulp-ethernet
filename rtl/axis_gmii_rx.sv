@@ -294,11 +294,15 @@ always_ff @(posedge clk or posedge rst) begin
         gmii_rx_dv_d4 <= 1'b0;
     end else begin
 
-         if (state_reg == STATE_PAYLOAD) begin
+        if (state_reg == STATE_PAYLOAD) begin
             if ( payload_cycle < 14) begin
                 payload_cycle <= payload_cycle + 1;
-            end
-        end
+            end else 
+                payload_cycle <= payload_cycle;
+        end else begin
+            payload_cycle <= 0;
+        end 
+        
         state_reg <= state_next;
         // Check for falling edge from high to low
      

@@ -205,8 +205,8 @@ module eth_idma_reg_top #(
     .wd     (low_addr_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.low_addr.de),
+    .d      (hw2reg.low_addr.d ),
 
     // to internal hardware
     .qe     (),
@@ -233,8 +233,8 @@ module eth_idma_reg_top #(
     .wd     (machi_upper_addr_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.machi.upper_addr.de),
+    .d      (hw2reg.machi.upper_addr.d ),
 
     // to internal hardware
     .qe     (),
@@ -259,8 +259,8 @@ module eth_idma_reg_top #(
     .wd     (machi_cooked_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.machi.cooked.de),
+    .d      (hw2reg.machi.cooked.d ),
 
     // to internal hardware
     .qe     (),
@@ -285,8 +285,8 @@ module eth_idma_reg_top #(
     .wd     (machi_loopback_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.machi.loopback.de),
+    .d      (hw2reg.machi.loopback.d ),
 
     // to internal hardware
     .qe     (),
@@ -311,8 +311,8 @@ module eth_idma_reg_top #(
     .wd     (machi_spare_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.machi.spare.de),
+    .d      (hw2reg.machi.spare.d ),
 
     // to internal hardware
     .qe     (),
@@ -337,8 +337,8 @@ module eth_idma_reg_top #(
     .wd     (machi_promiscuous_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.machi.promiscuous.de),
+    .d      (hw2reg.machi.promiscuous.d ),
 
     // to internal hardware
     .qe     (),
@@ -363,8 +363,8 @@ module eth_idma_reg_top #(
     .wd     (machi_irq_en_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.machi.irq_en.de),
+    .d      (hw2reg.machi.irq_en.d ),
 
     // to internal hardware
     .qe     (),

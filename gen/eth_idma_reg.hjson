@@ -10,7 +10,7 @@
         { name: "low_addr",
           desc: "lower 4 bytes of the devices MAC address",
           swaccess: "rw",
-          hwaccess: "hro",
+          hwaccess: "hrw",
           fields: [
               { bits: "31:0", name: "lower_mac_address",
                 desc: "Lower 32 bit of the devices MAC address"
@@ -21,7 +21,7 @@
         { name: "machi",
           desc: "upper 2 bytes of the devices MAC address, cooked, loopback, promiscuous flag, irq_en",
           swaccess: "rw",
-          hwaccess: "hro",
+          hwaccess: "hrw",
           fields: [
               { bits: "15:0", name: "upper_addr",
                 desc: "Upper 16 bit of the devices MAC address",
@@ -55,7 +55,7 @@
           swaccess: "rw",
           hwaccess: "hrw",
           fields: [
-          { bits: "0", name: "mdio_clk",
+              { bits: "0", name: "mdio_clk",
                 desc: "MDIO clk",
                 resval: "0"
               },
