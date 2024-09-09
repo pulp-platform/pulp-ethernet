@@ -79,8 +79,8 @@ module eth_idma_wrap #(
   localparam int unsigned RegAddrWidth = 8; 
   localparam int unsigned StrbWidth     = DataWidth / 8;
 
-  eth_idma_reg2hw_t reg2hw; // Write
-  eth_idma_hw2reg_t hw2reg; // Read
+  eth_idma_reg2hw_t reg2hw, reg2hw_eth; // Write
+  eth_idma_hw2reg_t hw2reg, hw2reg_eth; // Read
 
   eth_idma_reg_top #(
     .reg_req_t(reg_req_t),
@@ -177,7 +177,7 @@ module eth_idma_wrap #(
   /// iDMA request and response
   idma_req_t idma_reg_req;
   idma_rsp_t idma_reg_rsp;
-
+ 
   assign idma_reg_req.src_addr                   = reg2hw.src_addr.q;
   assign idma_reg_req.dst_addr                   = reg2hw.dst_addr.q;
 
@@ -211,7 +211,7 @@ module eth_idma_wrap #(
 
   assign idma_req_valid                          = reg2hw.req_valid.q;
   assign idma_rsp_ready                          = reg2hw.rsp_ready.q;
-  
+
   always_comb begin
     hw2reg.req_valid.d = 1'b0;
     hw2reg.rsp_ready.d = 1'b0;
@@ -305,20 +305,32 @@ module eth_idma_wrap #(
     .tx_axis_req_i      (  eth_axis_tx_req   ), 
     .tx_axis_rsp_o      (  eth_axis_tx_rsp   ),
     .rx_axis_req_o      (  eth_axis_rx_rsp   ),
-    .rx_axis_rsp_i      (  eth_axis_rx_req   ),
-    .idma_req_ready     (  idma_req_ready    ),
-    .idma_rsp_valid     (  idma_rsp_valid    ),        
-    .reg2hw_i           (  reg2hw            ),
-    .hw2reg_o           (                    ),
+    .rx_axis_rsp_i      (  eth_axis_rx_req   ),       
+    .reg2hw_i           (  reg2hw_eth        ),
+    .hw2reg_o           (  hw2reg_eth        ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
     .eth_len            (  eth_len           ),
     .dma_en             (  dma_rx_en         )
   );
   
   assign hw2reg.dma_rx_en.de = dma_rx_en;
-  assign hw2reg.dma_rx_en.d =  dma_rx_en;
-  assign hw2reg.rsp_valid.d = idma_rsp_valid;
+  assign hw2reg.dma_rx_en.d  = dma_rx_en;
   assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
+  assign hw2reg.rsp_valid.d  = idma_rsp_valid;
+  assign hw2reg.req_ready.de = idma_req_ready;
+  assign hw2reg.req_ready.d  = idma_req_ready;
+
+  assign hw2reg.mdio      = hw2reg_eth.mdio;
+  assign hw2reg.machi     = hw2reg_eth.machi;
+  assign hw2reg.low_addr  = hw2reg_eth.low_addr;
+  assign hw2reg.rsr       = hw2reg_eth.rsr;
+  assign hw2reg.tx_busy   = hw2reg_eth.tx_busy;
+  assign hw2reg.tx_fcs    = hw2reg_eth.tx_fcs;
+  assign hw2reg.rx_fcs    = hw2reg_eth.rx_fcs;
+
+  assign reg2hw_eth.machi    = reg2hw.machi;
+  assign reg2hw_eth.low_addr = reg2hw.low_addr;
+  assign reg2hw_eth.mdio     = reg2hw.mdio;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) begin

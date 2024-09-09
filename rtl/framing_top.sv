@@ -38,9 +38,6 @@ module framing_top #(
   output axi_stream_rsp_t                               tx_axis_rsp_o,
   output axi_stream_req_t                               rx_axis_req_o,
   input  axi_stream_rsp_t                               rx_axis_rsp_i,
-  // ugly fix (to-do)
-  input  logic                                          idma_req_ready,
-  input  logic                                          idma_rsp_valid,
   // REGBUS configs
   input  reg2hw_itf_t                                   reg2hw_i,
   output hw2reg_itf_t                                   hw2reg_o,
@@ -57,8 +54,9 @@ module framing_top #(
   logic [31:0] tx_fcs, rx_fcs;
   logic [31:0] tx_fcs_rev, rx_fcs_rev;
   logic        promiscuous;
-  logic        eth_rx_irq, eth_rx_irq_prv;
+  logic        eth_rx_irq;
   logic        tx_busy, rx_complete;
+  logic        irq_en;
 
   //AXIS RX
   logic [7:0] rx_axis_tdata_5_q,  rx_axis_tdata_4_q,  rx_axis_tdata_3_q,  rx_axis_tdata_2_q,  rx_axis_tdata_1_q,  rx_axis_tdata_0_q;
@@ -75,34 +73,23 @@ module framing_top #(
   assign phy_mdc     = reg2hw_i.mdio.mdio_clk.q;
   assign phy_mdio_o  = reg2hw_i.mdio.mdio_o.q;
   assign phy_mdio_oe = reg2hw_i.mdio.mdio_oe.q;
+  assign irq_en      = reg2hw_i.machi.irq_en.q;
   
+  assign hw2reg_o.rsr.rx_irq.de  = 1'b1;
+  assign hw2reg_o.rsr.rx_complete.de = 1'b1;
+  assign hw2reg_o.tx_busy.de     = 1'b1;
+  assign hw2reg_o.mdio.mdio_i.de = 1'b1;
   assign hw2reg_o.tx_fcs.de      = 1'b1;
   assign hw2reg_o.rx_fcs.de      = 1'b1;
-  assign hw2reg_o.req_ready.de   = 1'b1;
-  assign hw2reg_o.rsp_valid.de   = 1'b1;
-  assign hw2reg_o.rsr.rx_irq.de  = 1'b1;
-  assign hw2reg_o.mdio.mdio_i.de = 1'b1;
-  assign hw2reg_o.tx_busy.de     = 1'b1;
-  assign hw2reg_o.rsr.rx_complete.de = 1'b1;
 
-  assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq;
+  assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq_o;
   assign hw2reg_o.rsr.rx_complete.d = rx_complete;
   assign hw2reg_o.tx_busy.d     = tx_busy;
-  assign hw2reg_o.req_ready.d   = idma_req_ready;
-  assign hw2reg_o.rsp_valid.d   = idma_rsp_valid;
   assign hw2reg_o.mdio.mdio_i.d = phy_mdio_i;
   assign hw2reg_o.tx_fcs.d      = tx_fcs_rev;
   assign hw2reg_o.rx_fcs.d      = rx_fcs_rev;
- 
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni)
-      eth_rx_irq_prv <= 0;
-    else
-      eth_rx_irq_prv <= phy_rx_ctl;
-  end
   
-  assign eth_rx_irq = phy_rx_ctl & !eth_rx_irq_prv;
-  assign eth_rx_irq_o = eth_rx_irq;
+  assign eth_rx_irq = phy_rx_ctl;
 
   always_comb begin
     rx_axis_tdata_4_d  = rx_axis_tdata_5_q;
@@ -177,6 +164,7 @@ module framing_top #(
       rx_axis_tuser_0_q  <= 'd0;
 
       accept_frame_q <= 'd0;
+      eth_rx_irq_o <= 'b0;
     end else begin
       rx_axis_tdata_5_q  <= rx_axis_tdata_5_d;
       rx_axis_tvalid_5_q <= rx_axis_tvalid_5_d;
@@ -204,6 +192,7 @@ module framing_top #(
       rx_axis_tuser_0_q  <= rx_axis_tuser_0_d;
 
       accept_frame_q <= accept_frame_d;
+      eth_rx_irq_o   <= eth_rx_irq & irq_en;
     end
   end
 
