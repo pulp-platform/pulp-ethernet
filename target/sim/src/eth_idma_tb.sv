@@ -118,7 +118,7 @@ module eth_idma_tb
  
   logic reg_error;
   logic rx_irq;
-  logic dma_en,mdio_value;
+  logic dma_en;
   
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
@@ -157,21 +157,7 @@ module eth_idma_tb
     .clk_i              ( s_clk           ),
     .rst_ni             ( s_rst_n         ),
     .axi_req_i          ( axi_tx_req_mem  ),
-    .axi_rsp_o          ( axi_tx_rsp_mem  ),
-    .mon_r_last_o       ( /* NOT CONNECTED */ ),
-    .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
-    .mon_r_user_o       ( /* NOT CONNECTED */ ),
-    .mon_r_id_o         ( /* NOT CONNECTED */ ),
-    .mon_r_data_o       ( /* NOT CONNECTED */ ),
-    .mon_r_addr_o       ( /* NOT CONNECTED */ ),
-    .mon_r_valid_o      ( /* NOT CONNECTED */ ),
-    .mon_w_last_o       ( /* NOT CONNECTED */ ),
-    .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
-    .mon_w_user_o       ( /* NOT CONNECTED */ ),
-    .mon_w_id_o         ( /* NOT CONNECTED */ ),
-    .mon_w_data_o       ( /* NOT CONNECTED */ ),
-    .mon_w_addr_o       ( /* NOT CONNECTED */ ),
-    .mon_w_valid_o      ( /* NOT CONNECTED */ )
+    .axi_rsp_o          ( axi_tx_rsp_mem  )
   );
 
   // AXI4 RX sim memory
@@ -190,21 +176,7 @@ module eth_idma_tb
     .clk_i              ( s_clk             ),
     .rst_ni             ( s_rst_n           ),
     .axi_req_i          ( axi_rx_req_mem    ),
-    .axi_rsp_o          ( axi_rx_rsp_mem    ),
-    .mon_r_last_o       ( /* NOT CONNECTED */ ),
-    .mon_r_beat_count_o ( /* NOT CONNECTED */ ),
-    .mon_r_user_o       ( /* NOT CONNECTED */ ),
-    .mon_r_id_o         ( /* NOT CONNECTED */ ),
-    .mon_r_data_o       ( /* NOT CONNECTED */ ),
-    .mon_r_addr_o       ( /* NOT CONNECTED */ ),
-    .mon_r_valid_o      ( /* NOT CONNECTED */ ),
-    .mon_w_last_o       ( /* NOT CONNECTED */ ),
-    .mon_w_beat_count_o ( /* NOT CONNECTED */ ),
-    .mon_w_user_o       ( /* NOT CONNECTED */ ),
-    .mon_w_id_o         ( /* NOT CONNECTED */ ),
-    .mon_w_data_o       ( /* NOT CONNECTED */ ),
-    .mon_w_addr_o       ( /* NOT CONNECTED */ ),
-    .mon_w_valid_o      ( /* NOT CONNECTED */ )
+    .axi_rsp_o          ( axi_rx_rsp_mem    )
    );
     
   eth_idma_wrap#(
@@ -323,8 +295,8 @@ module eth_idma_tb
 
     //$readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     //$readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/astral/cheshire/handshake-eth/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/astral/cheshire/handshake-eth/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/eth-temp/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/eth-temp/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
    
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
@@ -352,13 +324,13 @@ module eth_idma_tb
     reg_drv_tx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
     
-    @(posedge  rx_irq);
-    
     reg_drv_rx.send_write( 'h0, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h4, 'h2301, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    reg_drv_rx.send_write( 'h4, 'h00802301, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
+
+    @(posedge  rx_irq);
     
     while(1) begin
       reg_drv_rx.send_read( 'h54, dma_en, reg_error);   // req ready 
