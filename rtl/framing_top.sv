@@ -43,16 +43,19 @@ module framing_top #(
   output hw2reg_itf_t                                   hw2reg_o,
   output logic                                          eth_rx_irq_o, 
   output logic [15:0]                                   eth_len,
-  output logic                                          dma_en   
+  output logic                                          dma_en,
+  output logic [47:0]                                   rx_dest_mac,
+  output logic [31:0]                                   tx_fcs_rev,
+   output logic [31:0]                                  rx_fcs_rev
 );
 
   import eth_idma_reg_pkg::* ;
 
   logic        mac_gmii_tx_en;
   logic        accept_frame_q, accept_frame_d;
-  logic [47:0] mac_address,rx_dest_mac;
+  logic [47:0] mac_address;
   logic [31:0] tx_fcs, rx_fcs;
-  logic [31:0] tx_fcs_rev, rx_fcs_rev;
+  //logic [31:0] tx_fcs_rev, rx_fcs_rev;
   logic        promiscuous;
   logic        eth_rx_irq;
   logic        tx_busy, rx_complete;
@@ -80,7 +83,7 @@ module framing_top #(
   assign hw2reg_o.rsr.rx_irq.de  = 1'b1;
   assign hw2reg_o.mdio.mdio_i.de = 1'b1;
   assign hw2reg_o.tx_busy.de     = 1'b1;
-  assign hw2reg_o.rsr.rx_complete.de = 1'b1;
+  assign hw2reg_o.rsr.rx_complete.de  = 1'b1;
 
   assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq_o;
   assign hw2reg_o.rsr.rx_complete.d = rx_complete;
@@ -88,7 +91,7 @@ module framing_top #(
   assign hw2reg_o.mdio.mdio_i.d = phy_mdio_i;
   assign hw2reg_o.tx_fcs.d      = tx_fcs_rev;
   assign hw2reg_o.rx_fcs.d      = rx_fcs_rev;
-  
+
   assign eth_rx_irq = phy_rx_ctl;
 
   always_comb begin
@@ -113,8 +116,9 @@ module framing_top #(
     rx_axis_tlast_0_d  = rx_axis_tlast_1_q;
     rx_axis_tuser_0_d  = rx_axis_tuser_1_q;
 
-    rx_dest_mac = {rx_axis_tdata_5_d, rx_axis_tdata_5_q, rx_axis_tdata_4_q, rx_axis_tdata_3_q,
-                   rx_axis_tdata_2_q, rx_axis_tdata_1_q};
+    //rx_dest_mac = {rx_axis_tdata_5_d, rx_axis_tdata_5_q, rx_axis_tdata_4_q, rx_axis_tdata_3_q,
+                  // rx_axis_tdata_2_q, rx_axis_tdata_1_q};
+    rx_dest_mac = {  rx_axis_tdata_1_q, rx_axis_tdata_2_q, rx_axis_tdata_3_q,rx_axis_tdata_4_q, rx_axis_tdata_5_q,rx_axis_tdata_5_d };
 
     accept_frame_d = accept_frame_q;
       if (!rx_axis_tvalid_0_q && rx_axis_tvalid_1_q) begin // check for beginning of eth frame

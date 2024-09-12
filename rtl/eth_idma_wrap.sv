@@ -326,16 +326,6 @@ module eth_idma_wrap #(
   assign reg2hw_eth.machi    = reg2hw.machi;
   assign reg2hw_eth.low_addr = reg2hw.low_addr;
   assign reg2hw_eth.mdio     = reg2hw.mdio;
-  
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (~rst_ni) begin
-      rx_req_en <= 0;
-    end else if (eth_rx_irq_o) begin
-      rx_req_en <= 1;
-    end else if (!idma_req_ready) begin
-      rx_req_en <= 0;
-    end
-  end
 
   // if on-chip devvice works as TX, dma length is set by the core
   // otherwise, dma lengths should be set by hardware as RX
@@ -343,7 +333,7 @@ module eth_idma_wrap #(
     idma_reg_req.length = reg2hw.length.q; 
     hw2reg.length.de = 1'b0; // Default de to 0
     hw2reg.length.d = 0;
-    if(rx_req_en) begin
+    if(dma_rx_en) begin
       if (eth_len > 0 && eth_len <= 16'h05DC) begin
         idma_reg_req.length = eth_len;
         hw2reg.length.de = 1'b1;
