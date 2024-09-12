@@ -43,19 +43,16 @@ module framing_top #(
   output hw2reg_itf_t                                   hw2reg_o,
   output logic                                          eth_rx_irq_o, 
   output logic [15:0]                                   eth_len,
-  output logic                                          dma_en,
-  output logic [47:0]                                   rx_dest_mac,
-  output logic [31:0]                                   tx_fcs_rev,
-   output logic [31:0]                                  rx_fcs_rev
+  output logic                                          dma_en
 );
 
   import eth_idma_reg_pkg::* ;
 
   logic        mac_gmii_tx_en;
   logic        accept_frame_q, accept_frame_d;
-  logic [47:0] mac_address;
+  logic [47:0] mac_address,rx_dest_mac;
   logic [31:0] tx_fcs, rx_fcs;
-  //logic [31:0] tx_fcs_rev, rx_fcs_rev;
+  logic [31:0] tx_fcs_rev, rx_fcs_rev;
   logic        promiscuous;
   logic        eth_rx_irq;
   logic        tx_busy, rx_complete;
