@@ -339,10 +339,10 @@ module eth_idma_tb
     reg_drv_tx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h0, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
+    reg_drv_rx.send_write( 'h0, 32'h89000123, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
     
-    reg_drv_rx.send_write( 'h4, 32'h00802301, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
+    reg_drv_rx.send_write( 'h4, 32'h00800207, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
 
     @(posedge  rx_irq);

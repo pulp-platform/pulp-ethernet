@@ -113,8 +113,7 @@ module framing_top #(
     rx_axis_tlast_0_d  = rx_axis_tlast_1_q;
     rx_axis_tuser_0_d  = rx_axis_tuser_1_q;
 
-    rx_dest_mac = {rx_axis_tdata_5_d, rx_axis_tdata_5_q, rx_axis_tdata_4_q, rx_axis_tdata_3_q,
-                   rx_axis_tdata_2_q, rx_axis_tdata_1_q};
+    rx_dest_mac = {rx_axis_tdata_1_q, rx_axis_tdata_2_q, rx_axis_tdata_3_q, rx_axis_tdata_4_q,rx_axis_tdata_5_q, rx_axis_tdata_5_d};
 
     accept_frame_d = accept_frame_q;
       if (!rx_axis_tvalid_0_q && rx_axis_tvalid_1_q) begin // check for beginning of eth frame
