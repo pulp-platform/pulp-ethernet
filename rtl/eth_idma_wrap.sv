@@ -295,7 +295,7 @@ module eth_idma_wrap #(
     .phy_mdio_i         (  phy_mdio_i        ),
     .phy_mdio_o         (  phy_mdio_o        ),
     .phy_mdio_oe        (  phy_mdio_oe       ),
-    .phy_mdc            (  phy_mdc           ), 
+    .phy_mdc            (  phy_mdc_o         ), 
     .tx_axis_req_i      (  eth_axis_tx_req   ), 
     .tx_axis_rsp_o      (  eth_axis_tx_rsp   ),
     .rx_axis_req_o      (  eth_axis_rx_rsp   ),
