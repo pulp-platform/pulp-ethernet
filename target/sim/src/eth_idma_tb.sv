@@ -21,7 +21,7 @@ module eth_idma_tb
   parameter bit          HardwareLegalizer   = 1'b1,
   parameter bit          RejectZeroTransfers = 1'b1
 );
-  
+
   import idma_pkg::*;
   import reg_test::*;
 
@@ -47,12 +47,12 @@ module eth_idma_tb
   typedef logic [StrbWidth-1:0]   strb_t;
   typedef logic [DataWidth-1:0]   data_t;
   typedef logic [TFLenWidth-1:0]  tf_len_t;
-  
+
   `AXI_TYPEDEF_AW_CHAN_T(axi_aw_chan_t, addr_t, id_t, user_t)
   `AXI_TYPEDEF_W_CHAN_T(axi_w_chan_t, data_t, strb_t, user_t)
-  `AXI_TYPEDEF_B_CHAN_T(axi_b_chan_t, id_t, user_t) 
+  `AXI_TYPEDEF_B_CHAN_T(axi_b_chan_t, id_t, user_t)
   `AXI_TYPEDEF_AR_CHAN_T(axi_ar_chan_t, addr_t, id_t, user_t)
-  `AXI_TYPEDEF_R_CHAN_T(axi_r_chan_t, data_t, id_t, user_t) 
+  `AXI_TYPEDEF_R_CHAN_T(axi_r_chan_t, data_t, id_t, user_t)
 
   `AXI_TYPEDEF_REQ_T(axi_req_t, axi_aw_chan_t, axi_w_chan_t, axi_ar_chan_t)
   `AXI_TYPEDEF_RESP_T(axi_rsp_t, axi_b_chan_t, axi_r_chan_t)
@@ -81,7 +81,7 @@ module eth_idma_tb
   logic [3:0] eth_txd;
   logic       eth_tx_rstn, eth_rx_rstn;
 
-  logic [AW_REGBUS-1:0] tx_req_ready, tx_rsp_valid; 
+  logic [AW_REGBUS-1:0] tx_req_ready, tx_rsp_valid;
   logic [DW_REGBUS-1:0] rx_req_ready, rx_rsp_valid;
 
   logic tx_idma_req_valid, tx_idma_req_ready, tx_idma_rsp_valid, tx_idma_rsp_ready;
@@ -93,8 +93,8 @@ module eth_idma_tb
 
   /// busy signal
   idma_busy_t   tx_busy, rx_busy;
-  
-  /// -------------------- REG Drivers -----------------------  
+
+  /// -------------------- REG Drivers -----------------------
   typedef reg_test::reg_driver #(
     .AW(AW_REGBUS),
     .DW(DW_REGBUS),
@@ -115,20 +115,23 @@ module eth_idma_tb
   )  reg_bus_rx (
     .clk_i(s_clk)
   );
- 
+
   logic reg_error;
   logic rx_irq;
   logic dma_en;
-  
+  logic dma_done;
+  logic req_ready;
+
+
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
-  
+
   reg_bus_req_t reg_bus_tx_req, reg_bus_rx_req;
   reg_bus_rsp_t reg_bus_tx_rsp, reg_bus_rx_rsp;
-  
+
   `REG_BUS_ASSIGN_TO_REQ (reg_bus_tx_req, reg_bus_tx)
   `REG_BUS_ASSIGN_FROM_RSP (reg_bus_tx, reg_bus_tx_rsp)
-  
+
   `REG_BUS_ASSIGN_TO_REQ (reg_bus_rx_req, reg_bus_rx)
   `REG_BUS_ASSIGN_FROM_RSP (reg_bus_rx, reg_bus_rx_rsp)
 
@@ -152,7 +155,8 @@ module eth_idma_tb
     .WarnUninitialized ( 1'b0         ),
     .ClearErrOnAccess  ( 1'b1         ),
     .ApplDelay         ( SYS_TA       ),
-    .AcqDelay          ( SYS_TT       )  
+    .AcqDelay          ( SYS_TT       ),
+    .UninitializedData ( "zeros"      )
   ) i_tx_axi_sim_mem (
     .clk_i              ( s_clk           ),
     .rst_ni             ( s_rst_n         ),
@@ -171,16 +175,17 @@ module eth_idma_tb
     .WarnUninitialized ( 1'b0         ),
     .ClearErrOnAccess  ( 1'b1         ),
     .ApplDelay         ( SYS_TA       ),
-    .AcqDelay          ( SYS_TT       )
+    .AcqDelay          ( SYS_TT       ),
+    .UninitializedData ( "zeros"      )
   ) i_rx_axi_sim_mem (
     .clk_i              ( s_clk             ),
     .rst_ni             ( s_rst_n           ),
     .axi_req_i          ( axi_rx_req_mem    ),
     .axi_rsp_o          ( axi_rx_rsp_mem    )
    );
-    
+
   eth_idma_wrap#(
-    .DataWidth           ( DataWidth           ),    
+    .DataWidth           ( DataWidth           ),
     .AddrWidth           ( AddrWidth           ),
     .UserWidth           ( UserWidth           ),
     .AxiIdWidth          ( AxiIdWidth          ),
@@ -198,14 +203,14 @@ module eth_idma_tb
     .rst_ni              ( s_rst_n             ),
      /// Etherent Internal clocks
     .eth_clk125_i        ( s_clk_125MHz_0      ), // 125MHz in-phase
-    .eth_clk125q_i       ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift 
+    .eth_clk125q_i       ( s_clk_125MHz_90     ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i        ( eth_rxck            ),
     .phy_rxd_i           ( eth_rxd             ),
     .phy_rx_ctl_i        ( eth_rxctl           ),
     .phy_tx_clk_o        ( eth_txck            ),
     .phy_txd_o           ( eth_txd             ),
     .phy_tx_ctl_o        ( eth_txctl           ),
-    .phy_resetn_o        ( eth_tx_rstn         ),  
+    .phy_resetn_o        ( eth_tx_rstn         ),
     .phy_intn_i          ( 1'b1                ),
     .phy_pme_i           ( 1'b1                ),
     .phy_mdio_i          ( 1'b0                ),
@@ -219,12 +224,12 @@ module eth_idma_tb
     .axi_rsp_i           ( axi_tx_rsp_mem      ),
     .idma_busy_o         ( tx_busy             )
   );
- 
+
   reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
   reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
 
   eth_idma_wrap #(
-    .DataWidth           ( DataWidth           ),    
+    .DataWidth           ( DataWidth           ),
     .AddrWidth           ( AddrWidth           ),
     .UserWidth           ( UserWidth           ),
     .AxiIdWidth          ( AxiIdWidth          ),
@@ -242,20 +247,20 @@ module eth_idma_tb
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
     .eth_clk125_i     ( s_clk_125MHz_0  ), // 125MHz in-phase
-    .eth_clk125q_i    ( s_clk_125MHz_90 ), // 125 MHz with 90 phase shift 
+    .eth_clk125q_i    ( s_clk_125MHz_90 ), // 125 MHz with 90 phase shift
     .phy_rx_clk_i     ( eth_txck        ),
     .phy_rxd_i        ( eth_txd         ),
     .phy_rx_ctl_i     ( eth_txctl       ),
     .phy_tx_clk_o     ( eth_rxck        ),
     .phy_txd_o        ( eth_rxd         ),
     .phy_tx_ctl_o     ( eth_rxctl       ),
-    .phy_resetn_o     ( eth_rx_rstn     ),  
+    .phy_resetn_o     ( eth_rx_rstn     ),
     .phy_intn_i       ( 1'b1            ),
     .phy_pme_i        ( 1'b1            ),
     .phy_mdio_i       ( 1'b0            ),
-    .phy_mdio_o       (                 ), 
-    .phy_mdio_oe      (                 ), 
-    .phy_mdc_o        (                 ), 
+    .phy_mdio_o       (                 ),
+    .phy_mdio_oe      (                 ),
+    .phy_mdc_o        (                 ),
     .reg_req_i        ( reg_bus_rx_req  ),
     .reg_rsp_o        ( reg_bus_rx_rsp  ),
     .testmode_i       ( 1'b0            ),
@@ -266,7 +271,7 @@ module eth_idma_tb
   );
 
     // ------------------------ BEGINNING OF SIMULATION ------------------------
-   
+
   /// Ethernet Internal Clock generation
   initial begin
     while (!done) begin
@@ -289,15 +294,15 @@ module eth_idma_tb
   end
 
   initial begin
-      
+
     @(posedge s_rst_n);
     @(posedge s_clk);
 
     //$readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     //$readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/eth-temp/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/eth-temp/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-   
+    $readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
@@ -307,33 +312,50 @@ module eth_idma_tb
 
     reg_drv_tx.send_write( 'h1c, 32'h0, 'hf, reg_error ); // SRC_ADDR
     @(posedge s_clk);
-     
-    reg_drv_tx.send_write( 'h20, 32'h0, 'hf, reg_error); // DST_ADDR 
+
+    reg_drv_tx.send_write( 'h20, 32'h0, 'hf, reg_error); // DST_ADDR
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h24, 'h40, 'hf, reg_error); // Size in bytes 
+    reg_drv_tx.send_write( 'h24, 'h40, 'hf, reg_error); // Size in bytes
     @(posedge s_clk);
-    
+
     reg_drv_tx.send_write( 'h28, 32'h0, 'hf, reg_error); // src protocol AXI
     @(posedge s_clk);
 
     reg_drv_tx.send_write( 'h2c, 32'h5, 'hf, reg_error); // dst protocol AXIS
     @(posedge s_clk);
 
+    while(1) begin
+      reg_drv_tx.send_read( 'h48, req_ready, reg_error);   // req ready
+      if( req_ready )
+        break;
+      @(posedge s_clk);
+    end
+
     /// Transaction configs
     reg_drv_tx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
-    
+
+    // // set req_valid as 0 when req_ready is deasserted
+    // while (req_ready) begin
+    //   reg_drv_tx.send_read('h48, req_ready, reg_error);  // req ready
+    //   @(posedge s_clk);
+    // end
+
+    /// Transaction configs
+    reg_drv_tx.send_write( 'h44, 32'h0, 'hf , reg_error);  // req valid goes to 0
+    @(posedge s_clk);
+
     reg_drv_rx.send_write( 'h0, 32'h89000123, 'hf, reg_error); //lower 32bits of MAC address
     @(posedge s_clk);
-    
+
     reg_drv_rx.send_write( 'h4, 'h00800207, 'hf, reg_error); //upper 16bits of MAC address + other configuration set to false/0
     @(posedge s_clk);
 
     @(posedge  rx_irq);
-    
+
     while(1) begin
-      reg_drv_rx.send_read( 'h54, dma_en, reg_error);   // req ready 
+      reg_drv_rx.send_read( 'h54, dma_en, reg_error);   // req ready
       if( dma_en )
         break;
       @(posedge s_clk);
@@ -341,7 +363,7 @@ module eth_idma_tb
 
     reg_drv_rx.send_write( 'h1c, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
-    
+
     reg_drv_rx.send_write( 'h20, 32'h0, 'hf, reg_error); // DST_ADDR
     @(posedge s_clk);
 
@@ -350,12 +372,39 @@ module eth_idma_tb
 
     reg_drv_rx.send_write( 'h2c, 32'h0, 'hf, reg_error); // dst protocol
     @(posedge s_clk);
-  
-    reg_drv_rx.send_write( 'h44, 32'h1, 'hf, reg_error);  // req_valid
+
+    while(1) begin
+      reg_drv_rx.send_read( 'h48, req_ready, reg_error);   // req ready
+      if( req_ready )
+        break;
+      @(posedge s_clk);
+    end
+
+    /// Transaction configs
+    reg_drv_rx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
-  
-    repeat(160) @(posedge s_clk); // adjust based on num_bytes to write into rx sim mem 
-    // can @posedge of rsp_valid 
+
+    // // set req_valid as 0 when req_ready is deasserted
+    // while(1) begin
+    //   reg_drv_rx.send_read( 'h48, req_ready, reg_error);   // req ready
+    //   if( !req_ready )
+    //     break;
+    //   @(posedge s_clk);
+    // end
+
+    /// Transaction configs
+    reg_drv_rx.send_write( 'h44, 32'h0, 'hf , reg_error);  // req valid goes to 0
+    @(posedge s_clk);
+
+    while(1) begin
+      reg_drv_rx.send_read( 'h50, dma_done, reg_error);   // rsp valid
+      if( dma_done )
+        break;
+      @(posedge s_clk);
+    end
+
+   @(posedge s_clk);
+    // can @posedge of rsp_valid
 
     for (int j = 0; j < 64; j++) begin
       if (i_tx_axi_sim_mem.mem[j] != i_rx_axi_sim_mem.mem[j]) begin
@@ -371,5 +420,5 @@ module eth_idma_tb
 
   $finish;
  end
- 
+
 endmodule

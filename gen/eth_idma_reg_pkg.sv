@@ -255,11 +255,6 @@ package eth_idma_reg_pkg;
   typedef struct packed {
     logic        d;
     logic        de;
-  } eth_idma_hw2reg_req_valid_reg_t;
-
-  typedef struct packed {
-    logic        d;
-    logic        de;
   } eth_idma_hw2reg_req_ready_reg_t;
 
   typedef struct packed {
@@ -300,17 +295,16 @@ package eth_idma_reg_pkg;
 
   // HW -> register type
   typedef struct packed {
-    eth_idma_hw2reg_low_addr_reg_t low_addr; // [169:137]
-    eth_idma_hw2reg_machi_reg_t machi; // [136:107]
-    eth_idma_hw2reg_mdio_reg_t mdio; // [106:99]
-    eth_idma_hw2reg_tx_busy_reg_t tx_busy; // [98:97]
-    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [96:64]
-    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [63:31]
-    eth_idma_hw2reg_rsr_reg_t rsr; // [30:27]
-    eth_idma_hw2reg_length_reg_t length; // [26:14]
-    eth_idma_hw2reg_axi_id_reg_t axi_id; // [13:12]
-    eth_idma_hw2reg_last_reg_t last; // [11:10]
-    eth_idma_hw2reg_req_valid_reg_t req_valid; // [9:8]
+    eth_idma_hw2reg_low_addr_reg_t low_addr; // [167:135]
+    eth_idma_hw2reg_machi_reg_t machi; // [134:105]
+    eth_idma_hw2reg_mdio_reg_t mdio; // [104:97]
+    eth_idma_hw2reg_tx_busy_reg_t tx_busy; // [96:95]
+    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [94:62]
+    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [61:29]
+    eth_idma_hw2reg_rsr_reg_t rsr; // [28:25]
+    eth_idma_hw2reg_length_reg_t length; // [24:12]
+    eth_idma_hw2reg_axi_id_reg_t axi_id; // [11:10]
+    eth_idma_hw2reg_last_reg_t last; // [9:8]
     eth_idma_hw2reg_req_ready_reg_t req_ready; // [7:6]
     eth_idma_hw2reg_rsp_ready_reg_t rsp_ready; // [5:4]
     eth_idma_hw2reg_rsp_valid_reg_t rsp_valid; // [3:2]

@@ -47,7 +47,7 @@
               { bits: "23", name: "irq_en",
                 desc: "interrupt enbale",
                 resval: "0"
-              }   
+              }
           ]
         },
         { name: "mdio",
@@ -255,7 +255,7 @@
              resval: "0"
            }
           ]
-        }, 
+        },
         {  name: "beo",
            desc: "backend options",
            swaccess: "rw",
@@ -286,7 +286,7 @@
               resval: "0"
             }
            ]
-        },   
+        },
         { name:"last",
           desc: "last transfer",
           swaccess: "rw",
@@ -301,7 +301,7 @@
         { name:"req_valid",
           desc: "idma request valid",
           swaccess: "rw",
-          hwaccess: "hrw",
+          hwaccess: "hro",
           fields: [
             { bits: "0",
               name: "req_valid",
@@ -359,8 +359,3 @@
         },
   ]
 }
-
-
-
-
-
