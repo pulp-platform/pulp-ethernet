@@ -215,9 +215,12 @@ module eth_idma_wrap #(
   assign idma_rsp_ready                          = reg2hw.rsp_ready.q;
 
   always_comb begin
+    hw2reg.req_valid.d = 1'b0;
     hw2reg.rsp_ready.d = 1'b0;
+    hw2reg.req_valid.de = 1'b0;
     hw2reg.rsp_ready.de = 1'b0;
     if (!idma_req_ready && reg2hw.req_valid.q) begin
+      hw2reg.req_valid.de = 1'b1;
       hw2reg.rsp_ready.d = 1'b1;
       hw2reg.rsp_ready.de = 1'b1;
     end
