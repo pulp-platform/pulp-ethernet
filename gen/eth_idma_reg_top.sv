@@ -1288,8 +1288,8 @@ module eth_idma_reg_top #(
     .wd     (req_valid_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.req_valid.de),
+    .d      (hw2reg.req_valid.d ),
 
     // to internal hardware
     .qe     (),
