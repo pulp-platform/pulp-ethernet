@@ -333,17 +333,7 @@ module eth_idma_tb
     end
 
     /// Transaction configs
-    reg_drv_tx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
-    @(posedge s_clk);
-
-    // // set req_valid as 0 when req_ready is deasserted
-    // while (req_ready) begin
-    //   reg_drv_tx.send_read('h48, req_ready, reg_error);  // req ready
-    //   @(posedge s_clk);
-    // end
-
-    /// Transaction configs
-    reg_drv_tx.send_write( 'h44, 32'h0, 'hf , reg_error);  // req valid goes to 0
+    reg_drv_tx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid
     @(posedge s_clk);
 
     reg_drv_rx.send_write( 'h0, 32'h89000123, 'hf, reg_error); //lower 32bits of MAC address
@@ -355,7 +345,7 @@ module eth_idma_tb
     @(posedge  rx_irq);
 
     while(1) begin
-      reg_drv_rx.send_read( 'h54, dma_en, reg_error);   // req ready
+      reg_drv_rx.send_read( 'h54, dma_en, reg_error);   // dma en
       if( dma_en )
         break;
       @(posedge s_clk);
@@ -384,20 +374,8 @@ module eth_idma_tb
     reg_drv_rx.send_write( 'h44, 32'h1, 'hf , reg_error);  // req valid - req start
     @(posedge s_clk);
 
-    // // set req_valid as 0 when req_ready is deasserted
-    // while(1) begin
-    //   reg_drv_rx.send_read( 'h48, req_ready, reg_error);   // req ready
-    //   if( !req_ready )
-    //     break;
-    //   @(posedge s_clk);
-    // end
-
-    /// Transaction configs
-    reg_drv_rx.send_write( 'h44, 32'h0, 'hf , reg_error);  // req valid goes to 0
-    @(posedge s_clk);
-
     while(1) begin
-      reg_drv_rx.send_read( 'h50, dma_done, reg_error);   // rsp valid
+      reg_drv_rx.send_read( 'h50, dma_done, reg_error);   // rsp_valid dma completes data moving
       if( dma_done )
         break;
       @(posedge s_clk);
