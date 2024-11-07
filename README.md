@@ -1,23 +1,23 @@
 ## Register Configuration for DMA Operation
-TX (Transmit) Path:
-Set ```src_addr```: Configure the source address for the data transfer.
-Set ```dst_addr```: Specify the destination address for the data transfer.
-Set ```length```: Define the length of the data to be transferred.
-Set ```src_protocol```: Select the protocol used by the source for data transfer.
-Set ```dst_protocol```: Set the protocol for the destination.
-Check ```req_ready```: Request Ready: Ensure the read request is ready before trigger the transfer.
-Set ```req_valid```: Assert req_valid to initiate the data transfer.
-Check ```rsp_valid```: Wait for rsp_valid to confirm that the data transfer has been successfully completed.
-RX (Receive) Path:
-Wait for RX IRQ: Once the receive interrupt (rx_irq) is raised, confirm that DMA is ready to proceed with configuration.
-Check ```dma_rx_en```: Ensure the length of the received data is ready.
-Set ```src_addr```: Configure the source address for the receive operation.
-Set ```dst_addr```: Specify the destination address for the data to be stored.
-Set ```src_protocol```: Define the protocol used by the data source.
-Set ```dst_protocol```: Configure the protocol for the destination.
-Check ```req_ready```: Ensure the DMA's request is ready before proceeding.
-Set ```req_valid```: Assert req_valid to initiate data reception.
-Check ```rsp_valid```: Monitor rsp_valid to confirm that the data movement is complete.
+### TX (Transmit) Path:
+- Set ```src_addr```: Configure the source address for the data transfer.
+- Set ```dst_addr```: Specify the destination address for the data transfer.
+- Set ```length```: Define the length of the data to be transferred.
+- Set ```src_protocol```: Select the protocol used by the source for data transfer.
+- Set ```dst_protocol```: Set the protocol for the destination.
+- Check ```req_ready```: Request Ready: Ensure the read request is ready before trigger the transfer.
+- Set ```req_valid```: Assert req_valid to initiate the data transfer.
+- Check ```rsp_valid```: Wait for rsp_valid to confirm that the data transfer has been successfully completed.
+### RX (Receive) Path:
+- Wait for RX IRQ: Once the receive interrupt (rx_irq) is raised, confirm that DMA is ready to proceed with configuration.
+- Check ```dma_rx_en```: Ensure the length of the received data is ready.
+- Set ```src_addr```: Configure the source address for the receive operation.
+- Set ```dst_addr```: Specify the destination address for the data to be stored.
+- Set ```src_protocol```: Define the protocol used by the data source.
+- Set ```dst_protocol```: Configure the protocol for the destination.
+- Check ```req_ready```: Ensure the DMA's request is ready before proceeding.
+- Set ```req_valid```: Assert req_valid to initiate data reception.
+- Check ```rsp_valid```: Monitor rsp_valid to confirm that the data movement is complete.
 
 ## Compile (Questa)
 
