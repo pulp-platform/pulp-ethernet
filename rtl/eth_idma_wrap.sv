@@ -334,14 +334,10 @@ module eth_idma_wrap #(
     hw2reg.length.de = 1'b0; // Default de to 0
     hw2reg.length.d = 0;
     if(dma_rx_en) begin
-      if (eth_len > 0 && eth_len <= 16'h05DC) begin
+      if (dma_rx_en) begin
         idma_reg_req.length = eth_len;
         hw2reg.length.de = 1'b1;
         hw2reg.length.d = eth_len;
-      end else if (eth_len > 16'h0600) begin
-        idma_reg_req.length = 16'h002a;
-        hw2reg.length.de = 1'b1;
-        hw2reg.length.d = 16'h002a;
       end
     end
   end

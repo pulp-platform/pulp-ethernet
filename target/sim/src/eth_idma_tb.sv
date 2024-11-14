@@ -380,8 +380,6 @@ module eth_idma_tb
         break;
       @(posedge s_clk);
     end
-
-   @(posedge s_clk);
     // can @posedge of rsp_valid
 
     for (int j = 0; j < 64; j++) begin

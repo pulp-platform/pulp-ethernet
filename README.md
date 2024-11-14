@@ -9,7 +9,7 @@
 - Set ```req_valid```: Assert req_valid to initiate the data transfer.
 - Check ```rsp_valid```: Wait for rsp_valid to confirm that the data transfer has been successfully completed.
 ### RX (Receive) Path:
-- Wait for RX IRQ: Once the receive interrupt (rx_irq) is raised, confirm that DMA is ready to proceed with configuration.
+- Wait for ```rx_irq```: Once the receive interrupt (rx_irq) is raised, confirm that DMA is ready to proceed with configuration.
 - Check ```dma_rx_en```: Ensure the length of the received data is ready.
 - Set ```src_addr```: Configure the source address for the receive operation.
 - Set ```dst_addr```: Specify the destination address for the data to be stored.

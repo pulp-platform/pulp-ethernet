@@ -30,7 +30,7 @@ module eth_top #(
   /// REGBUS
   parameter type reg2hw_itf_t            = logic,
   parameter type hw2reg_itf_t            = logic
-  
+
 ) (
   // Internal 125 MHz clock
   input  wire                                  clk_i        ,
@@ -59,13 +59,13 @@ module eth_top #(
   input  axi_stream_rsp_t                      rx_axis_rsp_i,
   // Reg configs
   input  reg2hw_itf_t                          reg2hw_i     ,
-  output hw2reg_itf_t                          hw2reg_o     , 
+  output hw2reg_itf_t                          hw2reg_o     ,
   output logic                                 eth_rx_irq_o ,
   //output logic                               eth_tx_irq_o
   output logic[15:0]                           eth_len,
   output logic                                 dma_en
 );
-  
+
 // ---------------- axis streams for the framing module ----------------------
   localparam int unsigned FramingDataWidth = 8;
   localparam int unsigned FramingIdWidth   = IdWidth;
@@ -124,7 +124,7 @@ module eth_top #(
     // Reg Interface
     .reg2hw_i       ( reg2hw_i    ),
     .hw2reg_o       ( hw2reg_o    ),
-    .eth_rx_irq_o   ( eth_rx_irq_o),
+    .eth_rx_irq     ( eth_rx_irq_o),
     .eth_len        ( eth_len     ),
     .dma_en         ( dma_en      )
   );

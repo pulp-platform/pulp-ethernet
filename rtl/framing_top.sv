@@ -41,7 +41,7 @@ module framing_top #(
   // REGBUS configs
   input  reg2hw_itf_t                                   reg2hw_i,
   output hw2reg_itf_t                                   hw2reg_o,
-  output logic                                          eth_rx_irq_o, 
+  output logic                                          eth_rx_irq,
   output logic [15:0]                                   eth_len,
   output logic                                          dma_en
 );
@@ -54,9 +54,9 @@ module framing_top #(
   logic [31:0] tx_fcs, rx_fcs;
   logic [31:0] tx_fcs_rev, rx_fcs_rev;
   logic        promiscuous;
-  logic        eth_rx_irq;
   logic        tx_busy, rx_complete;
   logic        irq_en;
+  logic [15:0] rx_packet_length_q, rx_packet_length_d;
 
   //AXIS RX
   logic [7:0] rx_axis_tdata_5_q,  rx_axis_tdata_4_q,  rx_axis_tdata_3_q,  rx_axis_tdata_2_q,  rx_axis_tdata_1_q,  rx_axis_tdata_0_q;
@@ -82,16 +82,15 @@ module framing_top #(
   assign hw2reg_o.tx_busy.de     = 1'b1;
   assign hw2reg_o.rsr.rx_complete.de  = 1'b1;
 
-  assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq_o;
+  assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq;
   assign hw2reg_o.rsr.rx_complete.d = rx_complete;
   assign hw2reg_o.tx_busy.d     = tx_busy;
   assign hw2reg_o.mdio.mdio_i.d = phy_mdio_i;
   assign hw2reg_o.tx_fcs.d      = tx_fcs_rev;
   assign hw2reg_o.rx_fcs.d      = rx_fcs_rev;
 
-  assign eth_rx_irq = phy_rx_ctl;
-
   always_comb begin
+    // Shift registers to capture MAC address
     rx_axis_tdata_4_d  = rx_axis_tdata_5_q;
     rx_axis_tvalid_4_d = rx_axis_tvalid_5_q;
     rx_axis_tlast_4_d  = rx_axis_tlast_5_q;
@@ -113,20 +112,22 @@ module framing_top #(
     rx_axis_tlast_0_d  = rx_axis_tlast_1_q;
     rx_axis_tuser_0_d  = rx_axis_tuser_1_q;
 
-    //rx_dest_mac = {rx_axis_tdata_5_d, rx_axis_tdata_5_q, rx_axis_tdata_4_q, rx_axis_tdata_3_q,
-                  // rx_axis_tdata_2_q, rx_axis_tdata_1_q};
+    // Capture destination MAC address from shift registers
     rx_dest_mac = {  rx_axis_tdata_1_q, rx_axis_tdata_2_q, rx_axis_tdata_3_q,rx_axis_tdata_4_q, rx_axis_tdata_5_q,rx_axis_tdata_5_d };
 
     accept_frame_d = accept_frame_q;
-      if (!rx_axis_tvalid_0_q && rx_axis_tvalid_1_q) begin // check for beginning of eth frame
-        // accept_frame_d = isMulticastRange || isBroadcast (ff:ff:ff:ff:ff) ||
-        //                isFrameAdresssedToOurMacAddress || isPromiscous (store all frames)
+
+    // Detect start of new frame
+    if (rx_axis_tlast_0_q && accept_frame_q) begin
+      accept_frame_d = 1'b0;
+    end else  if (!rx_axis_tvalid_0_q && rx_axis_tvalid_1_q) begin // check for beginning of eth frame
         accept_frame_d = (rx_dest_mac[47:24]==24'h01005E) | (&rx_dest_mac) |
                          (mac_address == rx_dest_mac) | promiscuous;
-      end
+    end
 
     rx_axis_req_o.t = '0;
     rx_axis_req_o.tvalid = '0;
+
     if (accept_frame_q) begin
       rx_axis_req_o.t.data = rx_axis_tdata_0_q;
       rx_axis_req_o.t.last = rx_axis_tlast_0_q;
@@ -134,6 +135,16 @@ module framing_top #(
       rx_axis_req_o.t.strb = 'd1;
       rx_axis_req_o.t.keep = 'd1;
       rx_axis_req_o.tvalid = rx_axis_tvalid_0_q;
+    end
+
+    // Length calculation logic
+    rx_packet_length_d = rx_packet_length_q;
+    if (accept_frame_q) begin
+      if (rx_axis_tvalid_0_q) begin
+        rx_packet_length_d = rx_packet_length_q + 1;
+      end
+    end else begin
+      rx_packet_length_d = 16'd0;
     end
   end
 
@@ -164,8 +175,12 @@ module framing_top #(
       rx_axis_tlast_0_q  <= 'd0;
       rx_axis_tuser_0_q  <= 'd0;
 
-      accept_frame_q <= 'd0;
-      eth_rx_irq_o   <= 'b0;
+      accept_frame_q     <= 'd0;
+      rx_packet_length_q <= 16'd0;
+      eth_len            <= 16'd0;
+      rx_complete        <= 1'b0;
+      eth_rx_irq         <= 'b0;
+      dma_en             <= 1'b0;
     end else begin
       rx_axis_tdata_5_q  <= rx_axis_tdata_5_d;
       rx_axis_tvalid_5_q <= rx_axis_tvalid_5_d;
@@ -193,7 +208,16 @@ module framing_top #(
       rx_axis_tuser_0_q  <= rx_axis_tuser_0_d;
 
       accept_frame_q <= accept_frame_d;
-      eth_rx_irq_o   <= eth_rx_irq & irq_en;
+      rx_packet_length_q <= rx_packet_length_d;
+
+      if (rx_axis_tlast_0_q && accept_frame_q) begin
+          eth_len     <= rx_packet_length_q + 1; // Include the last byte
+          rx_complete <= 1'b1;
+        end else begin
+        rx_complete <= 1'b0;
+      end
+        eth_rx_irq <= rx_complete & irq_en;
+        dma_en <= rx_complete;
     end
   end
 
@@ -233,15 +257,12 @@ module framing_top #(
     // Error registers
     .rx_fcs_reg    (rx_fcs               ),
     .tx_fcs_reg    (tx_fcs               ),
-    .tx_busy       (tx_busy              ),
-    .rx_complete   (rx_complete          ),
-    .eth_len       (eth_len              ),
-    .dma_en        (dma_en               )
+    .tx_busy       (tx_busy              )
   );
-  
+
   assign tx_fcs_rev = {<<{tx_fcs}};
   assign rx_fcs_rev = {<<{rx_fcs}};
-  
+
 endmodule // framing_top
 
 `ifdef GENESYSII
