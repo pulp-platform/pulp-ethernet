@@ -97,8 +97,6 @@ module eth_idma_wrap #(
     .devmode_i(1'b1)
   );
 
-  logic rx_req_en;
-
   /// Address type
   typedef logic [AddrWidth-1:0]   addr_t;
   typedef logic [DataWidth-1:0]   data_t;
@@ -161,7 +159,6 @@ module eth_idma_wrap #(
   } write_meta_channel_t;
 
   logic  idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;
-  logic  clk_125_0, clk_125_90;
   logic [15:0] eth_len;
   logic dma_rx_en;
 
