@@ -176,8 +176,8 @@ module framing_top #(
       rx_axis_tuser_0_q  <= 'd0;
 
       accept_frame_q     <= 'd0;
-      rx_packet_length_q <= 16'd0;
-      eth_len            <= 16'd0;
+      rx_packet_length_q <= 'b0;
+      eth_len            <= 'b0;
       rx_complete        <= 1'b0;
       eth_rx_irq         <= 'b0;
       dma_en             <= 1'b0;
@@ -214,10 +214,15 @@ module framing_top #(
           eth_len     <= rx_packet_length_q + 1; // Include the last byte
           rx_complete <= 1'b1;
         end else begin
-        rx_complete <= 1'b0;
+          rx_complete <= 1'b0;
       end
-        eth_rx_irq <= rx_complete & irq_en;
-        dma_en <= rx_complete;
+
+      if( irq_en ) begin
+        eth_rx_irq <= eth_rx_irq | rx_complete; // Set and hold when irq_en is 1
+      end else begin
+        eth_rx_irq <= 1'b0; // Clear when irq_en is 0
+      end
+      dma_en <= rx_complete;
     end
   end
 
