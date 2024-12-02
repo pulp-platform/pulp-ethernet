@@ -124,7 +124,7 @@ module eth_top #(
     // Reg Interface
     .reg2hw_i       ( reg2hw_i    ),
     .hw2reg_o       ( hw2reg_o    ),
-    .eth_rx_irq     ( eth_rx_irq_o),
+    .eth_rx_irq_o   ( eth_rx_irq_o),
     .eth_len        ( eth_len     ),
     .dma_en         ( dma_en      )
   );

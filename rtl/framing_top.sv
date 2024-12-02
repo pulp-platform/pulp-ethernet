@@ -41,7 +41,7 @@ module framing_top #(
   // REGBUS configs
   input  reg2hw_itf_t                                   reg2hw_i,
   output hw2reg_itf_t                                   hw2reg_o,
-  output logic                                          eth_rx_irq,
+  output logic                                          eth_rx_irq_o,
   output logic [15:0]                                   eth_len,
   output logic                                          dma_en
 );
@@ -82,12 +82,14 @@ module framing_top #(
   assign hw2reg_o.tx_busy.de     = 1'b1;
   assign hw2reg_o.rsr.rx_complete.de  = 1'b1;
 
-  assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq;
+  assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq_o;
   assign hw2reg_o.rsr.rx_complete.d = rx_complete;
   assign hw2reg_o.tx_busy.d     = tx_busy;
   assign hw2reg_o.mdio.mdio_i.d = phy_mdio_i;
   assign hw2reg_o.tx_fcs.d      = tx_fcs_rev;
   assign hw2reg_o.rx_fcs.d      = rx_fcs_rev;
+
+  assign eth_rx_irq = phy_rx_ctl;
 
   always_comb begin
     // Shift registers to capture MAC address
@@ -144,7 +146,7 @@ module framing_top #(
         rx_packet_length_d = rx_packet_length_q + 1;
       end
     end else begin
-      rx_packet_length_d = 16'd0;
+      rx_packet_length_d = 'b0;
     end
   end
 
@@ -179,7 +181,7 @@ module framing_top #(
       rx_packet_length_q <= 'b0;
       eth_len            <= 'b0;
       rx_complete        <= 1'b0;
-      eth_rx_irq         <= 'b0;
+      eth_rx_irq_o       <= 'b0;
       dma_en             <= 1'b0;
     end else begin
       rx_axis_tdata_5_q  <= rx_axis_tdata_5_d;
@@ -208,6 +210,7 @@ module framing_top #(
       rx_axis_tuser_0_q  <= rx_axis_tuser_0_d;
 
       accept_frame_q <= accept_frame_d;
+      eth_rx_irq_o   <= eth_rx_irq & irq_en;
       rx_packet_length_q <= rx_packet_length_d;
 
       if (rx_axis_tlast_0_q && accept_frame_q) begin
@@ -217,10 +220,10 @@ module framing_top #(
           rx_complete <= 1'b0;
       end
 
-      if( irq_en ) begin
-        eth_rx_irq <= eth_rx_irq | rx_complete; // Set and hold when irq_en is 1
-      end else begin
-        eth_rx_irq <= 1'b0; // Clear when irq_en is 0
+  //    if( irq_en ) begin
+  //      eth_rx_irq <= phy_rx_ctl; // Set and hold when irq_en is 1
+  //    end else begin
+  //      eth_rx_irq <= 1'b0; // Clear when irq_en is 0
       end
       dma_en <= rx_complete;
     end
