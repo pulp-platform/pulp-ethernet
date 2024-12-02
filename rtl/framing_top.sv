@@ -224,7 +224,7 @@ module framing_top #(
   //      eth_rx_irq <= phy_rx_ctl; // Set and hold when irq_en is 1
   //    end else begin
   //      eth_rx_irq <= 1'b0; // Clear when irq_en is 0
-      end
+  //    end
       dma_en <= rx_complete;
     end
   end
