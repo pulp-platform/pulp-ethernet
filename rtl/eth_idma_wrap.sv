@@ -158,9 +158,9 @@ module eth_idma_wrap #(
     axis_write_t_chan_padded_t axis;
   } write_meta_channel_t;
 
-  logic  idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;
+  logic idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;
   logic [15:0] eth_len;
-  logic dma_rx_en;
+  logic rx_complete;
 
   /// AXI request and response
   axi_req_t     axi_read_req,axi_write_req;
@@ -300,12 +300,9 @@ module eth_idma_wrap #(
     .reg2hw_i           (  reg2hw_eth        ),
     .hw2reg_o           (  hw2reg_eth        ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
-    .eth_len            (  eth_len           ),
-    .dma_en             (  dma_rx_en         )
+    .eth_len_o          (  eth_len           ),
+    .rx_complete_o      (  rx_complete       )
   );
-
-  assign hw2reg.dma_rx_en.de = dma_rx_en;
-  assign hw2reg.dma_rx_en.d =  dma_rx_en;
 
   assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
   assign hw2reg.rsp_valid.d = idma_rsp_valid;
@@ -323,6 +320,7 @@ module eth_idma_wrap #(
   assign reg2hw_eth.machi    = reg2hw.machi;
   assign reg2hw_eth.low_addr = reg2hw.low_addr;
   assign reg2hw_eth.mdio     = reg2hw.mdio;
+  assign reg2hw_eth.rsr.rx_end_clr  = reg2hw.rsr.rx_end_clr;
 
   // if on-chip devvice works as TX, dma length is set by the core
   // otherwise, dma lengths should be set by hardware as RX
@@ -330,12 +328,10 @@ module eth_idma_wrap #(
     idma_reg_req.length = reg2hw.length.q;
     hw2reg.length.de = 1'b0; // Default de to 0
     hw2reg.length.d = 0;
-    if(dma_rx_en) begin
-      if (dma_rx_en) begin
-        idma_reg_req.length = eth_len;
-        hw2reg.length.de = 1'b1;
-        hw2reg.length.d = eth_len;
-      end
+    if (rx_complete) begin
+      idma_reg_req.length = eth_len;
+      hw2reg.length.de = 1'b1;
+      hw2reg.length.d = eth_len;
     end
   end
 

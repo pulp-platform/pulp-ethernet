@@ -344,13 +344,6 @@ module eth_idma_tb
 
     @(posedge  rx_irq);
 
-    while(1) begin
-      reg_drv_rx.send_read( 'h54, dma_en, reg_error);   // dma en
-      if( dma_en )
-        break;
-      @(posedge s_clk);
-    end
-
     reg_drv_rx.send_write( 'h1c, 32'h0, 'hf, reg_error ); // SRC_ADDR  64'h0000207098001032
     @(posedge s_clk);
 
@@ -381,6 +374,8 @@ module eth_idma_tb
       @(posedge s_clk);
     end
     // can @posedge of rsp_valid
+    reg_drv_rx.send_write( 'h18, 32'h2, 'hf, reg_error ); // to clear rx_complete, thus to clear rx_irq once all data is processed.
+    @(posedge s_clk);
 
     for (int j = 0; j < 64; j++) begin
       if (i_tx_axi_sim_mem.mem[j] != i_rx_axi_sim_mem.mem[j]) begin

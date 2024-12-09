@@ -109,16 +109,24 @@
         },
         { name: "rsr",
           desc: "receive status register",
-          swaccess: "ro",
-          hwaccess: "hwo",
           fields: [
               { bits: "0", name: "rx_complete",
                 desc: "reception completes"
                 resval: "0"
+                swaccess: "ro",
+                hwaccess: "hwo"
               }
-              { bits: "1", name: "rx_irq",
+              { bits: "1", name: "rx_end_clr",
+                desc: "to clear reception completes"
+                resval: "0"
+                swaccess: "wo",
+                hwaccess: "hro"
+              }
+              { bits: "2", name: "rx_irq",
                 desc: "etherent rx interrupt"
                 resval: "0"
+                swaccess: "ro",
+                hwaccess: "hwo"
               }
           ]
         },
@@ -344,17 +352,6 @@
               desc: "idma response valid"
               resval: "0"
             }
-          ]
-        },
-        { name: "dma_rx_en",
-          desc: "this signal indicates dma can be configured now",
-          swaccess: "ro",
-          hwaccess: "hwo",
-          fields: [
-              { bits: "0", name: "dma_rx_en",
-                desc: "dma can be configured now"
-                resval: "0"
-              }
           ]
         },
   ]

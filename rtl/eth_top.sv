@@ -61,9 +61,8 @@ module eth_top #(
   input  reg2hw_itf_t                          reg2hw_i     ,
   output hw2reg_itf_t                          hw2reg_o     ,
   output logic                                 eth_rx_irq_o ,
-  //output logic                               eth_tx_irq_o
-  output logic[15:0]                           eth_len,
-  output logic                                 dma_en
+  output logic[15:0]                           eth_len_o    ,
+  output logic                                 rx_complete_o
 );
 
 // ---------------- axis streams for the framing module ----------------------
@@ -122,11 +121,11 @@ module eth_top #(
     .rx_axis_rsp_i(s_framing_rx_rsp),
 
     // Reg Interface
-    .reg2hw_i       ( reg2hw_i    ),
-    .hw2reg_o       ( hw2reg_o    ),
-    .eth_rx_irq_o   ( eth_rx_irq_o),
-    .eth_len        ( eth_len     ),
-    .dma_en         ( dma_en      )
+    .reg2hw_i       ( reg2hw_i      ),
+    .hw2reg_o       ( hw2reg_o      ),
+    .eth_rx_irq_o   ( eth_rx_irq_o  ),
+    .eth_len_o      ( eth_len_o     ),
+    .rx_complete_o  ( rx_complete_o )
   );
 
   axi_stream_dw_downsizer #(

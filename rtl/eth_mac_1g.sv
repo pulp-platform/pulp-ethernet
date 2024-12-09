@@ -72,7 +72,7 @@ module eth_mac_1g #
     input wire         tx_clk_enable,
     input wire         rx_mii_select,
     input wire         tx_mii_select,
- 
+
     /*
      * Status
      */
@@ -86,10 +86,7 @@ module eth_mac_1g #
      */
     input wire [7:0]   ifg_delay,
 
-    output wire        tx_busy,
-    output wire        rx_complete,
-    output wire[15:0]  eth_len,
-    output wire        dma_en
+    output wire        tx_busy
 );
 
 axis_gmii_rx
@@ -107,10 +104,7 @@ axis_gmii_rx_inst (
     .mii_select(rx_mii_select),
     .error_bad_frame(rx_error_bad_frame),
     .error_bad_fcs(rx_error_bad_fcs),
-    .fcs_reg(rx_fcs_reg),
-    .rx_complete(rx_complete),
-    .eth_len(eth_len),
-    .dma_en(dma_en)
+    .fcs_reg(rx_fcs_reg)
 );
 
 axis_gmii_tx #(

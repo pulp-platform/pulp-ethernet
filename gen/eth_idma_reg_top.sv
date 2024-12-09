@@ -103,6 +103,8 @@ module eth_idma_reg_top #(
   logic [31:0] tx_fcs_qs;
   logic [31:0] rx_fcs_qs;
   logic rsr_rx_complete_qs;
+  logic rsr_rx_end_clr_wd;
+  logic rsr_rx_end_clr_we;
   logic rsr_rx_irq_qs;
   logic [31:0] src_addr_qs;
   logic [31:0] src_addr_wd;
@@ -187,7 +189,6 @@ module eth_idma_reg_top #(
   logic rsp_ready_wd;
   logic rsp_ready_we;
   logic rsp_valid_qs;
-  logic dma_rx_en_qs;
 
   // Register instances
   // R[low_addr]: V(False)
@@ -585,7 +586,32 @@ module eth_idma_reg_top #(
   );
 
 
-  //   F[rx_irq]: 1:1
+  //   F[rx_end_clr]: 1:1
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("WO"),
+    .RESVAL  (1'h0)
+  ) u_rsr_rx_end_clr (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    // from register interface
+    .we     (rsr_rx_end_clr_we),
+    .wd     (rsr_rx_end_clr_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0  ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.rsr.rx_end_clr.q ),
+
+    .qs     ()
+  );
+
+
+  //   F[rx_irq]: 2:2
   prim_subreg #(
     .DW      (1),
     .SWACCESS("RO"),
@@ -1379,35 +1405,9 @@ module eth_idma_reg_top #(
   );
 
 
-  // R[dma_rx_en]: V(False)
-
-  prim_subreg #(
-    .DW      (1),
-    .SWACCESS("RO"),
-    .RESVAL  (1'h0)
-  ) u_dma_rx_en (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    .we     (1'b0),
-    .wd     ('0  ),
-
-    // from internal hardware
-    .de     (hw2reg.dma_rx_en.de),
-    .d      (hw2reg.dma_rx_en.d ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (),
-
-    // to register interface (read)
-    .qs     (dma_rx_en_qs)
-  );
 
 
-
-
-  logic [21:0] addr_hit;
+  logic [20:0] addr_hit;
   always_comb begin
     addr_hit = '0;
     addr_hit[ 0] = (reg_addr == ETH_IDMA_LOW_ADDR_OFFSET);
@@ -1431,7 +1431,6 @@ module eth_idma_reg_top #(
     addr_hit[18] = (reg_addr == ETH_IDMA_REQ_READY_OFFSET);
     addr_hit[19] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
     addr_hit[20] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
-    addr_hit[21] = (reg_addr == ETH_IDMA_DMA_RX_EN_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -1459,8 +1458,7 @@ module eth_idma_reg_top #(
                (addr_hit[17] & (|(ETH_IDMA_PERMIT[17] & ~reg_be))) |
                (addr_hit[18] & (|(ETH_IDMA_PERMIT[18] & ~reg_be))) |
                (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(ETH_IDMA_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(ETH_IDMA_PERMIT[21] & ~reg_be)))));
+               (addr_hit[20] & (|(ETH_IDMA_PERMIT[20] & ~reg_be)))));
   end
 
   assign low_addr_we = addr_hit[0] & reg_we & !reg_error;
@@ -1492,6 +1490,9 @@ module eth_idma_reg_top #(
 
   assign mdio_mdio_oe_we = addr_hit[2] & reg_we & !reg_error;
   assign mdio_mdio_oe_wd = reg_wdata[2];
+
+  assign rsr_rx_end_clr_we = addr_hit[6] & reg_we & !reg_error;
+  assign rsr_rx_end_clr_wd = reg_wdata[1];
 
   assign src_addr_we = addr_hit[7] & reg_we & !reg_error;
   assign src_addr_wd = reg_wdata[31:0];
@@ -1612,7 +1613,8 @@ module eth_idma_reg_top #(
 
       addr_hit[6]: begin
         reg_rdata_next[0] = rsr_rx_complete_qs;
-        reg_rdata_next[1] = rsr_rx_irq_qs;
+        reg_rdata_next[1] = '0;
+        reg_rdata_next[2] = rsr_rx_irq_qs;
       end
 
       addr_hit[7]: begin
@@ -1684,10 +1686,6 @@ module eth_idma_reg_top #(
 
       addr_hit[20]: begin
         reg_rdata_next[0] = rsp_valid_qs;
-      end
-
-      addr_hit[21]: begin
-        reg_rdata_next[0] = dma_rx_en_qs;
       end
 
       default: begin

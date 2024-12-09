@@ -26,7 +26,7 @@ Author: Alex Forencich <alex@alexforencich.com>
 Date:   Thu Nov 8 13:15:47 2018 -0800
 
 Modified by Jonathan Kimmitt to extract CRC bytes
- 
+
 lfsr submodule renamed rgmii_lfsr to avoid name clash with main project
 */
 
@@ -66,13 +66,9 @@ module axis_gmii_rx
      */
     output wire        error_bad_frame,
     output wire        error_bad_fcs,
-    output reg         rx_complete,
 
     /* debug */
-    output reg [31:0]  fcs_reg,
-    // íncoming packet length
-    output reg [15:0]  eth_len,
-    output reg         dma_en
+    output reg [31:0]  fcs_reg
 );
 
 localparam [7:0]
@@ -86,13 +82,11 @@ localparam [2:0]
     STATE_CRC = 3'd3;
 
 reg [2:0] state_reg, state_next;
-reg eth_busy, eth_busy_next; 
+reg eth_busy, eth_busy_next;
 reg [4:0] payload_cycle;
-reg [7:0] eth_len_hi,eth_len_lo;
 // datapath control signals
 reg reset_crc;
 reg update_crc;
-reg rx_complete_next;
 
 reg mii_odd;
 reg mii_locked;
@@ -154,7 +148,7 @@ eth_crc_8 (
 
 always @* begin
     state_next = STATE_IDLE;
-    eth_busy_next = 1'b0; 
+    eth_busy_next = 1'b0;
     reset_crc = 1'b0;
     update_crc = 1'b0;
 
@@ -167,11 +161,6 @@ always @* begin
     error_bad_fcs_next = 1'b0;
     fcs_next = fcs_reg;
     crc_cnt_next = crc_cnt;
-    rx_complete_next = 1'b0;
-    eth_len_hi = 0;
-    eth_len_lo = 0;
-    eth_len = 0;
-    dma_en = 0;
 
     if (!clk_enable) begin
         // clock disabled - hold state
@@ -185,7 +174,6 @@ always @* begin
                 // idle state - wait for packet
                 reset_crc = 1'b1;
                 eth_busy_next = 1'b0;
-                rx_complete_next = 1'b0;
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
                     state_next = STATE_PAYLOAD;
                 end else begin
@@ -196,17 +184,8 @@ always @* begin
                 // read payload
                 update_crc = 1'b1;
                 eth_busy_next = 1'b1;
-                rx_complete_next = 1'b0;
                 m_axis_tdata_next = gmii_rxd_d4;
                 m_axis_tvalid_next = 1'b1;
-                
-                if (payload_cycle == 12)
-                    eth_len_hi = gmii_rxd_d4;
-                else if (payload_cycle == 13 ) begin
-                        eth_len_lo = gmii_rxd_d4;
-                        eth_len = { eth_len_hi, eth_len_lo };
-                        dma_en = 1;
-                end
 
                 if (gmii_rx_dv_d4 && gmii_rx_er_d4) begin
                     // error
@@ -248,7 +227,6 @@ always @* begin
                     // end of packet + CRC bytes
                     fcs_next = crc_next;
                     m_axis_tlast_next = 1'b1;
-                    rx_complete_next = 1'b1;
                     state_next = STATE_IDLE;
                 end else begin
                     fcs_next = 32'b0;
@@ -285,7 +263,6 @@ always_ff @(posedge clk or posedge rst) begin
         mii_odd <= 1'b0;
 
         payload_cycle <= 0;
-        rx_complete <= 1'b0;
 
         gmii_rx_dv_d0 <= 1'b0;
         gmii_rx_dv_d1 <= 1'b0;
@@ -297,23 +274,23 @@ always_ff @(posedge clk or posedge rst) begin
         if (state_reg == STATE_PAYLOAD) begin
             if ( payload_cycle < 14) begin
                 payload_cycle <= payload_cycle + 1;
-            end else 
+            end else
                 payload_cycle <= payload_cycle;
         end else begin
             payload_cycle <= 0;
-        end 
+        end
 
         state_reg <= state_next;
         // Check for falling edge from high to low
-     
+
         m_axis_tvalid_reg <= m_axis_tvalid_next;
 
         error_bad_frame_reg <= error_bad_frame_next;
         error_bad_fcs_reg <= error_bad_fcs_next;
 
         fcs_reg <= fcs_next;
+        eth_busy <= eth_busy_next;
         crc_cnt <= crc_cnt_next;
-        rx_complete <= rx_complete_next;
         // datapath
         if (reset_crc) begin
             crc_state <= 32'hFFFFFFFF;

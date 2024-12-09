@@ -62,17 +62,17 @@ module rgmii_core #
        /*
         * AXI input
         */
- 
+
     input wire         tx_axis_tvalid,
     input wire         tx_axis_tlast,
     input wire [7:0]   tx_axis_tdata,
     output wire        tx_axis_tready,
     input wire         tx_axis_tuser,
-   
+
        /*
         * AXI output
         */
- 
+
     output wire [7:0]  rx_axis_tdata,
     output wire        rx_axis_tvalid,
     output wire        rx_axis_tlast,
@@ -85,10 +85,7 @@ module rgmii_core #
     output wire [31:0] rx_fcs_reg,
     output wire [31:0] tx_fcs_reg,
 
-    output wire        tx_busy,
-    output wire        rx_complete,
-    output wire[15:0]  eth_len,
-    output wire        dma_en
+    output wire        tx_busy
 );
 
 assign phy_reset_n = !rst;
@@ -97,7 +94,7 @@ eth_mac_1g_rgmii_fifo #(
     .TARGET(TARGET),
     .IODDR_STYLE("IODDR"),
     .CLOCK_INPUT_STYLE("BUFR"),
-    .USE_CLK90("FALSE"), //TRUE 
+    .USE_CLK90("FALSE"), //TRUE
     .ENABLE_PADDING(1),
     .MIN_FRAME_LENGTH(64),
     .TX_FIFO_ADDR_WIDTH(12),
@@ -145,10 +142,7 @@ eth_mac_inst (
     .speed(),
 
     .ifg_delay(8'd12),
-    .tx_busy(tx_busy),
-    .rx_complete(rx_complete),
-    .eth_len(eth_len),
-    .dma_en(dma_en)
+    .tx_busy(tx_busy)
 );
 
 endmodule

@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 based on fpga.v
- 
+
 */
 
 // Language: Verilog 2001
@@ -59,7 +59,7 @@ module rgmii_soc (
     input wire [7:0]   tx_axis_tdata,
     output wire        tx_axis_tready,
     input wire         tx_axis_tuser,
-   
+
        /*
         * AXI output
         */
@@ -74,11 +74,8 @@ module rgmii_soc (
 
     output wire [31:0] rx_fcs_reg,
     output wire [31:0] tx_fcs_reg,
-    
-    output wire        tx_busy,
-    output wire        rx_complete,
-    output wire[15:0]  eth_len,
-    output wire        dma_en
+
+    output wire        tx_busy
 );
 
 // IODELAY elements for RGMII interface to PHY
@@ -87,7 +84,7 @@ wire       phy_rx_ctl_delay;
 
 
 `ifdef GENESYSII
-   
+
 IDELAYCTRL
 idelayctrl_inst
 (
@@ -231,10 +228,7 @@ core_inst (
     .rx_axis_tuser(rx_axis_tuser),
     .rx_fcs_reg(rx_fcs_reg),
     .tx_fcs_reg(tx_fcs_reg),
-    .tx_busy(tx_busy),
-    .rx_complete(rx_complete),
-    .eth_len(eth_len),
-    .dma_en(dma_en)
+    .tx_busy(tx_busy)
 );
 
 endmodule
