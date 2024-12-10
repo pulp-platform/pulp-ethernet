@@ -82,7 +82,6 @@ localparam [2:0]
     STATE_CRC = 3'd3;
 
 reg [2:0] state_reg, state_next;
-reg eth_busy, eth_busy_next;
 reg [4:0] payload_cycle;
 // datapath control signals
 reg reset_crc;
@@ -148,7 +147,6 @@ eth_crc_8 (
 
 always @* begin
     state_next = STATE_IDLE;
-    eth_busy_next = 1'b0;
     reset_crc = 1'b0;
     update_crc = 1'b0;
 
@@ -173,7 +171,6 @@ always @* begin
             STATE_IDLE: begin
                 // idle state - wait for packet
                 reset_crc = 1'b1;
-                eth_busy_next = 1'b0;
                 if (gmii_rx_dv_d4 && !gmii_rx_er_d4 && gmii_rxd_d4 == ETH_SFD) begin
                     state_next = STATE_PAYLOAD;
                 end else begin
@@ -183,7 +180,6 @@ always @* begin
             STATE_PAYLOAD: begin
                 // read payload
                 update_crc = 1'b1;
-                eth_busy_next = 1'b1;
                 m_axis_tdata_next = gmii_rxd_d4;
                 m_axis_tvalid_next = 1'b1;
 
@@ -218,7 +214,6 @@ always @* begin
             STATE_CRC: begin
                 // wait for CRC
                 update_crc = 1'b1;
-                eth_busy_next = 1'b1;
                 m_axis_tdata_next = gmii_rxd_d4;
                 m_axis_tvalid_next = 1'b1;
 
@@ -234,7 +229,6 @@ always @* begin
                 end
             end
             STATE_WAIT_LAST: begin
-                eth_busy_next = 1'b1;
                 // wait for end of packet
                 if (~gmii_rx_dv) begin
                     state_next = STATE_IDLE;
@@ -289,7 +283,6 @@ always_ff @(posedge clk or posedge rst) begin
         error_bad_fcs_reg <= error_bad_fcs_next;
 
         fcs_reg <= fcs_next;
-        eth_busy <= eth_busy_next;
         crc_cnt <= crc_cnt_next;
         // datapath
         if (reset_crc) begin

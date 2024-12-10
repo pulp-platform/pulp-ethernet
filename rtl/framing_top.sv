@@ -1,6 +1,5 @@
 // See LICENSE for license details.
 
-
 module framing_top #(
   /// AXI Stream in request struct
   parameter type axi_stream_req_t  = logic,
@@ -54,9 +53,9 @@ module framing_top #(
   logic [31:0] tx_fcs, rx_fcs;
   logic [31:0] tx_fcs_rev, rx_fcs_rev;
   logic        promiscuous;
-  logic        tx_busy, rx_complete;
+  logic        tx_busy, rx_complete, rx_complete_next;
   logic        irq_en;
-  logic        rx_end_clr;
+  logic        rx_end_clr, rx_end_clr_next;
   logic [15:0] rx_packet_length_q, rx_packet_length_d, eth_len;
 
   //AXIS RX
@@ -75,7 +74,7 @@ module framing_top #(
   assign phy_mdio_o  = reg2hw_i.mdio.mdio_o.q;
   assign phy_mdio_oe = reg2hw_i.mdio.mdio_oe.q;
   assign irq_en      = reg2hw_i.machi.irq_en.q;
-  assign rx_end_clr  = reg2hw_i.rsr.rx_end_clr.q;
+  assign rx_end_clr_next  = reg2hw_i.rsr.rx_end_clr.q;
 
   assign hw2reg_o.tx_fcs.de      = 1'b1;
   assign hw2reg_o.rx_fcs.de      = 1'b1;
@@ -85,13 +84,12 @@ module framing_top #(
   assign hw2reg_o.rsr.rx_complete.de  = 1'b1;
 
   assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq_o;
-  assign hw2reg_o.rsr.rx_complete.d = rx_complete;
+  assign hw2reg_o.rsr.rx_complete.d = rx_complete_o;
   assign hw2reg_o.tx_busy.d     = tx_busy;
   assign hw2reg_o.mdio.mdio_i.d = phy_mdio_i;
   assign hw2reg_o.tx_fcs.d      = tx_fcs_rev;
   assign hw2reg_o.rx_fcs.d      = rx_fcs_rev;
-  assign eth_len_o     = eth_len;
-  assign rx_complete_o = rx_complete;
+
   always_comb begin
     // Shift registers to capture MAC address
     rx_axis_tdata_4_d  = rx_axis_tdata_5_q;
@@ -148,7 +146,7 @@ module framing_top #(
         rx_packet_length_d = rx_packet_length_q + 1;
       end
     end else begin
-      rx_packet_length_d = 'b0;
+      rx_packet_length_d = '0;
     end
   end
 
@@ -184,6 +182,8 @@ module framing_top #(
       eth_rx_irq_o       <= 'b0;
       eth_len            <= 'b0;
       rx_complete        <= 1'b0;
+      rx_complete_o      <= 1'b0;
+      rx_end_clr         <= 1'b0;
 
     end else begin
       rx_axis_tdata_5_q  <= rx_axis_tdata_5_d;
@@ -212,8 +212,8 @@ module framing_top #(
       rx_axis_tuser_0_q  <= rx_axis_tuser_0_d;
 
       accept_frame_q <= accept_frame_d;
-      eth_rx_irq_o   <= rx_complete & irq_en;
       rx_packet_length_q <= rx_packet_length_d;
+      rx_end_clr   <=  rx_end_clr_next;
 
       if (rx_axis_tlast_0_q && accept_frame_q) begin
         eth_len <= rx_packet_length_q + 1;
@@ -221,6 +221,11 @@ module framing_top #(
       end else if (rx_end_clr) begin
         rx_complete <= 1'b0;
       end
+
+      rx_complete_o <= rx_complete;
+      eth_len_o     <= eth_len;
+      eth_rx_irq_o  <= rx_complete_o & irq_en;
+
     end
   end
 
