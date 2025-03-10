@@ -26,7 +26,7 @@ Author: Alex Forencich <alex@alexforencich.com>
 Date:   Thu Nov 8 13:15:47 2018 -0800
 
 Modified by Jonathan Kimmitt to extract CRC bytes
- 
+
 lfsr submodule renamed rgmii_lfsr to avoid name clash with main project
 */
 
@@ -94,7 +94,7 @@ localparam [2:0]
     STATE_IFG = 3'd7;
 
 reg [2:0] state_reg, state_next;
-reg eth_busy_next; 
+reg eth_busy_next;
 reg eth_irq;
 
 // datapath control signals
@@ -113,7 +113,7 @@ reg gmii_tx_en_reg, gmii_tx_en_next;
 reg gmii_tx_er_reg, gmii_tx_er_next;
 
 reg s_axis_tready_reg, s_axis_tready_next;
-reg [31:0] crc_state, fcs_next;   
+reg [31:0] crc_state, fcs_next;
 
 wire [31:0] crc_next;
 
@@ -141,7 +141,7 @@ eth_crc_8 (
 
 always @* begin
     state_next = STATE_IDLE;
-    eth_busy_next = 1'b0; 
+    eth_busy_next = 1'b0;
     reset_crc = 1'b0;
     update_crc = 1'b0;
 
@@ -379,9 +379,9 @@ always_ff @(posedge clk or posedge rst) begin
         eth_busy <= eth_busy_next;
         // Check for falling edge from high to low
         if (eth_busy && !eth_busy_next) begin
-            eth_irq <= 1'b1; 
+            eth_irq <= 1'b1;
         end else begin
-            eth_irq <= 1'b0;  
+            eth_irq <= 1'b0;
         end
 
         frame_ptr_reg <= frame_ptr_next;

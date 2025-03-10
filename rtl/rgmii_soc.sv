@@ -52,7 +52,7 @@ module rgmii_soc (
     output wire        mac_gmii_tx_en,
 
        /*
-        * AXI input
+        * AXIS input
         */
     input wire         tx_axis_tvalid,
     input wire         tx_axis_tlast,
@@ -61,7 +61,7 @@ module rgmii_soc (
     input wire         tx_axis_tuser,
 
        /*
-        * AXI output
+        * AXIS output
         */
     output wire [7:0]  rx_axis_tdata,
     output wire        rx_axis_tvalid,

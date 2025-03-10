@@ -52,6 +52,7 @@ module eth_top #(
   output reg                                   phy_mdio_o   ,
   output reg                                   phy_mdio_oe  ,
   output wire                                  phy_mdc      ,
+  input wire                                   rsp_valid_i  ,
   // AXIS TX/RX
   input  axi_stream_req_t                      tx_axis_req_i,
   output axi_stream_rsp_t                      tx_axis_rsp_o,
@@ -61,8 +62,10 @@ module eth_top #(
   input  reg2hw_itf_t                          reg2hw_i     ,
   output hw2reg_itf_t                          hw2reg_o     ,
   output logic                                 eth_rx_irq_o ,
-  output logic[15:0]                           eth_len_o    ,
-  output logic                                 rx_complete_o
+  output logic[11:0]                           eth_len_o    ,
+  output logic                                 rx_complete_o,
+  output logic                                 tx_busy_o    ,
+  output logic                                 sync_o
 );
 
 // ---------------- axis streams for the framing module ----------------------
@@ -82,9 +85,10 @@ module eth_top #(
   `AXI_STREAM_TYPEDEF_ALL(s_framing, framing_tdata_t, framing_tstrb_t, framing_tkeep_t, framing_tid_t, framing_tdest_t, framing_tuser_t)
 
 // AXI stream signals
-  s_framing_req_t s_framing_tx_req, s_framing_rx_req;
-  s_framing_rsp_t s_framing_tx_rsp, s_framing_rx_rsp;
-
+  s_framing_req_t s_framing_tx_req;
+  s_framing_req_t s_framing_rx_req;
+  s_framing_rsp_t s_framing_tx_rsp;
+  s_framing_rsp_t s_framing_rx_rsp;
 // ---------------- END: axis streams for the framing module ----------------------
   framing_top #(
     .axi_stream_req_t  ( s_framing_req_t ),
@@ -113,6 +117,7 @@ module eth_top #(
     .phy_mdio_o     ( phy_mdio_o  ),
     .phy_mdio_oe    ( phy_mdio_oe ),
     .phy_mdc        ( phy_mdc     ),
+    .rsp_valid_i    ( rsp_valid_i ),
 
     // AXIS TX/RX
     .tx_axis_req_i(s_framing_tx_req),
@@ -125,7 +130,9 @@ module eth_top #(
     .hw2reg_o       ( hw2reg_o      ),
     .eth_rx_irq_o   ( eth_rx_irq_o  ),
     .eth_len_o      ( eth_len_o     ),
-    .rx_complete_o  ( rx_complete_o )
+    .rx_complete_o  ( rx_complete_o ),
+    .tx_busy_o      ( tx_busy_o     ),
+    .sync_o         ( sync_o        )
   );
 
   axi_stream_dw_downsizer #(
@@ -139,7 +146,7 @@ module eth_top #(
     .axi_stream_out_req_t ( s_framing_req_t  ),
     .axi_stream_out_rsp_t ( s_framing_rsp_t  )
   ) i_axi_stream_dw_downsizer (
-    .clk_i      ( clk_i            ),
+    .clk_i      ( clk_i            ), // phy_tx_clk does not work
     .rst_ni     ( rst_ni           ),
     .in_req_i   ( tx_axis_req_i    ),
     .in_rsp_o   ( tx_axis_rsp_o    ),
@@ -158,7 +165,7 @@ module eth_top #(
     .axi_stream_out_req_t  ( axi_stream_req_t ),
     .axi_stream_out_rsp_t  ( axi_stream_rsp_t )
   ) i_axi_stream_dw_upsizer (
-    .clk_i     ( clk_i             ),
+    .clk_i     ( phy_rx_clk        ),
     .rst_ni    ( rst_ni            ),
     .in_req_i  ( s_framing_rx_req  ),
     .in_rsp_o  ( s_framing_rx_rsp  ),

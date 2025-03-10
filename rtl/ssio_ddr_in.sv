@@ -27,7 +27,7 @@ THE SOFTWARE.
 /*
  * Generic source synchronous DDR input
  */
-module ssio_ddr_in 
+module ssio_ddr_in
 #(
     // target ("SIM", "GENERIC", "XILINX", "ALTERA")
     parameter TARGET = "GENERIC",
@@ -97,7 +97,7 @@ if (TARGET == "XILINX") begin
             .CE(1'b1),
             .CLR(1'b0)
         );
-        
+
     end else if (CLOCK_INPUT_STYLE == "BUFIO") begin
 
         assign clk_int = input_clk;

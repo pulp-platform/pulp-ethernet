@@ -82,7 +82,6 @@ localparam [2:0]
     STATE_CRC = 3'd3;
 
 reg [2:0] state_reg, state_next;
-reg [4:0] payload_cycle;
 // datapath control signals
 reg reset_crc;
 reg update_crc;
@@ -256,23 +255,12 @@ always_ff @(posedge clk or posedge rst) begin
         mii_locked <= 1'b0;
         mii_odd <= 1'b0;
 
-        payload_cycle <= 0;
-
         gmii_rx_dv_d0 <= 1'b0;
         gmii_rx_dv_d1 <= 1'b0;
         gmii_rx_dv_d2 <= 1'b0;
         gmii_rx_dv_d3 <= 1'b0;
         gmii_rx_dv_d4 <= 1'b0;
     end else begin
-
-        if (state_reg == STATE_PAYLOAD) begin
-            if ( payload_cycle < 14) begin
-                payload_cycle <= payload_cycle + 1;
-            end else
-                payload_cycle <= payload_cycle;
-        end else begin
-            payload_cycle <= 0;
-        end
 
         state_reg <= state_next;
         // Check for falling edge from high to low
@@ -322,46 +310,64 @@ always_ff @(posedge clk or posedge rst) begin
     end
 end
 
-always_ff @(posedge clk) begin
-    // delay input
-    if (clk_enable) begin
-        if (mii_select) begin
-            gmii_rxd_d0 <= {gmii_rxd[3:0], gmii_rxd_d0[7:4]};
+always_ff @(posedge clk or posedge rst ) begin
+    if (rst) begin
+        gmii_rxd_d0 <= 1'b0;
+        gmii_rxd_d1 <= 1'b0;
+        gmii_rxd_d2 <= 1'b0;
+        gmii_rxd_d3 <= 1'b0;
+        gmii_rxd_d4 <= 1'b0;
 
-            if (mii_odd) begin
+        gmii_rx_er_d0 <= 1'b0;
+        gmii_rx_er_d1 <= 1'b0;
+        gmii_rx_er_d2 <= 1'b0;
+        gmii_rx_er_d3 <= 1'b0;
+        gmii_rx_er_d4 <= 1'b0;
+
+        m_axis_tdata_reg <= '0;
+        m_axis_tlast_reg <= '0;
+        m_axis_tuser_reg <= '0;
+    end else begin
+    // delay input
+        if (clk_enable) begin
+            if (mii_select) begin
+                gmii_rxd_d0 <= {gmii_rxd[3:0], gmii_rxd_d0[7:4]};
+
+                if (mii_odd) begin
+                    gmii_rxd_d1 <= gmii_rxd_d0;
+                    gmii_rxd_d2 <= gmii_rxd_d1;
+                    gmii_rxd_d3 <= gmii_rxd_d2;
+                    gmii_rxd_d4 <= gmii_rxd_d3;
+
+                    gmii_rx_er_d0 <= gmii_rx_er | gmii_rx_er_d0;
+                    gmii_rx_er_d1 <= gmii_rx_er_d0;
+                    gmii_rx_er_d2 <= gmii_rx_er_d1;
+                    gmii_rx_er_d3 <= gmii_rx_er_d2;
+                    gmii_rx_er_d4 <= gmii_rx_er_d3;
+                end else begin
+                    gmii_rx_er_d0 <= gmii_rx_er;
+                end
+            end else begin
+                gmii_rxd_d0 <= gmii_rxd;
                 gmii_rxd_d1 <= gmii_rxd_d0;
                 gmii_rxd_d2 <= gmii_rxd_d1;
                 gmii_rxd_d3 <= gmii_rxd_d2;
                 gmii_rxd_d4 <= gmii_rxd_d3;
 
-                gmii_rx_er_d0 <= gmii_rx_er | gmii_rx_er_d0;
+                gmii_rx_er_d0 <= gmii_rx_er;
                 gmii_rx_er_d1 <= gmii_rx_er_d0;
                 gmii_rx_er_d2 <= gmii_rx_er_d1;
                 gmii_rx_er_d3 <= gmii_rx_er_d2;
                 gmii_rx_er_d4 <= gmii_rx_er_d3;
-            end else begin
-                gmii_rx_er_d0 <= gmii_rx_er;
             end
+            m_axis_tdata_reg <= m_axis_tdata_next;
+            m_axis_tlast_reg <= m_axis_tlast_next;
+            m_axis_tuser_reg <= m_axis_tuser_next;
         end else begin
-            gmii_rxd_d0 <= gmii_rxd;
-            gmii_rxd_d1 <= gmii_rxd_d0;
-            gmii_rxd_d2 <= gmii_rxd_d1;
-            gmii_rxd_d3 <= gmii_rxd_d2;
-            gmii_rxd_d4 <= gmii_rxd_d3;
-
-            gmii_rx_er_d0 <= gmii_rx_er;
-            gmii_rx_er_d1 <= gmii_rx_er_d0;
-            gmii_rx_er_d2 <= gmii_rx_er_d1;
-            gmii_rx_er_d3 <= gmii_rx_er_d2;
-            gmii_rx_er_d4 <= gmii_rx_er_d3;
+            m_axis_tdata_reg <= m_axis_tdata_next;
+            m_axis_tlast_reg <= m_axis_tlast_next;
+            m_axis_tuser_reg <= m_axis_tuser_next;
         end
-        m_axis_tdata_reg <= m_axis_tdata_next;
-        m_axis_tlast_reg <= m_axis_tlast_next;
-        m_axis_tuser_reg <= m_axis_tuser_next;
-    end else begin
-        m_axis_tdata_reg <= m_axis_tdata_next;
-        m_axis_tlast_reg <= m_axis_tlast_next;
-        m_axis_tuser_reg <= m_axis_tuser_next;
     end
 end
 

@@ -42,11 +42,13 @@
               },
               { bits: "22", name: "promiscuous",
                 desc: "enable the reception of all packets",
-                resval: "0"
+                swaccess: "rw",
+                hwaccess: "hro"
               },
               { bits: "23", name: "irq_en",
                 desc: "interrupt enbale",
-                resval: "0"
+                swaccess: "rw",
+                hwaccess: "hro"
               }
           ]
         },
@@ -115,14 +117,8 @@
                 resval: "0"
                 swaccess: "ro",
                 hwaccess: "hwo"
-              }
-              { bits: "1", name: "rx_end_clr",
-                desc: "to clear reception completes"
-                resval: "0"
-                swaccess: "wo",
-                hwaccess: "hro"
-              }
-              { bits: "2", name: "rx_irq",
+              },
+              { bits: "1", name: "rx_irq",
                 desc: "etherent rx interrupt"
                 resval: "0"
                 swaccess: "ro",
@@ -332,7 +328,7 @@
         },
         { name:"rsp_ready",
           desc: "idma response ready",
-          swaccess: "rw",
+          swaccess: "ro",
           hwaccess: "hrw",
           fields: [
             { bits: "0",
@@ -344,7 +340,7 @@
         },
         { name:"rsp_valid",
           desc: "idma response valid",
-          swaccess: "ro",
+          swaccess: "rw",
           hwaccess: "hrw",
           fields: [
             { bits: "0",
@@ -353,6 +349,32 @@
               resval: "0"
             }
           ]
+        },
+        { name:"rx_end_clr",
+          desc: "to clear reception completes",
+          swaccess: "wo",
+          hwaccess: "hro",
+          fields: [
+            { bits: "0", name: "rx_end_clr",
+              desc: "to clear reception completes"
+              resval: "0"
+              swaccess: "wo",
+              hwaccess: "hro"
+            }
+           ]
+        },
+        { name:"rsp_valid_clr",
+          desc: "for sw to clear rsp_valid once read",
+          swaccess: "wo",
+          hwaccess: "hro",
+          fields: [
+            { bits: "0", name: "rsp_valid_clr",
+              desc: "for sw to clear rsp_valid once read"
+              resval: "0"
+              swaccess: "wo",
+              hwaccess: "hro"
+            }
+           ]
         },
   ]
 }

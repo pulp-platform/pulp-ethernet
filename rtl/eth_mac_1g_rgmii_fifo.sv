@@ -103,7 +103,6 @@ module eth_mac_1g_rgmii_fifo #
     output wire [1:0]  speed,
     output wire [31:0] rx_fcs_reg,
     output wire [31:0] tx_fcs_reg,
-
     /*
      * Configuration
      */

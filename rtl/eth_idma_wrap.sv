@@ -4,6 +4,7 @@
 //
 // Chaoqun Liang <chaoqun.liang@unibo.it>
 
+
 `include "axi/typedef.svh"
 `include "axi_stream/typedef.svh"
 `include "idma/typedef.svh"
@@ -70,9 +71,9 @@ module eth_idma_wrap #(
   /// iDMA Busy Signal
   output idma_pkg::idma_busy_t    idma_busy_o,
   /// Register Configuration Interface
-  input  reg_req_t                reg_req_i,
-  output reg_rsp_t                reg_rsp_o,
-  output logic                    eth_rx_irq_o
+  input  reg_req_t      reg_req_i,
+  output reg_rsp_t      reg_rsp_o,
+  output logic          eth_rx_irq_o
 );
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
@@ -82,6 +83,12 @@ module eth_idma_wrap #(
 
   eth_idma_reg2hw_t reg2hw, reg2hw_eth; // Write
   eth_idma_hw2reg_t hw2reg, hw2reg_eth; // Read
+
+  logic phy_rx_clk;
+
+  (* mark_debug = "true" *) logic req_valid_sync, req_valid;
+
+  assign phy_rx_clk   = phy_rx_clk_i;
 
   eth_idma_reg_top #(
     .reg_req_t(reg_req_t),
@@ -158,24 +165,34 @@ module eth_idma_wrap #(
     axis_write_t_chan_padded_t axis;
   } write_meta_channel_t;
 
-  logic idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;
-  logic [15:0] eth_len;
+  (* mark_debug = "true" *)logic idma_req_ready, idma_rsp_valid, rsp_valid;
+  logic idma_rsp_ready;
+  logic [11:0] eth_len;
   logic rx_complete;
+  logic tx_busy;
+  logic sync;
+  logic rx_en;
 
   /// AXI request and response
-  axi_req_t     axi_read_req,axi_write_req;
-  axi_rsp_t     axi_read_rsp,axi_write_rsp;
+  axi_req_t axi_read_req;
+  axi_req_t axi_write_req;
+  axi_rsp_t axi_read_rsp;
+  axi_rsp_t axi_write_rsp;
 
   /// AXI Stream request and response
-  axi_stream_rsp_t idma_axis_read_rsp, eth_axis_tx_rsp;
-  axi_stream_req_t idma_axis_read_req, eth_axis_tx_req;
-  axi_stream_req_t idma_axis_write_req, eth_axis_rx_rsp;
-  axi_stream_rsp_t idma_axis_write_rsp, eth_axis_rx_req;
-
+  (* mark_debug = "true" *) axi_stream_rsp_t idma_axis_read_rsp;
+  (* mark_debug = "true" *) axi_stream_req_t idma_axis_read_req;
+  axi_stream_req_t eth_axis_tx_req;
+  axi_stream_req_t idma_axis_write_req;
+  axi_stream_rsp_t idma_axis_write_rsp, eth_axis_tx_rsp;
+  (* mark_debug = "true" *)  axi_stream_req_t eth_axis_rx_req;
+  (* mark_debug = "true" *) axi_stream_rsp_t eth_axis_rx_rsp;
   /// iDMA request and response
-  idma_req_t idma_reg_req;
-  idma_rsp_t idma_reg_rsp;
+  (* mark_debug = "true" *) idma_req_t idma_reg_req;
+  (* mark_debug = "true" *) idma_rsp_t idma_reg_rsp;
 
+  logic rsp_valid_clr;
+  logic idma_axis_read_rsp_tready_sync;
 
   assign idma_reg_req.src_addr                   = reg2hw.src_addr.q;
   assign idma_reg_req.dst_addr                   = reg2hw.dst_addr.q;
@@ -208,18 +225,35 @@ module eth_idma_wrap #(
 
   assign idma_reg_req.opt.last                   = reg2hw.last.q;
 
-  assign idma_req_valid                          = reg2hw.req_valid.q;
-  assign idma_rsp_ready                          = reg2hw.rsp_ready.q;
+  assign req_valid                               = reg2hw.req_valid.q;
+  assign idma_rsp_ready                          = 1'b1;
+
+  sync #(
+    .STAGES     ( 32'd3      ),
+    .ResetValue ( 1'b0       )
+    ) i_req_sync (
+    .clk_i    ( clk_i            ),
+    .rst_ni   ( rst_ni           ),
+    .serial_i ( req_valid        ),
+    .serial_o ( req_valid_sync   )
+  );
+
+  // sync #(
+  //   .STAGES     ( 32'd3      ),
+  //   .ResetValue ( 1'b0       )
+  // ) i_dma_read_rsp_sync (
+  //   .clk_i    ( clk_i            ),
+  //   .rst_ni   ( rst_ni           ),
+  //   .serial_i ( idma_axis_read_rsp.tready    ),
+  //   .serial_o ( idma_axis_read_rsp_tready_sync   )
+  // );
 
   always_comb begin
     hw2reg.req_valid.d = 1'b0;
-    hw2reg.rsp_ready.d = 1'b0;
     hw2reg.req_valid.de = 1'b0;
-    hw2reg.rsp_ready.de = 1'b0;
-    if (!idma_req_ready && reg2hw.req_valid.q) begin
+    if (!idma_req_ready && req_valid_sync) begin
       hw2reg.req_valid.de = 1'b1;
-      hw2reg.rsp_ready.d = 1'b1;
-      hw2reg.rsp_ready.de = 1'b1;
+      hw2reg.req_valid.de = 1'b1;
     end
   end
 
@@ -250,7 +284,7 @@ module eth_idma_wrap #(
     .idma_eh_req_i        ( '0                ),
     .eh_req_valid_i       ( '0                ),
     .idma_req_i           ( idma_reg_req      ),
-    .req_valid_i          ( idma_req_valid    ),
+    .req_valid_i          ( req_valid_sync    ),
     .req_ready_o          ( idma_req_ready    ),
     .idma_rsp_o           ( idma_reg_rsp      ),
     .rsp_valid_o          ( idma_rsp_valid    ),
@@ -280,7 +314,7 @@ module eth_idma_wrap #(
     .clk_i              (  eth_clk125_i      ),
     .clk90_int          (  eth_clk125q_i     ),
     .clk200_int         (  eth_clk200_i      ),
-    .phy_rx_clk         (  phy_rx_clk_i      ),
+    .phy_rx_clk         (  phy_rx_clk        ),
     .phy_rxd            (  phy_rxd_i         ),
     .phy_rx_ctl         (  phy_rx_ctl_i      ),
     .phy_tx_clk         (  phy_tx_clk_o      ),
@@ -295,18 +329,22 @@ module eth_idma_wrap #(
     .phy_mdc            (  phy_mdc_o         ),
     .tx_axis_req_i      (  eth_axis_tx_req   ),
     .tx_axis_rsp_o      (  eth_axis_tx_rsp   ),
-    .rx_axis_req_o      (  eth_axis_rx_rsp   ),
-    .rx_axis_rsp_i      (  eth_axis_rx_req   ),
+    .rx_axis_req_o      (  eth_axis_rx_req   ),
+    .rx_axis_rsp_i      (  eth_axis_rx_rsp   ),
     .reg2hw_i           (  reg2hw_eth        ),
     .hw2reg_o           (  hw2reg_eth        ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
+    .rsp_valid_i        (  rsp_valid         ),
     .eth_len_o          (  eth_len           ),
-    .rx_complete_o      (  rx_complete       )
+    .rx_complete_o      (  rx_complete       ),
+    .tx_busy_o          (  tx_busy           ),
+    .sync_o             (  sync              )
   );
 
-  assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
-  assign hw2reg.rsp_valid.d = idma_rsp_valid;
-  assign hw2reg.req_ready.de = idma_req_ready;
+
+  assign hw2reg.rsp_valid.de = 1'b1;
+  assign hw2reg.rsp_valid.d  = rsp_valid;
+  assign hw2reg.req_ready.de = 1'b1;
   assign hw2reg.req_ready.d  = idma_req_ready;
 
   assign hw2reg.mdio      = hw2reg_eth.mdio;
@@ -320,20 +358,44 @@ module eth_idma_wrap #(
   assign reg2hw_eth.machi    = reg2hw.machi;
   assign reg2hw_eth.low_addr = reg2hw.low_addr;
   assign reg2hw_eth.mdio     = reg2hw.mdio;
-  assign reg2hw_eth.rsr.rx_end_clr  = reg2hw.rsr.rx_end_clr;
+  assign rsp_valid_clr      = reg2hw.rsp_valid_clr.q;
+
+  //assign rx_en = eth_axis_rx_req.tvalid && sync;
 
   // if on-chip devvice works as TX, dma length is set by the core
   // otherwise, dma lengths should be set by hardware as RX
+
   always_comb begin
     idma_reg_req.length = reg2hw.length.q;
     hw2reg.length.de = 1'b0; // Default de to 0
-    hw2reg.length.d = 0;
+    hw2reg.length.d = 12'b0;
     if (rx_complete) begin
       idma_reg_req.length = eth_len;
       hw2reg.length.de = 1'b1;
       hw2reg.length.d = eth_len;
     end
   end
+
+  logic [5:0] rsp_cnt;
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if(!rst_ni) begin
+      rsp_valid <= 1'b0;
+      rsp_cnt   <= 6'b0;
+    end else begin
+      if( idma_rsp_valid && !rsp_valid) begin
+        rsp_valid <= 1'b1;
+        rsp_cnt   <= 1'b1;
+      end
+      if( (rsp_cnt > 0) && rsp_valid) begin
+        rsp_cnt <= rsp_cnt + 'b1;
+      end
+      if ( rsp_cnt == 6'b111111) begin
+        rsp_valid <= 1'b0;
+        rsp_cnt   <= 6'b0;
+      end
+    end
+  end
+
 
   // TX CDC FIFO
   cdc_fifo_gray #(
@@ -360,15 +422,15 @@ module eth_idma_wrap #(
     .SYNC_STAGES ( 3 )
   ) i_cdc_fifo_rx (
     .src_rst_ni     ( rst_ni                    ),
-    .src_clk_i      ( eth_clk125_i              ),
-    .src_data_i     ( eth_axis_rx_rsp.t         ),
-    .src_valid_i    ( eth_axis_rx_rsp.tvalid    ),
-    .src_ready_o    ( eth_axis_rx_req.tready    ),
+    .src_clk_i      ( phy_rx_clk                ),
+    .src_data_i     ( eth_axis_rx_req.t         ),
+    .src_valid_i    ( eth_axis_rx_req.tvalid    ), //eth_axis_rx_req.tvalid     to do: rx_en
+    .src_ready_o    ( eth_axis_rx_rsp.tready    ),
     .dst_rst_ni     ( rst_ni                    ),
     .dst_clk_i      ( clk_i                     ),
     .dst_data_o     ( idma_axis_read_req.t      ),
     .dst_valid_o    ( idma_axis_read_req.tvalid ),
-    .dst_ready_i    ( idma_axis_read_rsp.tready )
+    .dst_ready_i    (  idma_axis_read_rsp.tready ) //   idma_axis_read_rsp_tready_sync
   );
 
   axi_rw_join #(
@@ -384,5 +446,6 @@ module eth_idma_wrap #(
     .mst_req_o        ( axi_req_o     ),
     .mst_resp_i       ( axi_rsp_i     )
   );
+
 
 endmodule : eth_idma_wrap

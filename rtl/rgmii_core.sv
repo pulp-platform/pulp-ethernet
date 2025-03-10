@@ -60,7 +60,7 @@ module rgmii_core #
     output wire        mac_gmii_tx_en,
 
        /*
-        * AXI input
+        * AXIS input
         */
 
     input wire         tx_axis_tvalid,
@@ -70,7 +70,7 @@ module rgmii_core #
     input wire         tx_axis_tuser,
 
        /*
-        * AXI output
+        * AXIS output
         */
 
     output wire [7:0]  rx_axis_tdata,

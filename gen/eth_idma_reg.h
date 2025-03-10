@@ -48,8 +48,7 @@ extern "C" {
 // receive status register
 #define ETH_IDMA_RSR_REG_OFFSET 0x18
 #define ETH_IDMA_RSR_RX_COMPLETE_BIT 0
-#define ETH_IDMA_RSR_RX_END_CLR_BIT 1
-#define ETH_IDMA_RSR_RX_IRQ_BIT 2
+#define ETH_IDMA_RSR_RX_IRQ_BIT 1
 
 // Source Address
 #define ETH_IDMA_SRC_ADDR_REG_OFFSET 0x1c
@@ -164,6 +163,14 @@ extern "C" {
 // idma response valid
 #define ETH_IDMA_RSP_VALID_REG_OFFSET 0x50
 #define ETH_IDMA_RSP_VALID_RSP_VALID_BIT 0
+
+// to clear reception completes
+#define ETH_IDMA_RX_END_CLR_REG_OFFSET 0x54
+#define ETH_IDMA_RX_END_CLR_RX_END_CLR_BIT 0
+
+// for sw to clear rsp_valid once read
+#define ETH_IDMA_RSP_VALID_CLR_REG_OFFSET 0x58
+#define ETH_IDMA_RSP_VALID_CLR_RSP_VALID_CLR_BIT 0
 
 #ifdef __cplusplus
 }  // extern "C"
