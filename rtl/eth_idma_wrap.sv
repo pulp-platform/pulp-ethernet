@@ -159,7 +159,7 @@ module eth_idma_wrap #(
   } write_meta_channel_t;
 
   logic idma_req_valid, idma_req_ready, idma_rsp_ready, idma_rsp_valid;
-  logic [15:0] eth_len;
+  logic [11:0] eth_len;
   logic rx_complete;
 
   /// AXI request and response
@@ -301,7 +301,8 @@ module eth_idma_wrap #(
     .hw2reg_o           (  hw2reg_eth        ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
     .eth_len_o          (  eth_len           ),
-    .rx_complete_o      (  rx_complete       )
+    .rx_complete_o      (  rx_complete       ),
+    .rsp_valid_i        (  idma_rsp_valid    )
   );
 
   assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
