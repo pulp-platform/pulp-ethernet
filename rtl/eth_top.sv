@@ -52,7 +52,6 @@ module eth_top #(
   output reg                                   phy_mdio_o   ,
   output reg                                   phy_mdio_oe  ,
   output wire                                  phy_mdc      ,
-  input wire                                   rsp_valid_i  ,
   // AXIS TX/RX
   input  axi_stream_req_t                      tx_axis_req_i,
   output axi_stream_rsp_t                      tx_axis_rsp_o,
@@ -65,7 +64,8 @@ module eth_top #(
   output logic[11:0]                           eth_len_o    ,
   output logic                                 rx_complete_o,
   output logic                                 tx_busy_o    ,
-  output logic                                 sync_o
+  output logic                                 sync_o       ,
+  input  logic                                 rsp_valid_i
 );
 
 // ---------------- axis streams for the framing module ----------------------

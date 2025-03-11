@@ -167,6 +167,7 @@ module eth_idma_wrap #(
 
   (* mark_debug = "true" *)logic idma_req_ready, idma_rsp_valid, rsp_valid;
   logic idma_rsp_ready;
+
   logic [11:0] eth_len;
   logic rx_complete;
   logic tx_busy;
@@ -337,8 +338,12 @@ module eth_idma_wrap #(
     .rsp_valid_i        (  rsp_valid         ),
     .eth_len_o          (  eth_len           ),
     .rx_complete_o      (  rx_complete       ),
+<<<<<<< HEAD
     .tx_busy_o          (  tx_busy           ),
     .sync_o             (  sync              )
+=======
+    .rsp_valid_i        (  idma_rsp_valid    )
+>>>>>>> 36f87ff
   );
 
 
