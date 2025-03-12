@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 # Author: Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>
+#         Chaoqun Liang        <chaoqun.liang@unibo.it>
 
 BENDER ?= bender
 QUESTA ?= questa-2023.4
@@ -31,7 +32,7 @@ ifdef DEBUG
 	VSIM_FLAGS := $(QUESTA_FLAGS) +acc
 	RUN_AND_EXIT := log -r /*; run -all
 else
-	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH). 
+	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH).
 	VSIM_FLAGS := $(QUESTA_FLAGS) -c
 	RUN_AND_EXIT := run -all; exit
 endif
@@ -49,10 +50,22 @@ eth-nonfree-init:
 
 -include $(ETH_ROOT)/nonfree/nonfree.mk
 
+##############
+# Synthesis  #
+##############
+synth_targs += -t rtl -t eth_synth
+synth-ips:
+	$(BENDER) update
+	$(BENDER) script synopsys \
+    $(synth_targs) \
+	> ${compile_script_synth}
+
+
+
 
 ##############
 # Simulation #
-##############                            
+##############
 
 $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl: Bender.yml
 	$(BENDER) script vsim -t test -t rtl -t snitch_cluster \

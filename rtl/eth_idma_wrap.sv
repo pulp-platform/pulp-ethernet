@@ -4,7 +4,6 @@
 //
 // Chaoqun Liang <chaoqun.liang@unibo.it>
 
-
 `include "axi/typedef.svh"
 `include "axi_stream/typedef.svh"
 `include "idma/typedef.svh"

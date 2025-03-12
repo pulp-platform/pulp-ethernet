@@ -1,3 +1,8 @@
+// Copyright 2025 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE for details.
+// SPDX-License-Identifier: SHL-0.51
+//
+// Chaoqun Liang <chaoqun.liang@unibo.it>
 
 module framing_top #(
   /// AXI Stream in request struct
