@@ -126,179 +126,118 @@
               }
           ]
         },
-        { name: "src_addr",
-          desc: "Source Address",
+        { name: "src_addr_low"
+          desc: "Low source address",
           swaccess: "rw",
           hwaccess: "hro",
           fields: [
             { bits: "31:0",
-              name: "src_addr",
-              desc: "Source Address"
+              name: "src_addr_low",
+              desc: "Low source address",
               resval: "0"
             }
           ]
         },
-        { name: "dst_addr",
-          desc: "Destination Address",
+        { name: "src_addr_high"
+          desc: "High source address",
           swaccess: "rw",
           hwaccess: "hro",
           fields: [
             { bits: "31:0",
-              name: "dst_addr",
-              desc: "Destination Address"
+              name: "src_addr_high",
+              desc: "High source address",
               resval: "0"
             }
           ]
         },
-        { name: "length",
-          desc: "Number of bytes",
+        { name: "dst_addr_low"
+          desc: "Low destination address",
+          swaccess: "rw",
+          hwaccess: "hro",
+          fields: [
+            { bits: "31:0",
+              name: "dst_addr_low",
+              desc: "Low destination address",
+              resval: "0"
+            }
+          ]
+        },
+        { name: "dst_addr_high"
+          desc: "High destination address",
+          swaccess: "rw",
+          hwaccess: "hro",
+          fields: [
+            { bits: "31:0",
+              name: "dst_addr_high",
+              desc: "High destination address",
+              resval: "0"
+            }
+          ]
+        },
+        { name: "length_low"
+          desc: "Low transfer length in byte",
           swaccess: "rw",
           hwaccess: "hrw",
           fields: [
-            { bits: "11:0",
-              name: "num_bytes",
-              desc: "Number of bytes"
+            { bits: "31:0",
+              name: "length_low",
+              desc: "Low transfer length in byte",
               resval: "0"
             }
           ]
         },
-        { name: "src_protocol",
-          desc: "Source protocol of iDMA",
+        { name: "length_high"
+          desc: "High transfer length in byte",
+          swaccess: "rw",
+          hwaccess: "hrw",
+          fields: [
+            { bits: "31:0",
+              name: "length_high",
+              desc: "High transfer length in byte",
+              resval: "0"
+            }
+          ]
+        },
+        { name: "conf",
+          desc: "Configuration Register for DMA settings",
           swaccess: "rw",
           hwaccess: "hro",
           fields: [
-            { bits: "2:0",
+            { bits: "0",
+              name: "decouple_aw",
+              desc: "Decouple R-AW"
+            },
+            { bits: "1",
+              name: "decouple_rw",
+              desc: "Decouple R-W"
+            },
+            { bits: "2",
+              name: "src_reduce_len",
+              desc: "Reduce maximal source burst length"
+            },
+            { bits: "3",
+              name: "dst_reduce_len",
+              desc: "Reduce maximal destination burst length"
+            }
+            { bits: "6:4",
+              name: "src_max_llen",
+              desc: "Maximal logarithmic source burst length"
+            }
+            { bits: "9:7",
+              name: "dst_max_llen",
+              desc: "Maximal logarithmic destination burst length"
+            }
+            { bits: "10:10",
+              name: "enable_nd",
+              desc: "ND-extension enabled"
+            }
+            { bits: "13:11",
               name: "src_protocol",
-              desc: "iDMA source protocol"
-              resval: "0"
+              desc: "Selection of the source protocol"
             }
-          ]
-        },
-        { name: "dst_protocol",
-          desc: "Destination protocol of iDMA",
-          swaccess: "rw",
-          hwaccess: "hro",
-          fields: [
-            { bits: "2:0",
+            { bits: "16:14",
               name: "dst_protocol",
-              desc: "iDMA destination protocol "
-              resval: "0"
-            }
-          ]
-        },
-        { name: "axi_id",
-          desc: "iDMA transaction ID",
-          swaccess: "rw",
-          hwaccess: "hrw",
-          fields: [
-            { bits: "0",
-              name: "axi_id",
-              desc: "transaction ID"
-              resval: "0"
-            }
-          ]
-        },
-        { name: "opt_src",
-          desc: "src options",
-          swaccess: "rw",
-          hwaccess: "hro",
-          fields: [
-           { bits: "1:0", name: "burst",
-             desc: "burst opt"
-             resval: "1"
-           },
-           { bits: "5:2", name: "cache",
-             desc: "cache opt"
-             resval: "0"
-           },
-           { bits: "6", name: "lock",
-             desc: "lock opt"
-             resval: "0"
-           },
-           { bits: "9:7", name: "prot",
-             desc: "prot opt"
-             resval: "0"
-           },
-           { bits: "13:10", name: "qos",
-             desc: "qos opt"
-             resval: "0"
-           }
-           { bits: "17:14", name: "region",
-             desc: "region opt"
-             resval: "0"
-           }
-          ]
-        },
-        { name: "opt_dst",
-          desc: "dst options",
-          swaccess: "rw",
-          hwaccess: "hro",
-          fields: [
-           { bits: "1:0", name: "burst",
-             desc: "burst opt"
-             resval: "1"
-           },
-           { bits: "5:2", name: "cache",
-             desc: "cache opt"
-             resval: "0"
-           },
-           { bits: "6", name: "lock",
-             desc: "lock opt"
-             resval: "0"
-           },
-           { bits: "9:7", name: "prot",
-             desc: "prot opt"
-             resval: "0"
-           },
-           { bits: "13:10", name: "qos",
-             desc: "qos opt"
-             resval: "0"
-           }
-           { bits: "17:14", name: "region",
-             desc: "region opt"
-             resval: "0"
-           }
-          ]
-        },
-        {  name: "beo",
-           desc: "backend options",
-           swaccess: "rw",
-           hwaccess: "hro",
-           fields: [
-            { bits: "0", name: "decouple_aw",
-              desc: "aw decouple enable"
-              resval: "0"
-            },
-            { bits: "1", name: "decouple_rw",
-              desc: "rw decouple enable"
-              resval: "0"
-            },
-            { bits: "4:2", name: "src_max_llen",
-              desc: "source max length"
-              resval: "0"
-            },
-            { bits: "7:5", name: "dst_max_llen",
-              desc: "destination max length"
-              resval: "0"
-            },
-            { bits: "8", name: "src_reduce_len",
-              desc: "srouce reduce length"
-              resval: "0"
-            }
-            { bits: "9", name: "dst_reduce_len",
-              desc: "destination reduce length"
-              resval: "0"
-            }
-           ]
-        },
-        { name:"last",
-          desc: "last transfer",
-          swaccess: "rw",
-          hwaccess: "hrw",
-          fields: [
-            { bits: "0",
-              name: "last",
-              desc: "last transfer"
+              desc: "Selection of the destination protocol"
             }
           ]
         },
@@ -361,7 +300,7 @@
               swaccess: "wo",
               hwaccess: "hro"
             }
-           ]
+          ]
         },
         { name:"rsp_valid_clr",
           desc: "for sw to clear rsp_valid once read",
@@ -374,7 +313,7 @@
               swaccess: "wo",
               hwaccess: "hro"
             }
-           ]
+          ]
         },
   ]
 }

@@ -73,6 +73,7 @@ module eth_idma_wrap #(
   input  reg_req_t      reg_req_i,
   output reg_rsp_t      reg_rsp_o,
   output logic          eth_rx_irq_o
+
 );
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
@@ -170,7 +171,7 @@ module eth_idma_wrap #(
   logic rx_complete;
   logic tx_busy;
   logic sync;
-  logic rx_en;
+  //logic rx_en;
 
   /// AXI request and response
   axi_req_t axi_read_req;
@@ -184,48 +185,56 @@ module eth_idma_wrap #(
   axi_stream_req_t eth_axis_tx_req;
   axi_stream_req_t idma_axis_write_req;
   axi_stream_rsp_t idma_axis_write_rsp, eth_axis_tx_rsp;
-  (* mark_debug = "true" *)  axi_stream_req_t eth_axis_rx_req;
+  (* mark_debug = "true" *) axi_stream_req_t eth_axis_rx_req;
   (* mark_debug = "true" *) axi_stream_rsp_t eth_axis_rx_rsp;
   /// iDMA request and response
   (* mark_debug = "true" *) idma_req_t idma_reg_req;
   (* mark_debug = "true" *) idma_rsp_t idma_reg_rsp;
 
   logic rsp_valid_clr;
-  logic idma_axis_read_rsp_tready_sync;
-
-  assign idma_reg_req.src_addr                   = reg2hw.src_addr.q;
-  assign idma_reg_req.dst_addr                   = reg2hw.dst_addr.q;
-
-  assign idma_reg_req.opt.src_protocol           = idma_pkg::protocol_e'(reg2hw.src_protocol.q);
-  assign idma_reg_req.opt.dst_protocol           = idma_pkg::protocol_e'(reg2hw.dst_protocol.q);
-
-  assign idma_reg_req.opt.axi_id                 = reg2hw.axi_id.q;
-
-  assign idma_reg_req.opt.src.burst              = reg2hw.opt_src.burst.q;
-  assign idma_reg_req.opt.src.cache              = reg2hw.opt_src.cache.q;
-  assign idma_reg_req.opt.src.lock               = reg2hw.opt_src.lock.q;
-  assign idma_reg_req.opt.src.prot               = reg2hw.opt_src.prot.q;
-  assign idma_reg_req.opt.src.qos                = reg2hw.opt_src.qos.q;
-  assign idma_reg_req.opt.src.region             = reg2hw.opt_src.region.q;
-
-  assign idma_reg_req.opt.dst.burst              = reg2hw.opt_dst.burst.q;
-  assign idma_reg_req.opt.dst.cache              = reg2hw.opt_dst.cache.q;
-  assign idma_reg_req.opt.dst.lock               = reg2hw.opt_dst.lock.q;
-  assign idma_reg_req.opt.dst.prot               = reg2hw.opt_dst.prot.q;
-  assign idma_reg_req.opt.dst.qos                = reg2hw.opt_dst.qos.q;
-  assign idma_reg_req.opt.dst.region             = reg2hw.opt_dst.region.q;
-
-  assign idma_reg_req.opt.beo.decouple_aw        = reg2hw.beo.decouple_aw.q;
-  assign idma_reg_req.opt.beo.decouple_rw        = reg2hw.beo.decouple_rw.q;
-  assign idma_reg_req.opt.beo.src_max_llen       = reg2hw.beo.src_max_llen.q;
-  assign idma_reg_req.opt.beo.dst_max_llen       = reg2hw.beo.dst_max_llen.q;
-  assign idma_reg_req.opt.beo.src_reduce_len     = reg2hw.beo.src_reduce_len.q;
-  assign idma_reg_req.opt.beo.dst_reduce_len     = reg2hw.beo.dst_reduce_len.q;
-
-  assign idma_reg_req.opt.last                   = reg2hw.last.q;
-
+  //logic idma_axis_read_rsp_tready_sync;
   assign req_valid                               = reg2hw.req_valid.q;
   assign idma_rsp_ready                          = 1'b1;
+
+  // assign request struct
+  always_comb begin : proc_hw_req_conv
+    // all fields are zero per default
+    idma_reg_req = '0;
+
+    // address and length
+    idma_reg_req.src_addr     = {reg2hw.src_addr_high.q, reg2hw.src_addr_low.q};
+    idma_reg_req.dst_addr     = {reg2hw.dst_addr_high.q, reg2hw.dst_addr_low.q};
+
+    // if on-chip devvice works as TX, dma length is set by the core
+    // otherwise, dma lengths should be set by hardware as RX
+
+    idma_reg_req.length = reg2hw.length_low.q;
+    hw2reg.length_low.de = 1'b0; // Default de to 0
+    hw2reg.length_low.d = 12'b0;
+    if (rx_complete) begin
+      idma_reg_req.length = eth_len;
+      hw2reg.length_low.de = 1'b1;
+      hw2reg.length_low.d = eth_len;
+    end
+
+    // Protocols
+    idma_reg_req.opt.src_protocol    = idma_pkg::protocol_e'(reg2hw.conf.src_protocol.q);
+    idma_reg_req.opt.dst_protocol    = idma_pkg::protocol_e'(reg2hw.conf.dst_protocol.q);
+
+    // Current backend only supports incremental burst
+    idma_reg_req.opt.src.burst = axi_pkg::BURST_INCR;
+    idma_reg_req.opt.dst.burst = axi_pkg::BURST_INCR;
+    // this frontend currently does not support cache variations
+    idma_reg_req.opt.src.cache = axi_pkg::CACHE_MODIFIABLE;
+    idma_reg_req.opt.dst.cache = axi_pkg::CACHE_MODIFIABLE;
+
+    idma_reg_req.opt.beo.decouple_aw        = reg2hw.conf.decouple_aw.q;
+    idma_reg_req.opt.beo.decouple_rw        = reg2hw.conf.decouple_rw.q;
+    idma_reg_req.opt.beo.src_max_llen       = reg2hw.conf.src_max_llen.q;
+    idma_reg_req.opt.beo.dst_max_llen       = reg2hw.conf.dst_max_llen.q;
+    idma_reg_req.opt.beo.src_reduce_len     = reg2hw.conf.src_reduce_len.q;
+    idma_reg_req.opt.beo.dst_reduce_len     = reg2hw.conf.dst_reduce_len.q;
+  end
 
   sync #(
     .STAGES     ( 32'd3      ),
@@ -357,23 +366,9 @@ module eth_idma_wrap #(
   assign reg2hw_eth.machi    = reg2hw.machi;
   assign reg2hw_eth.low_addr = reg2hw.low_addr;
   assign reg2hw_eth.mdio     = reg2hw.mdio;
-  assign rsp_valid_clr      = reg2hw.rsp_valid_clr.q;
+  //assign rsp_valid_clr      = reg2hw.rsp_valid_clr.q;
 
   //assign rx_en = eth_axis_rx_req.tvalid && sync;
-
-  // if on-chip devvice works as TX, dma length is set by the core
-  // otherwise, dma lengths should be set by hardware as RX
-
-  always_comb begin
-    idma_reg_req.length = reg2hw.length.q;
-    hw2reg.length.de = 1'b0; // Default de to 0
-    hw2reg.length.d = 12'b0;
-    if (rx_complete) begin
-      idma_reg_req.length = eth_len;
-      hw2reg.length.de = 1'b1;
-      hw2reg.length.d = eth_len;
-    end
-  end
 
   logic [5:0] rsp_cnt;
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -394,7 +389,6 @@ module eth_idma_wrap #(
       end
     end
   end
-
 
   // TX CDC FIFO
   cdc_fifo_gray #(

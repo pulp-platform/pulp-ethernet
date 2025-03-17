@@ -55,69 +55,27 @@ package eth_idma_reg_pkg;
 
   typedef struct packed {
     logic [31:0] q;
-  } eth_idma_reg2hw_src_addr_reg_t;
+  } eth_idma_reg2hw_src_addr_low_reg_t;
 
   typedef struct packed {
     logic [31:0] q;
-  } eth_idma_reg2hw_dst_addr_reg_t;
+  } eth_idma_reg2hw_src_addr_high_reg_t;
 
   typedef struct packed {
-    logic [11:0] q;
-  } eth_idma_reg2hw_length_reg_t;
+    logic [31:0] q;
+  } eth_idma_reg2hw_dst_addr_low_reg_t;
 
   typedef struct packed {
-    logic [2:0]  q;
-  } eth_idma_reg2hw_src_protocol_reg_t;
+    logic [31:0] q;
+  } eth_idma_reg2hw_dst_addr_high_reg_t;
 
   typedef struct packed {
-    logic [2:0]  q;
-  } eth_idma_reg2hw_dst_protocol_reg_t;
+    logic [31:0] q;
+  } eth_idma_reg2hw_length_low_reg_t;
 
   typedef struct packed {
-    logic        q;
-  } eth_idma_reg2hw_axi_id_reg_t;
-
-  typedef struct packed {
-    struct packed {
-      logic [1:0]  q;
-    } burst;
-    struct packed {
-      logic [3:0]  q;
-    } cache;
-    struct packed {
-      logic        q;
-    } lock;
-    struct packed {
-      logic [2:0]  q;
-    } prot;
-    struct packed {
-      logic [3:0]  q;
-    } qos;
-    struct packed {
-      logic [3:0]  q;
-    } region;
-  } eth_idma_reg2hw_opt_src_reg_t;
-
-  typedef struct packed {
-    struct packed {
-      logic [1:0]  q;
-    } burst;
-    struct packed {
-      logic [3:0]  q;
-    } cache;
-    struct packed {
-      logic        q;
-    } lock;
-    struct packed {
-      logic [2:0]  q;
-    } prot;
-    struct packed {
-      logic [3:0]  q;
-    } qos;
-    struct packed {
-      logic [3:0]  q;
-    } region;
-  } eth_idma_reg2hw_opt_dst_reg_t;
+    logic [31:0] q;
+  } eth_idma_reg2hw_length_high_reg_t;
 
   typedef struct packed {
     struct packed {
@@ -127,6 +85,12 @@ package eth_idma_reg_pkg;
       logic        q;
     } decouple_rw;
     struct packed {
+      logic        q;
+    } src_reduce_len;
+    struct packed {
+      logic        q;
+    } dst_reduce_len;
+    struct packed {
       logic [2:0]  q;
     } src_max_llen;
     struct packed {
@@ -134,15 +98,14 @@ package eth_idma_reg_pkg;
     } dst_max_llen;
     struct packed {
       logic        q;
-    } src_reduce_len;
+    } enable_nd;
     struct packed {
-      logic        q;
-    } dst_reduce_len;
-  } eth_idma_reg2hw_beo_reg_t;
-
-  typedef struct packed {
-    logic        q;
-  } eth_idma_reg2hw_last_reg_t;
+      logic [2:0]  q;
+    } src_protocol;
+    struct packed {
+      logic [2:0]  q;
+    } dst_protocol;
+  } eth_idma_reg2hw_conf_reg_t;
 
   typedef struct packed {
     logic        q;
@@ -238,19 +201,14 @@ package eth_idma_reg_pkg;
   } eth_idma_hw2reg_rsr_reg_t;
 
   typedef struct packed {
-    logic [11:0] d;
+    logic [31:0] d;
     logic        de;
-  } eth_idma_hw2reg_length_reg_t;
+  } eth_idma_hw2reg_length_low_reg_t;
 
   typedef struct packed {
-    logic        d;
+    logic [31:0] d;
     logic        de;
-  } eth_idma_hw2reg_axi_id_reg_t;
-
-  typedef struct packed {
-    logic        d;
-    logic        de;
-  } eth_idma_hw2reg_last_reg_t;
+  } eth_idma_hw2reg_length_high_reg_t;
 
   typedef struct packed {
     logic        d;
@@ -274,19 +232,16 @@ package eth_idma_reg_pkg;
 
   // Register -> HW type
   typedef struct packed {
-    eth_idma_reg2hw_low_addr_reg_t low_addr; // [195:164]
-    eth_idma_reg2hw_machi_reg_t machi; // [163:140]
-    eth_idma_reg2hw_mdio_reg_t mdio; // [139:136]
-    eth_idma_reg2hw_src_addr_reg_t src_addr; // [135:104]
-    eth_idma_reg2hw_dst_addr_reg_t dst_addr; // [103:72]
-    eth_idma_reg2hw_length_reg_t length; // [71:60]
-    eth_idma_reg2hw_src_protocol_reg_t src_protocol; // [59:57]
-    eth_idma_reg2hw_dst_protocol_reg_t dst_protocol; // [56:54]
-    eth_idma_reg2hw_axi_id_reg_t axi_id; // [53:53]
-    eth_idma_reg2hw_opt_src_reg_t opt_src; // [52:35]
-    eth_idma_reg2hw_opt_dst_reg_t opt_dst; // [34:17]
-    eth_idma_reg2hw_beo_reg_t beo; // [16:7]
-    eth_idma_reg2hw_last_reg_t last; // [6:6]
+    eth_idma_reg2hw_low_addr_reg_t low_addr; // [274:243]
+    eth_idma_reg2hw_machi_reg_t machi; // [242:219]
+    eth_idma_reg2hw_mdio_reg_t mdio; // [218:215]
+    eth_idma_reg2hw_src_addr_low_reg_t src_addr_low; // [214:183]
+    eth_idma_reg2hw_src_addr_high_reg_t src_addr_high; // [182:151]
+    eth_idma_reg2hw_dst_addr_low_reg_t dst_addr_low; // [150:119]
+    eth_idma_reg2hw_dst_addr_high_reg_t dst_addr_high; // [118:87]
+    eth_idma_reg2hw_length_low_reg_t length_low; // [86:55]
+    eth_idma_reg2hw_length_high_reg_t length_high; // [54:23]
+    eth_idma_reg2hw_conf_reg_t conf; // [22:6]
     eth_idma_reg2hw_req_valid_reg_t req_valid; // [5:5]
     eth_idma_reg2hw_req_ready_reg_t req_ready; // [4:4]
     eth_idma_reg2hw_rsp_ready_reg_t rsp_ready; // [3:3]
@@ -297,16 +252,15 @@ package eth_idma_reg_pkg;
 
   // HW -> register type
   typedef struct packed {
-    eth_idma_hw2reg_low_addr_reg_t low_addr; // [163:131]
-    eth_idma_hw2reg_machi_reg_t machi; // [130:105]
-    eth_idma_hw2reg_mdio_reg_t mdio; // [104:97]
-    eth_idma_hw2reg_tx_busy_reg_t tx_busy; // [96:95]
-    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [94:62]
-    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [61:29]
-    eth_idma_hw2reg_rsr_reg_t rsr; // [28:25]
-    eth_idma_hw2reg_length_reg_t length; // [24:12]
-    eth_idma_hw2reg_axi_id_reg_t axi_id; // [11:10]
-    eth_idma_hw2reg_last_reg_t last; // [9:8]
+    eth_idma_hw2reg_low_addr_reg_t low_addr; // [212:180]
+    eth_idma_hw2reg_machi_reg_t machi; // [179:154]
+    eth_idma_hw2reg_mdio_reg_t mdio; // [153:146]
+    eth_idma_hw2reg_tx_busy_reg_t tx_busy; // [145:144]
+    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [143:111]
+    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [110:78]
+    eth_idma_hw2reg_rsr_reg_t rsr; // [77:74]
+    eth_idma_hw2reg_length_low_reg_t length_low; // [73:41]
+    eth_idma_hw2reg_length_high_reg_t length_high; // [40:8]
     eth_idma_hw2reg_req_valid_reg_t req_valid; // [7:6]
     eth_idma_hw2reg_req_ready_reg_t req_ready; // [5:4]
     eth_idma_hw2reg_rsp_ready_reg_t rsp_ready; // [3:2]
@@ -321,22 +275,19 @@ package eth_idma_reg_pkg;
   parameter logic [BlockAw-1:0] ETH_IDMA_TX_FCS_OFFSET = 7'h 10;
   parameter logic [BlockAw-1:0] ETH_IDMA_RX_FCS_OFFSET = 7'h 14;
   parameter logic [BlockAw-1:0] ETH_IDMA_RSR_OFFSET = 7'h 18;
-  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_ADDR_OFFSET = 7'h 1c;
-  parameter logic [BlockAw-1:0] ETH_IDMA_DST_ADDR_OFFSET = 7'h 20;
-  parameter logic [BlockAw-1:0] ETH_IDMA_LENGTH_OFFSET = 7'h 24;
-  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_PROTOCOL_OFFSET = 7'h 28;
-  parameter logic [BlockAw-1:0] ETH_IDMA_DST_PROTOCOL_OFFSET = 7'h 2c;
-  parameter logic [BlockAw-1:0] ETH_IDMA_AXI_ID_OFFSET = 7'h 30;
-  parameter logic [BlockAw-1:0] ETH_IDMA_OPT_SRC_OFFSET = 7'h 34;
-  parameter logic [BlockAw-1:0] ETH_IDMA_OPT_DST_OFFSET = 7'h 38;
-  parameter logic [BlockAw-1:0] ETH_IDMA_BEO_OFFSET = 7'h 3c;
-  parameter logic [BlockAw-1:0] ETH_IDMA_LAST_OFFSET = 7'h 40;
-  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_VALID_OFFSET = 7'h 44;
-  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_READY_OFFSET = 7'h 48;
-  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_READY_OFFSET = 7'h 4c;
-  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_OFFSET = 7'h 50;
-  parameter logic [BlockAw-1:0] ETH_IDMA_RX_END_CLR_OFFSET = 7'h 54;
-  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_CLR_OFFSET = 7'h 58;
+  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_ADDR_LOW_OFFSET = 7'h 1c;
+  parameter logic [BlockAw-1:0] ETH_IDMA_SRC_ADDR_HIGH_OFFSET = 7'h 20;
+  parameter logic [BlockAw-1:0] ETH_IDMA_DST_ADDR_LOW_OFFSET = 7'h 24;
+  parameter logic [BlockAw-1:0] ETH_IDMA_DST_ADDR_HIGH_OFFSET = 7'h 28;
+  parameter logic [BlockAw-1:0] ETH_IDMA_LENGTH_LOW_OFFSET = 7'h 2c;
+  parameter logic [BlockAw-1:0] ETH_IDMA_LENGTH_HIGH_OFFSET = 7'h 30;
+  parameter logic [BlockAw-1:0] ETH_IDMA_CONF_OFFSET = 7'h 34;
+  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_VALID_OFFSET = 7'h 38;
+  parameter logic [BlockAw-1:0] ETH_IDMA_REQ_READY_OFFSET = 7'h 3c;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_READY_OFFSET = 7'h 40;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_OFFSET = 7'h 44;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RX_END_CLR_OFFSET = 7'h 48;
+  parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_CLR_OFFSET = 7'h 4c;
 
   // Register index
   typedef enum int {
@@ -347,16 +298,13 @@ package eth_idma_reg_pkg;
     ETH_IDMA_TX_FCS,
     ETH_IDMA_RX_FCS,
     ETH_IDMA_RSR,
-    ETH_IDMA_SRC_ADDR,
-    ETH_IDMA_DST_ADDR,
-    ETH_IDMA_LENGTH,
-    ETH_IDMA_SRC_PROTOCOL,
-    ETH_IDMA_DST_PROTOCOL,
-    ETH_IDMA_AXI_ID,
-    ETH_IDMA_OPT_SRC,
-    ETH_IDMA_OPT_DST,
-    ETH_IDMA_BEO,
-    ETH_IDMA_LAST,
+    ETH_IDMA_SRC_ADDR_LOW,
+    ETH_IDMA_SRC_ADDR_HIGH,
+    ETH_IDMA_DST_ADDR_LOW,
+    ETH_IDMA_DST_ADDR_HIGH,
+    ETH_IDMA_LENGTH_LOW,
+    ETH_IDMA_LENGTH_HIGH,
+    ETH_IDMA_CONF,
     ETH_IDMA_REQ_VALID,
     ETH_IDMA_REQ_READY,
     ETH_IDMA_RSP_READY,
@@ -366,7 +314,7 @@ package eth_idma_reg_pkg;
   } eth_idma_id_e;
 
   // Register width information to check illegal writes
-  parameter logic [3:0] ETH_IDMA_PERMIT [23] = '{
+  parameter logic [3:0] ETH_IDMA_PERMIT [20] = '{
     4'b 1111, // index[ 0] ETH_IDMA_LOW_ADDR
     4'b 0111, // index[ 1] ETH_IDMA_MACHI
     4'b 0001, // index[ 2] ETH_IDMA_MDIO
@@ -374,22 +322,19 @@ package eth_idma_reg_pkg;
     4'b 1111, // index[ 4] ETH_IDMA_TX_FCS
     4'b 1111, // index[ 5] ETH_IDMA_RX_FCS
     4'b 0001, // index[ 6] ETH_IDMA_RSR
-    4'b 1111, // index[ 7] ETH_IDMA_SRC_ADDR
-    4'b 1111, // index[ 8] ETH_IDMA_DST_ADDR
-    4'b 0011, // index[ 9] ETH_IDMA_LENGTH
-    4'b 0001, // index[10] ETH_IDMA_SRC_PROTOCOL
-    4'b 0001, // index[11] ETH_IDMA_DST_PROTOCOL
-    4'b 0001, // index[12] ETH_IDMA_AXI_ID
-    4'b 0111, // index[13] ETH_IDMA_OPT_SRC
-    4'b 0111, // index[14] ETH_IDMA_OPT_DST
-    4'b 0011, // index[15] ETH_IDMA_BEO
-    4'b 0001, // index[16] ETH_IDMA_LAST
-    4'b 0001, // index[17] ETH_IDMA_REQ_VALID
-    4'b 0001, // index[18] ETH_IDMA_REQ_READY
-    4'b 0001, // index[19] ETH_IDMA_RSP_READY
-    4'b 0001, // index[20] ETH_IDMA_RSP_VALID
-    4'b 0001, // index[21] ETH_IDMA_RX_END_CLR
-    4'b 0001  // index[22] ETH_IDMA_RSP_VALID_CLR
+    4'b 1111, // index[ 7] ETH_IDMA_SRC_ADDR_LOW
+    4'b 1111, // index[ 8] ETH_IDMA_SRC_ADDR_HIGH
+    4'b 1111, // index[ 9] ETH_IDMA_DST_ADDR_LOW
+    4'b 1111, // index[10] ETH_IDMA_DST_ADDR_HIGH
+    4'b 1111, // index[11] ETH_IDMA_LENGTH_LOW
+    4'b 1111, // index[12] ETH_IDMA_LENGTH_HIGH
+    4'b 0111, // index[13] ETH_IDMA_CONF
+    4'b 0001, // index[14] ETH_IDMA_REQ_VALID
+    4'b 0001, // index[15] ETH_IDMA_REQ_READY
+    4'b 0001, // index[16] ETH_IDMA_RSP_READY
+    4'b 0001, // index[17] ETH_IDMA_RSP_VALID
+    4'b 0001, // index[18] ETH_IDMA_RX_END_CLR
+    4'b 0001  // index[19] ETH_IDMA_RSP_VALID_CLR
   };
 
 endpackage

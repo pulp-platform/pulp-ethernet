@@ -25,6 +25,8 @@ ETH_ROOT ?= $(shell pwd)
 
 REG_DIR := $(shell $(BENDER) path register_interface)
 
+compile_script_synth ?= $(ETH_ROOT)/target/sim/vsim/synth_compile.tcl
+
 QUESTA_FLAGS := -permissive -suppress 3009 -suppress 8386 -error 7 +UVM_NO_RELNOTES
 #QUESTA_FLAGS :=
 ifdef DEBUG
@@ -35,6 +37,27 @@ else
 	VOPT_FLAGS := $(QUESTA_FLAGS) -O5 +acc=p+$(TBENCH).
 	VSIM_FLAGS := $(QUESTA_FLAGS) -c
 	RUN_AND_EXIT := run -all; exit
+endif
+
+# Conditionally enable netlist simulation
+ifeq ($(netlist_sim),1)
+  # Turn on netlist simulation tag for Bender
+  NETLIST := -t netlist_sim
+
+  # Additional netlist-sim flags
+  VOPT_FLAGS += +nospecify \
+                -v2k_int_delays +no_glitch_msg \
+                +bus_conflict_off
+
+  # Could do something similar for VSIM_FLAGS if you want:
+  VSIM_FLAGS += +nospecify \
+  				-v2k_int_delays +no_glitch_msg \
+				+bus_conflict_off
+
+  $(info netlist_sim is enabled: building/running netlist simulation)
+else
+  # If netlist_sim=0 or is unset, we do a plain RTL sim
+  $(info netlist_sim is NOT enabled: building/running pure RTL simulation)
 endif
 
 ######################
@@ -53,22 +76,21 @@ eth-nonfree-init:
 ##############
 # Synthesis  #
 ##############
+
 synth_targs += -t rtl -t eth_synth
+
 synth-ips:
-	$(BENDER) update
-	$(BENDER) script synopsys \
+		$(BENDER) update
+		$(BENDER) script synopsys \
     $(synth_targs) \
-	> ${compile_script_synth}
-
-
-
+		> ${compile_script_synth}
 
 ##############
 # Simulation #
 ##############
 
 $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl: Bender.yml
-	$(BENDER) script vsim -t test -t rtl -t snitch_cluster \
+	$(BENDER) script vsim -t test -t rtl -t snitch_cluster -t sim $(NETLIST) \
 	--vlog-arg="-svinputport=compat" \
 	--vlog-arg="-override_timescale 1ns/1ps" \
 	--vlog-arg="-suppress 2583" > $@
@@ -79,12 +101,28 @@ eth-sim-init: $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl
 eth-hw-build: eth-sim-init
 	$(QUESTA) vsim -c -do "quit -code [source $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl]"
 
+#eth-hw-sim:
+#	$(QUESTA) vsim $(VSIM_FLAGS) -do \
+#		"set TESTBENCH $(TBENCH); \
+#		 set VSIM_FLAGS \"$(VSIM_FLAGS)\"; \
+#		 source $(ETH_ROOT)/target/sim/vsim/start.eth.tcl ; \
+#		 $(RUN_AND_EXIT)"
+
 eth-hw-sim:
 	$(QUESTA) vsim $(VSIM_FLAGS) -do \
-		"set TESTBENCH $(TBENCH); \
-		 set VSIM_FLAGS \"$(VSIM_FLAGS)\"; \
-		 source $(ETH_ROOT)/target/sim/vsim/start.eth.tcl ; \
-		 $(RUN_AND_EXIT)"
+		"source $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl; \
+		 vopt $(VOPT_FLAGS) $(TBENCH) -o $(TBENCH)_opt; \
+		 vsim $(TBENCH)_opt; \
+		 run -all; \
+		 quit"
+
+#################################
+# CLEAN TARGET
+#################################
+clean:
+	rm -rf $(ETH_ROOT)/target/sim/vsim/compile.eth.tcl
+	rm -rf $(ETH_ROOT)/target/sim/vsim/work
+	rm -f  *.log *.wlf
 
 #################################
 # Phonies (KEEP AT END OF FILE) #

@@ -104,81 +104,51 @@ module eth_idma_reg_top #(
   logic [31:0] rx_fcs_qs;
   logic rsr_rx_complete_qs;
   logic rsr_rx_irq_qs;
-  logic [31:0] src_addr_qs;
-  logic [31:0] src_addr_wd;
-  logic src_addr_we;
-  logic [31:0] dst_addr_qs;
-  logic [31:0] dst_addr_wd;
-  logic dst_addr_we;
-  logic [11:0] length_qs;
-  logic [11:0] length_wd;
-  logic length_we;
-  logic [2:0] src_protocol_qs;
-  logic [2:0] src_protocol_wd;
-  logic src_protocol_we;
-  logic [2:0] dst_protocol_qs;
-  logic [2:0] dst_protocol_wd;
-  logic dst_protocol_we;
-  logic axi_id_qs;
-  logic axi_id_wd;
-  logic axi_id_we;
-  logic [1:0] opt_src_burst_qs;
-  logic [1:0] opt_src_burst_wd;
-  logic opt_src_burst_we;
-  logic [3:0] opt_src_cache_qs;
-  logic [3:0] opt_src_cache_wd;
-  logic opt_src_cache_we;
-  logic opt_src_lock_qs;
-  logic opt_src_lock_wd;
-  logic opt_src_lock_we;
-  logic [2:0] opt_src_prot_qs;
-  logic [2:0] opt_src_prot_wd;
-  logic opt_src_prot_we;
-  logic [3:0] opt_src_qos_qs;
-  logic [3:0] opt_src_qos_wd;
-  logic opt_src_qos_we;
-  logic [3:0] opt_src_region_qs;
-  logic [3:0] opt_src_region_wd;
-  logic opt_src_region_we;
-  logic [1:0] opt_dst_burst_qs;
-  logic [1:0] opt_dst_burst_wd;
-  logic opt_dst_burst_we;
-  logic [3:0] opt_dst_cache_qs;
-  logic [3:0] opt_dst_cache_wd;
-  logic opt_dst_cache_we;
-  logic opt_dst_lock_qs;
-  logic opt_dst_lock_wd;
-  logic opt_dst_lock_we;
-  logic [2:0] opt_dst_prot_qs;
-  logic [2:0] opt_dst_prot_wd;
-  logic opt_dst_prot_we;
-  logic [3:0] opt_dst_qos_qs;
-  logic [3:0] opt_dst_qos_wd;
-  logic opt_dst_qos_we;
-  logic [3:0] opt_dst_region_qs;
-  logic [3:0] opt_dst_region_wd;
-  logic opt_dst_region_we;
-  logic beo_decouple_aw_qs;
-  logic beo_decouple_aw_wd;
-  logic beo_decouple_aw_we;
-  logic beo_decouple_rw_qs;
-  logic beo_decouple_rw_wd;
-  logic beo_decouple_rw_we;
-  logic [2:0] beo_src_max_llen_qs;
-  logic [2:0] beo_src_max_llen_wd;
-  logic beo_src_max_llen_we;
-  logic [2:0] beo_dst_max_llen_qs;
-  logic [2:0] beo_dst_max_llen_wd;
-  logic beo_dst_max_llen_we;
-  logic beo_src_reduce_len_qs;
-  logic beo_src_reduce_len_wd;
-  logic beo_src_reduce_len_we;
-  logic beo_dst_reduce_len_qs;
-  logic beo_dst_reduce_len_wd;
-  logic beo_dst_reduce_len_we;
-  logic last_qs;
-  logic last_wd;
-  logic last_we;
+  logic [31:0] src_addr_low_qs;
+  logic [31:0] src_addr_low_wd;
+  logic src_addr_low_we;
+  logic [31:0] src_addr_high_qs;
+  logic [31:0] src_addr_high_wd;
+  logic src_addr_high_we;
+  logic [31:0] dst_addr_low_qs;
+  logic [31:0] dst_addr_low_wd;
+  logic dst_addr_low_we;
+  logic [31:0] dst_addr_high_qs;
+  logic [31:0] dst_addr_high_wd;
+  logic dst_addr_high_we;
+  logic [31:0] length_low_qs;
+  logic [31:0] length_low_wd;
+  logic length_low_we;
+  logic [31:0] length_high_qs;
+  logic [31:0] length_high_wd;
+  logic length_high_we;
+  logic conf_decouple_aw_qs;
+  logic conf_decouple_aw_wd;
+  logic conf_decouple_aw_we;
+  logic conf_decouple_rw_qs;
+  logic conf_decouple_rw_wd;
+  logic conf_decouple_rw_we;
+  logic conf_src_reduce_len_qs;
+  logic conf_src_reduce_len_wd;
+  logic conf_src_reduce_len_we;
+  logic conf_dst_reduce_len_qs;
+  logic conf_dst_reduce_len_wd;
+  logic conf_dst_reduce_len_we;
+  logic [2:0] conf_src_max_llen_qs;
+  logic [2:0] conf_src_max_llen_wd;
+  logic conf_src_max_llen_we;
+  logic [2:0] conf_dst_max_llen_qs;
+  logic [2:0] conf_dst_max_llen_wd;
+  logic conf_dst_max_llen_we;
+  logic conf_enable_nd_qs;
+  logic conf_enable_nd_wd;
+  logic conf_enable_nd_we;
+  logic [2:0] conf_src_protocol_qs;
+  logic [2:0] conf_src_protocol_wd;
+  logic conf_src_protocol_we;
+  logic [2:0] conf_dst_protocol_qs;
+  logic [2:0] conf_dst_protocol_wd;
+  logic conf_dst_protocol_we;
   logic req_valid_qs;
   logic req_valid_wd;
   logic req_valid_we;
@@ -613,19 +583,19 @@ module eth_idma_reg_top #(
   );
 
 
-  // R[src_addr]: V(False)
+  // R[src_addr_low]: V(False)
 
   prim_subreg #(
     .DW      (32),
     .SWACCESS("RW"),
     .RESVAL  (32'h0)
-  ) u_src_addr (
+  ) u_src_addr_low (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (src_addr_we),
-    .wd     (src_addr_wd),
+    .we     (src_addr_low_we),
+    .wd     (src_addr_low_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -633,26 +603,26 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.src_addr.q ),
+    .q      (reg2hw.src_addr_low.q ),
 
     // to register interface (read)
-    .qs     (src_addr_qs)
+    .qs     (src_addr_low_qs)
   );
 
 
-  // R[dst_addr]: V(False)
+  // R[src_addr_high]: V(False)
 
   prim_subreg #(
     .DW      (32),
     .SWACCESS("RW"),
     .RESVAL  (32'h0)
-  ) u_dst_addr (
+  ) u_src_addr_high (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (dst_addr_we),
-    .wd     (dst_addr_wd),
+    .we     (src_addr_high_we),
+    .wd     (src_addr_high_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -660,53 +630,26 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.dst_addr.q ),
+    .q      (reg2hw.src_addr_high.q ),
 
     // to register interface (read)
-    .qs     (dst_addr_qs)
+    .qs     (src_addr_high_qs)
   );
 
 
-  // R[length]: V(False)
+  // R[dst_addr_low]: V(False)
 
   prim_subreg #(
-    .DW      (12),
+    .DW      (32),
     .SWACCESS("RW"),
-    .RESVAL  (12'h0)
-  ) u_length (
+    .RESVAL  (32'h0)
+  ) u_dst_addr_low (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (length_we),
-    .wd     (length_wd),
-
-    // from internal hardware
-    .de     (hw2reg.length.de),
-    .d      (hw2reg.length.d ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.length.q ),
-
-    // to register interface (read)
-    .qs     (length_qs)
-  );
-
-
-  // R[src_protocol]: V(False)
-
-  prim_subreg #(
-    .DW      (3),
-    .SWACCESS("RW"),
-    .RESVAL  (3'h0)
-  ) u_src_protocol (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (src_protocol_we),
-    .wd     (src_protocol_wd),
+    .we     (dst_addr_low_we),
+    .wd     (dst_addr_low_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -714,26 +657,26 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.src_protocol.q ),
+    .q      (reg2hw.dst_addr_low.q ),
 
     // to register interface (read)
-    .qs     (src_protocol_qs)
+    .qs     (dst_addr_low_qs)
   );
 
 
-  // R[dst_protocol]: V(False)
+  // R[dst_addr_high]: V(False)
 
   prim_subreg #(
-    .DW      (3),
+    .DW      (32),
     .SWACCESS("RW"),
-    .RESVAL  (3'h0)
-  ) u_dst_protocol (
+    .RESVAL  (32'h0)
+  ) u_dst_addr_high (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (dst_protocol_we),
-    .wd     (dst_protocol_wd),
+    .we     (dst_addr_high_we),
+    .wd     (dst_addr_high_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -741,370 +684,81 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.dst_protocol.q ),
+    .q      (reg2hw.dst_addr_high.q ),
 
     // to register interface (read)
-    .qs     (dst_protocol_qs)
+    .qs     (dst_addr_high_qs)
   );
 
 
-  // R[axi_id]: V(False)
+  // R[length_low]: V(False)
 
   prim_subreg #(
-    .DW      (1),
+    .DW      (32),
     .SWACCESS("RW"),
-    .RESVAL  (1'h0)
-  ) u_axi_id (
+    .RESVAL  (32'h0)
+  ) u_length_low (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (axi_id_we),
-    .wd     (axi_id_wd),
+    .we     (length_low_we),
+    .wd     (length_low_wd),
 
     // from internal hardware
-    .de     (hw2reg.axi_id.de),
-    .d      (hw2reg.axi_id.d ),
+    .de     (hw2reg.length_low.de),
+    .d      (hw2reg.length_low.d ),
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.axi_id.q ),
+    .q      (reg2hw.length_low.q ),
 
     // to register interface (read)
-    .qs     (axi_id_qs)
+    .qs     (length_low_qs)
   );
 
 
-  // R[opt_src]: V(False)
+  // R[length_high]: V(False)
 
-  //   F[burst]: 1:0
   prim_subreg #(
-    .DW      (2),
+    .DW      (32),
     .SWACCESS("RW"),
-    .RESVAL  (2'h1)
-  ) u_opt_src_burst (
+    .RESVAL  (32'h0)
+  ) u_length_high (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (opt_src_burst_we),
-    .wd     (opt_src_burst_wd),
+    .we     (length_high_we),
+    .wd     (length_high_wd),
 
     // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
+    .de     (hw2reg.length_high.de),
+    .d      (hw2reg.length_high.d ),
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.opt_src.burst.q ),
+    .q      (reg2hw.length_high.q ),
 
     // to register interface (read)
-    .qs     (opt_src_burst_qs)
+    .qs     (length_high_qs)
   );
 
 
-  //   F[cache]: 5:2
-  prim_subreg #(
-    .DW      (4),
-    .SWACCESS("RW"),
-    .RESVAL  (4'h0)
-  ) u_opt_src_cache (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_src_cache_we),
-    .wd     (opt_src_cache_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_src.cache.q ),
-
-    // to register interface (read)
-    .qs     (opt_src_cache_qs)
-  );
-
-
-  //   F[lock]: 6:6
-  prim_subreg #(
-    .DW      (1),
-    .SWACCESS("RW"),
-    .RESVAL  (1'h0)
-  ) u_opt_src_lock (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_src_lock_we),
-    .wd     (opt_src_lock_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_src.lock.q ),
-
-    // to register interface (read)
-    .qs     (opt_src_lock_qs)
-  );
-
-
-  //   F[prot]: 9:7
-  prim_subreg #(
-    .DW      (3),
-    .SWACCESS("RW"),
-    .RESVAL  (3'h0)
-  ) u_opt_src_prot (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_src_prot_we),
-    .wd     (opt_src_prot_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_src.prot.q ),
-
-    // to register interface (read)
-    .qs     (opt_src_prot_qs)
-  );
-
-
-  //   F[qos]: 13:10
-  prim_subreg #(
-    .DW      (4),
-    .SWACCESS("RW"),
-    .RESVAL  (4'h0)
-  ) u_opt_src_qos (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_src_qos_we),
-    .wd     (opt_src_qos_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_src.qos.q ),
-
-    // to register interface (read)
-    .qs     (opt_src_qos_qs)
-  );
-
-
-  //   F[region]: 17:14
-  prim_subreg #(
-    .DW      (4),
-    .SWACCESS("RW"),
-    .RESVAL  (4'h0)
-  ) u_opt_src_region (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_src_region_we),
-    .wd     (opt_src_region_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_src.region.q ),
-
-    // to register interface (read)
-    .qs     (opt_src_region_qs)
-  );
-
-
-  // R[opt_dst]: V(False)
-
-  //   F[burst]: 1:0
-  prim_subreg #(
-    .DW      (2),
-    .SWACCESS("RW"),
-    .RESVAL  (2'h1)
-  ) u_opt_dst_burst (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_dst_burst_we),
-    .wd     (opt_dst_burst_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_dst.burst.q ),
-
-    // to register interface (read)
-    .qs     (opt_dst_burst_qs)
-  );
-
-
-  //   F[cache]: 5:2
-  prim_subreg #(
-    .DW      (4),
-    .SWACCESS("RW"),
-    .RESVAL  (4'h0)
-  ) u_opt_dst_cache (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_dst_cache_we),
-    .wd     (opt_dst_cache_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_dst.cache.q ),
-
-    // to register interface (read)
-    .qs     (opt_dst_cache_qs)
-  );
-
-
-  //   F[lock]: 6:6
-  prim_subreg #(
-    .DW      (1),
-    .SWACCESS("RW"),
-    .RESVAL  (1'h0)
-  ) u_opt_dst_lock (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_dst_lock_we),
-    .wd     (opt_dst_lock_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_dst.lock.q ),
-
-    // to register interface (read)
-    .qs     (opt_dst_lock_qs)
-  );
-
-
-  //   F[prot]: 9:7
-  prim_subreg #(
-    .DW      (3),
-    .SWACCESS("RW"),
-    .RESVAL  (3'h0)
-  ) u_opt_dst_prot (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_dst_prot_we),
-    .wd     (opt_dst_prot_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_dst.prot.q ),
-
-    // to register interface (read)
-    .qs     (opt_dst_prot_qs)
-  );
-
-
-  //   F[qos]: 13:10
-  prim_subreg #(
-    .DW      (4),
-    .SWACCESS("RW"),
-    .RESVAL  (4'h0)
-  ) u_opt_dst_qos (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_dst_qos_we),
-    .wd     (opt_dst_qos_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_dst.qos.q ),
-
-    // to register interface (read)
-    .qs     (opt_dst_qos_qs)
-  );
-
-
-  //   F[region]: 17:14
-  prim_subreg #(
-    .DW      (4),
-    .SWACCESS("RW"),
-    .RESVAL  (4'h0)
-  ) u_opt_dst_region (
-    .clk_i   (clk_i    ),
-    .rst_ni  (rst_ni  ),
-
-    // from register interface
-    .we     (opt_dst_region_we),
-    .wd     (opt_dst_region_wd),
-
-    // from internal hardware
-    .de     (1'b0),
-    .d      ('0  ),
-
-    // to internal hardware
-    .qe     (),
-    .q      (reg2hw.opt_dst.region.q ),
-
-    // to register interface (read)
-    .qs     (opt_dst_region_qs)
-  );
-
-
-  // R[beo]: V(False)
+  // R[conf]: V(False)
 
   //   F[decouple_aw]: 0:0
   prim_subreg #(
     .DW      (1),
     .SWACCESS("RW"),
     .RESVAL  (1'h0)
-  ) u_beo_decouple_aw (
+  ) u_conf_decouple_aw (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (beo_decouple_aw_we),
-    .wd     (beo_decouple_aw_wd),
+    .we     (conf_decouple_aw_we),
+    .wd     (conf_decouple_aw_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -1112,10 +766,10 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.beo.decouple_aw.q ),
+    .q      (reg2hw.conf.decouple_aw.q ),
 
     // to register interface (read)
-    .qs     (beo_decouple_aw_qs)
+    .qs     (conf_decouple_aw_qs)
   );
 
 
@@ -1124,13 +778,13 @@ module eth_idma_reg_top #(
     .DW      (1),
     .SWACCESS("RW"),
     .RESVAL  (1'h0)
-  ) u_beo_decouple_rw (
+  ) u_conf_decouple_rw (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (beo_decouple_rw_we),
-    .wd     (beo_decouple_rw_wd),
+    .we     (conf_decouple_rw_we),
+    .wd     (conf_decouple_rw_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -1138,25 +792,77 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.beo.decouple_rw.q ),
+    .q      (reg2hw.conf.decouple_rw.q ),
 
     // to register interface (read)
-    .qs     (beo_decouple_rw_qs)
+    .qs     (conf_decouple_rw_qs)
   );
 
 
-  //   F[src_max_llen]: 4:2
+  //   F[src_reduce_len]: 2:2
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("RW"),
+    .RESVAL  (1'h0)
+  ) u_conf_src_reduce_len (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    // from register interface
+    .we     (conf_src_reduce_len_we),
+    .wd     (conf_src_reduce_len_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0  ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.conf.src_reduce_len.q ),
+
+    // to register interface (read)
+    .qs     (conf_src_reduce_len_qs)
+  );
+
+
+  //   F[dst_reduce_len]: 3:3
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("RW"),
+    .RESVAL  (1'h0)
+  ) u_conf_dst_reduce_len (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    // from register interface
+    .we     (conf_dst_reduce_len_we),
+    .wd     (conf_dst_reduce_len_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0  ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.conf.dst_reduce_len.q ),
+
+    // to register interface (read)
+    .qs     (conf_dst_reduce_len_qs)
+  );
+
+
+  //   F[src_max_llen]: 6:4
   prim_subreg #(
     .DW      (3),
     .SWACCESS("RW"),
     .RESVAL  (3'h0)
-  ) u_beo_src_max_llen (
+  ) u_conf_src_max_llen (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (beo_src_max_llen_we),
-    .wd     (beo_src_max_llen_wd),
+    .we     (conf_src_max_llen_we),
+    .wd     (conf_src_max_llen_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -1164,25 +870,25 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.beo.src_max_llen.q ),
+    .q      (reg2hw.conf.src_max_llen.q ),
 
     // to register interface (read)
-    .qs     (beo_src_max_llen_qs)
+    .qs     (conf_src_max_llen_qs)
   );
 
 
-  //   F[dst_max_llen]: 7:5
+  //   F[dst_max_llen]: 9:7
   prim_subreg #(
     .DW      (3),
     .SWACCESS("RW"),
     .RESVAL  (3'h0)
-  ) u_beo_dst_max_llen (
+  ) u_conf_dst_max_llen (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (beo_dst_max_llen_we),
-    .wd     (beo_dst_max_llen_wd),
+    .we     (conf_dst_max_llen_we),
+    .wd     (conf_dst_max_llen_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -1190,25 +896,25 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.beo.dst_max_llen.q ),
+    .q      (reg2hw.conf.dst_max_llen.q ),
 
     // to register interface (read)
-    .qs     (beo_dst_max_llen_qs)
+    .qs     (conf_dst_max_llen_qs)
   );
 
 
-  //   F[src_reduce_len]: 8:8
+  //   F[enable_nd]: 10:10
   prim_subreg #(
     .DW      (1),
     .SWACCESS("RW"),
     .RESVAL  (1'h0)
-  ) u_beo_src_reduce_len (
+  ) u_conf_enable_nd (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (beo_src_reduce_len_we),
-    .wd     (beo_src_reduce_len_wd),
+    .we     (conf_enable_nd_we),
+    .wd     (conf_enable_nd_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -1216,25 +922,25 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.beo.src_reduce_len.q ),
+    .q      (reg2hw.conf.enable_nd.q ),
 
     // to register interface (read)
-    .qs     (beo_src_reduce_len_qs)
+    .qs     (conf_enable_nd_qs)
   );
 
 
-  //   F[dst_reduce_len]: 9:9
+  //   F[src_protocol]: 13:11
   prim_subreg #(
-    .DW      (1),
+    .DW      (3),
     .SWACCESS("RW"),
-    .RESVAL  (1'h0)
-  ) u_beo_dst_reduce_len (
+    .RESVAL  (3'h0)
+  ) u_conf_src_protocol (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (beo_dst_reduce_len_we),
-    .wd     (beo_dst_reduce_len_wd),
+    .we     (conf_src_protocol_we),
+    .wd     (conf_src_protocol_wd),
 
     // from internal hardware
     .de     (1'b0),
@@ -1242,37 +948,36 @@ module eth_idma_reg_top #(
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.beo.dst_reduce_len.q ),
+    .q      (reg2hw.conf.src_protocol.q ),
 
     // to register interface (read)
-    .qs     (beo_dst_reduce_len_qs)
+    .qs     (conf_src_protocol_qs)
   );
 
 
-  // R[last]: V(False)
-
+  //   F[dst_protocol]: 16:14
   prim_subreg #(
-    .DW      (1),
+    .DW      (3),
     .SWACCESS("RW"),
-    .RESVAL  (1'h0)
-  ) u_last (
+    .RESVAL  (3'h0)
+  ) u_conf_dst_protocol (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
     // from register interface
-    .we     (last_we),
-    .wd     (last_wd),
+    .we     (conf_dst_protocol_we),
+    .wd     (conf_dst_protocol_wd),
 
     // from internal hardware
-    .de     (hw2reg.last.de),
-    .d      (hw2reg.last.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
-    .q      (reg2hw.last.q ),
+    .q      (reg2hw.conf.dst_protocol.q ),
 
     // to register interface (read)
-    .qs     (last_qs)
+    .qs     (conf_dst_protocol_qs)
   );
 
 
@@ -1436,7 +1141,7 @@ module eth_idma_reg_top #(
 
 
 
-  logic [22:0] addr_hit;
+  logic [19:0] addr_hit;
   always_comb begin
     addr_hit = '0;
     addr_hit[ 0] = (reg_addr == ETH_IDMA_LOW_ADDR_OFFSET);
@@ -1446,22 +1151,19 @@ module eth_idma_reg_top #(
     addr_hit[ 4] = (reg_addr == ETH_IDMA_TX_FCS_OFFSET);
     addr_hit[ 5] = (reg_addr == ETH_IDMA_RX_FCS_OFFSET);
     addr_hit[ 6] = (reg_addr == ETH_IDMA_RSR_OFFSET);
-    addr_hit[ 7] = (reg_addr == ETH_IDMA_SRC_ADDR_OFFSET);
-    addr_hit[ 8] = (reg_addr == ETH_IDMA_DST_ADDR_OFFSET);
-    addr_hit[ 9] = (reg_addr == ETH_IDMA_LENGTH_OFFSET);
-    addr_hit[10] = (reg_addr == ETH_IDMA_SRC_PROTOCOL_OFFSET);
-    addr_hit[11] = (reg_addr == ETH_IDMA_DST_PROTOCOL_OFFSET);
-    addr_hit[12] = (reg_addr == ETH_IDMA_AXI_ID_OFFSET);
-    addr_hit[13] = (reg_addr == ETH_IDMA_OPT_SRC_OFFSET);
-    addr_hit[14] = (reg_addr == ETH_IDMA_OPT_DST_OFFSET);
-    addr_hit[15] = (reg_addr == ETH_IDMA_BEO_OFFSET);
-    addr_hit[16] = (reg_addr == ETH_IDMA_LAST_OFFSET);
-    addr_hit[17] = (reg_addr == ETH_IDMA_REQ_VALID_OFFSET);
-    addr_hit[18] = (reg_addr == ETH_IDMA_REQ_READY_OFFSET);
-    addr_hit[19] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
-    addr_hit[20] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
-    addr_hit[21] = (reg_addr == ETH_IDMA_RX_END_CLR_OFFSET);
-    addr_hit[22] = (reg_addr == ETH_IDMA_RSP_VALID_CLR_OFFSET);
+    addr_hit[ 7] = (reg_addr == ETH_IDMA_SRC_ADDR_LOW_OFFSET);
+    addr_hit[ 8] = (reg_addr == ETH_IDMA_SRC_ADDR_HIGH_OFFSET);
+    addr_hit[ 9] = (reg_addr == ETH_IDMA_DST_ADDR_LOW_OFFSET);
+    addr_hit[10] = (reg_addr == ETH_IDMA_DST_ADDR_HIGH_OFFSET);
+    addr_hit[11] = (reg_addr == ETH_IDMA_LENGTH_LOW_OFFSET);
+    addr_hit[12] = (reg_addr == ETH_IDMA_LENGTH_HIGH_OFFSET);
+    addr_hit[13] = (reg_addr == ETH_IDMA_CONF_OFFSET);
+    addr_hit[14] = (reg_addr == ETH_IDMA_REQ_VALID_OFFSET);
+    addr_hit[15] = (reg_addr == ETH_IDMA_REQ_READY_OFFSET);
+    addr_hit[16] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
+    addr_hit[17] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
+    addr_hit[18] = (reg_addr == ETH_IDMA_RX_END_CLR_OFFSET);
+    addr_hit[19] = (reg_addr == ETH_IDMA_RSP_VALID_CLR_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -1488,10 +1190,7 @@ module eth_idma_reg_top #(
                (addr_hit[16] & (|(ETH_IDMA_PERMIT[16] & ~reg_be))) |
                (addr_hit[17] & (|(ETH_IDMA_PERMIT[17] & ~reg_be))) |
                (addr_hit[18] & (|(ETH_IDMA_PERMIT[18] & ~reg_be))) |
-               (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(ETH_IDMA_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(ETH_IDMA_PERMIT[21] & ~reg_be))) |
-               (addr_hit[22] & (|(ETH_IDMA_PERMIT[22] & ~reg_be)))));
+               (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be)))));
   end
 
   assign low_addr_we = addr_hit[0] & reg_we & !reg_error;
@@ -1524,91 +1223,61 @@ module eth_idma_reg_top #(
   assign mdio_mdio_oe_we = addr_hit[2] & reg_we & !reg_error;
   assign mdio_mdio_oe_wd = reg_wdata[2];
 
-  assign src_addr_we = addr_hit[7] & reg_we & !reg_error;
-  assign src_addr_wd = reg_wdata[31:0];
+  assign src_addr_low_we = addr_hit[7] & reg_we & !reg_error;
+  assign src_addr_low_wd = reg_wdata[31:0];
 
-  assign dst_addr_we = addr_hit[8] & reg_we & !reg_error;
-  assign dst_addr_wd = reg_wdata[31:0];
+  assign src_addr_high_we = addr_hit[8] & reg_we & !reg_error;
+  assign src_addr_high_wd = reg_wdata[31:0];
 
-  assign length_we = addr_hit[9] & reg_we & !reg_error;
-  assign length_wd = reg_wdata[11:0];
+  assign dst_addr_low_we = addr_hit[9] & reg_we & !reg_error;
+  assign dst_addr_low_wd = reg_wdata[31:0];
 
-  assign src_protocol_we = addr_hit[10] & reg_we & !reg_error;
-  assign src_protocol_wd = reg_wdata[2:0];
+  assign dst_addr_high_we = addr_hit[10] & reg_we & !reg_error;
+  assign dst_addr_high_wd = reg_wdata[31:0];
 
-  assign dst_protocol_we = addr_hit[11] & reg_we & !reg_error;
-  assign dst_protocol_wd = reg_wdata[2:0];
+  assign length_low_we = addr_hit[11] & reg_we & !reg_error;
+  assign length_low_wd = reg_wdata[31:0];
 
-  assign axi_id_we = addr_hit[12] & reg_we & !reg_error;
-  assign axi_id_wd = reg_wdata[0];
+  assign length_high_we = addr_hit[12] & reg_we & !reg_error;
+  assign length_high_wd = reg_wdata[31:0];
 
-  assign opt_src_burst_we = addr_hit[13] & reg_we & !reg_error;
-  assign opt_src_burst_wd = reg_wdata[1:0];
+  assign conf_decouple_aw_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_decouple_aw_wd = reg_wdata[0];
 
-  assign opt_src_cache_we = addr_hit[13] & reg_we & !reg_error;
-  assign opt_src_cache_wd = reg_wdata[5:2];
+  assign conf_decouple_rw_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_decouple_rw_wd = reg_wdata[1];
 
-  assign opt_src_lock_we = addr_hit[13] & reg_we & !reg_error;
-  assign opt_src_lock_wd = reg_wdata[6];
+  assign conf_src_reduce_len_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_src_reduce_len_wd = reg_wdata[2];
 
-  assign opt_src_prot_we = addr_hit[13] & reg_we & !reg_error;
-  assign opt_src_prot_wd = reg_wdata[9:7];
+  assign conf_dst_reduce_len_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_dst_reduce_len_wd = reg_wdata[3];
 
-  assign opt_src_qos_we = addr_hit[13] & reg_we & !reg_error;
-  assign opt_src_qos_wd = reg_wdata[13:10];
+  assign conf_src_max_llen_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_src_max_llen_wd = reg_wdata[6:4];
 
-  assign opt_src_region_we = addr_hit[13] & reg_we & !reg_error;
-  assign opt_src_region_wd = reg_wdata[17:14];
+  assign conf_dst_max_llen_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_dst_max_llen_wd = reg_wdata[9:7];
 
-  assign opt_dst_burst_we = addr_hit[14] & reg_we & !reg_error;
-  assign opt_dst_burst_wd = reg_wdata[1:0];
+  assign conf_enable_nd_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_enable_nd_wd = reg_wdata[10];
 
-  assign opt_dst_cache_we = addr_hit[14] & reg_we & !reg_error;
-  assign opt_dst_cache_wd = reg_wdata[5:2];
+  assign conf_src_protocol_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_src_protocol_wd = reg_wdata[13:11];
 
-  assign opt_dst_lock_we = addr_hit[14] & reg_we & !reg_error;
-  assign opt_dst_lock_wd = reg_wdata[6];
+  assign conf_dst_protocol_we = addr_hit[13] & reg_we & !reg_error;
+  assign conf_dst_protocol_wd = reg_wdata[16:14];
 
-  assign opt_dst_prot_we = addr_hit[14] & reg_we & !reg_error;
-  assign opt_dst_prot_wd = reg_wdata[9:7];
-
-  assign opt_dst_qos_we = addr_hit[14] & reg_we & !reg_error;
-  assign opt_dst_qos_wd = reg_wdata[13:10];
-
-  assign opt_dst_region_we = addr_hit[14] & reg_we & !reg_error;
-  assign opt_dst_region_wd = reg_wdata[17:14];
-
-  assign beo_decouple_aw_we = addr_hit[15] & reg_we & !reg_error;
-  assign beo_decouple_aw_wd = reg_wdata[0];
-
-  assign beo_decouple_rw_we = addr_hit[15] & reg_we & !reg_error;
-  assign beo_decouple_rw_wd = reg_wdata[1];
-
-  assign beo_src_max_llen_we = addr_hit[15] & reg_we & !reg_error;
-  assign beo_src_max_llen_wd = reg_wdata[4:2];
-
-  assign beo_dst_max_llen_we = addr_hit[15] & reg_we & !reg_error;
-  assign beo_dst_max_llen_wd = reg_wdata[7:5];
-
-  assign beo_src_reduce_len_we = addr_hit[15] & reg_we & !reg_error;
-  assign beo_src_reduce_len_wd = reg_wdata[8];
-
-  assign beo_dst_reduce_len_we = addr_hit[15] & reg_we & !reg_error;
-  assign beo_dst_reduce_len_wd = reg_wdata[9];
-
-  assign last_we = addr_hit[16] & reg_we & !reg_error;
-  assign last_wd = reg_wdata[0];
-
-  assign req_valid_we = addr_hit[17] & reg_we & !reg_error;
+  assign req_valid_we = addr_hit[14] & reg_we & !reg_error;
   assign req_valid_wd = reg_wdata[0];
 
-  assign rsp_valid_we = addr_hit[20] & reg_we & !reg_error;
+  assign rsp_valid_we = addr_hit[17] & reg_we & !reg_error;
   assign rsp_valid_wd = reg_wdata[0];
 
-  assign rx_end_clr_we = addr_hit[21] & reg_we & !reg_error;
+  assign rx_end_clr_we = addr_hit[18] & reg_we & !reg_error;
   assign rx_end_clr_wd = reg_wdata[0];
 
-  assign rsp_valid_clr_we = addr_hit[22] & reg_we & !reg_error;
+  assign rsp_valid_clr_we = addr_hit[19] & reg_we & !reg_error;
   assign rsp_valid_clr_wd = reg_wdata[0];
 
   // Read data return
@@ -1653,81 +1322,62 @@ module eth_idma_reg_top #(
       end
 
       addr_hit[7]: begin
-        reg_rdata_next[31:0] = src_addr_qs;
+        reg_rdata_next[31:0] = src_addr_low_qs;
       end
 
       addr_hit[8]: begin
-        reg_rdata_next[31:0] = dst_addr_qs;
+        reg_rdata_next[31:0] = src_addr_high_qs;
       end
 
       addr_hit[9]: begin
-        reg_rdata_next[11:0] = length_qs;
+        reg_rdata_next[31:0] = dst_addr_low_qs;
       end
 
       addr_hit[10]: begin
-        reg_rdata_next[2:0] = src_protocol_qs;
+        reg_rdata_next[31:0] = dst_addr_high_qs;
       end
 
       addr_hit[11]: begin
-        reg_rdata_next[2:0] = dst_protocol_qs;
+        reg_rdata_next[31:0] = length_low_qs;
       end
 
       addr_hit[12]: begin
-        reg_rdata_next[0] = axi_id_qs;
+        reg_rdata_next[31:0] = length_high_qs;
       end
 
       addr_hit[13]: begin
-        reg_rdata_next[1:0] = opt_src_burst_qs;
-        reg_rdata_next[5:2] = opt_src_cache_qs;
-        reg_rdata_next[6] = opt_src_lock_qs;
-        reg_rdata_next[9:7] = opt_src_prot_qs;
-        reg_rdata_next[13:10] = opt_src_qos_qs;
-        reg_rdata_next[17:14] = opt_src_region_qs;
+        reg_rdata_next[0] = conf_decouple_aw_qs;
+        reg_rdata_next[1] = conf_decouple_rw_qs;
+        reg_rdata_next[2] = conf_src_reduce_len_qs;
+        reg_rdata_next[3] = conf_dst_reduce_len_qs;
+        reg_rdata_next[6:4] = conf_src_max_llen_qs;
+        reg_rdata_next[9:7] = conf_dst_max_llen_qs;
+        reg_rdata_next[10] = conf_enable_nd_qs;
+        reg_rdata_next[13:11] = conf_src_protocol_qs;
+        reg_rdata_next[16:14] = conf_dst_protocol_qs;
       end
 
       addr_hit[14]: begin
-        reg_rdata_next[1:0] = opt_dst_burst_qs;
-        reg_rdata_next[5:2] = opt_dst_cache_qs;
-        reg_rdata_next[6] = opt_dst_lock_qs;
-        reg_rdata_next[9:7] = opt_dst_prot_qs;
-        reg_rdata_next[13:10] = opt_dst_qos_qs;
-        reg_rdata_next[17:14] = opt_dst_region_qs;
-      end
-
-      addr_hit[15]: begin
-        reg_rdata_next[0] = beo_decouple_aw_qs;
-        reg_rdata_next[1] = beo_decouple_rw_qs;
-        reg_rdata_next[4:2] = beo_src_max_llen_qs;
-        reg_rdata_next[7:5] = beo_dst_max_llen_qs;
-        reg_rdata_next[8] = beo_src_reduce_len_qs;
-        reg_rdata_next[9] = beo_dst_reduce_len_qs;
-      end
-
-      addr_hit[16]: begin
-        reg_rdata_next[0] = last_qs;
-      end
-
-      addr_hit[17]: begin
         reg_rdata_next[0] = req_valid_qs;
       end
 
-      addr_hit[18]: begin
+      addr_hit[15]: begin
         reg_rdata_next[0] = req_ready_qs;
       end
 
-      addr_hit[19]: begin
+      addr_hit[16]: begin
         reg_rdata_next[0] = rsp_ready_qs;
       end
 
-      addr_hit[20]: begin
+      addr_hit[17]: begin
         reg_rdata_next[0] = rsp_valid_qs;
       end
 
-      addr_hit[21]: begin
+      addr_hit[18]: begin
         reg_rdata_next[0] = '0;
       end
 
-      addr_hit[22]: begin
+      addr_hit[19]: begin
         reg_rdata_next[0] = '0;
       end
 

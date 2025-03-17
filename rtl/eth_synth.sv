@@ -4,8 +4,7 @@
 //
 // Chaoqun Liang <chaoqun.liang@unibo.it>
 
-import eth_idma_reg_pkg::*;
-import idma_pkg::*;
+import eth_pkg::*;
 
 module eth_synth (
   input  logic                    clk_i,
@@ -23,18 +22,18 @@ module eth_synth (
   output logic    [3:0]           phy_txd_o,
   output logic                    phy_tx_ctl_o,
   output logic                    phy_resetn_o,
-  input  logic                    phy_intn_i,
-  input  logic                    phy_pme_i,
+  (* keep = "true" *) input  logic                    phy_intn_i,
+  (* keep = "true" *) input  logic                    phy_pme_i,
   /// Ethernet MDIO
-  input  logic                    phy_mdio_i,
+  (* keep = "true" *) input  logic                    phy_mdio_i,
   output logic                    phy_mdio_o,
   output logic                    phy_mdio_oe,
   output logic                    phy_mdc_o,
   /// iDMA testmode
-  input  logic                    testmode_i,
+  (* keep = "true" *) input  logic                    testmode_i,
   /// iDMA AXI Interface
   output axi_req_t                axi_req_o,
-  input  axi_rsp_t                axi_rsp_i,
+  input  axi_resp_t               axi_rsp_i,
   /// Register Configuration Interface
   input  reg_req_t                reg_req_i,
   output reg_rsp_t                reg_rsp_o,
@@ -56,9 +55,9 @@ module eth_synth (
     .TxFifoLogDepth      ( TxFifoLogDepth      ),
     .RxFifoLogDepth      ( RxFifoLogDepth      ),
     .axi_req_t           ( axi_req_t           ),
-    .axi_rsp_t           ( axi_rsp_t           ),
-    .reg_req_t           ( reg_bus_req_t       ),
-    .reg_rsp_t           ( reg_bus_rsp_t       )
+    .axi_rsp_t           ( axi_resp_t          ),
+    .reg_req_t           ( reg_req_t           ),
+    .reg_rsp_t           ( reg_rsp_t           )
   ) i_eth_idma_wrap (
     .clk_i               ( clk_i               ),
     .rst_ni              ( rst_ni              ),

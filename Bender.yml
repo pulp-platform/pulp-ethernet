@@ -48,9 +48,10 @@ sources:
   - target: netlist_sim
     files:
       - /usr/pack/gf-12-kgf/arm/gf/12lpplus/sc7p5mcpp84_base_lvt_c14/r5p0/verilog/sc7p5mcpp84_12lpplus_base_lvt_c14.v
-      - monitor-synth/synopsys/out/monitor_sspg_0p72v_125c_1ns/netlist_monitor.v
+      - eth-synth/synopsys/out/eth_sspg_0p72v_125c_1ns/netlist_eth.v
       - rtl/eth_pkg.sv
       - target/sim/src/eth_idma_tb.sv
+
   - target: test
     files:
       - target/sim/src/eth_idma_tb.sv
