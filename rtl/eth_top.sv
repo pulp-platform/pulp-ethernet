@@ -21,51 +21,45 @@ module eth_top #(
   parameter int unsigned DestWidth       = 0,
   /// AXI Stream User Width
   parameter int unsigned UserWidth       = 1,
-  /// Register address width
-  parameter int unsigned RegAddrWidth    = 4,
-    /// AXI Stream in request struct
+  /// AXI Stream in request struct
   parameter type axi_stream_req_t        = logic,
   /// AXI Stream in response struct
-  parameter type axi_stream_rsp_t        = logic,
-  /// REGBUS
-  parameter type reg2hw_itf_t            = logic,
-  parameter type hw2reg_itf_t            = logic
+  parameter type axi_stream_rsp_t        = logic
 
 ) (
   // Internal 125 MHz clock
-  input  wire                                  clk_i        ,
-  input  wire                                  rst_ni       ,
-  input  wire                                  clk90_int    ,
-  input  wire                                  clk200_int   ,
+  input  logic                                  clk_i        ,
+  input  logic                                  rst_ni       ,
+  input  logic                                  clk90_int    ,
+  input  logic                                  clk200_int   ,
   // Ethernet: 1000BASE-T RGMII
-  input  wire                                  phy_rx_clk   ,
-  input  wire     [3:0]                        phy_rxd      ,
-  input  wire                                  phy_rx_ctl   ,
-  output wire                                  phy_tx_clk   ,
-  output wire     [3:0]                        phy_txd      ,
-  output wire                                  phy_tx_ctl   ,
-  output wire                                  phy_reset_n  ,
-  input  wire                                  phy_int_n    ,
-  input  wire                                  phy_pme_n    ,
-  // MDIO
-  input  wire                                  phy_mdio_i   ,
-  output reg                                   phy_mdio_o   ,
-  output reg                                   phy_mdio_oe  ,
-  output wire                                  phy_mdc      ,
-  input wire                                   rsp_valid_i  ,
+  input  logic                                  phy_rx_clk   ,
+  input  logic     [3:0]                        phy_rxd      ,
+  input  logic                                  phy_rx_ctl   ,
+  output logic                                  phy_tx_clk   ,
+  output logic     [3:0]                        phy_txd      ,
+  output logic                                  phy_tx_ctl   ,
+  output logic                                  phy_reset_n  ,
+  input  logic                                  phy_int_n    ,
+  input  logic                                  phy_pme_n    ,
+
+  input  logic                                  rsp_valid_i  ,
   // AXIS TX/RX
   input  axi_stream_req_t                      tx_axis_req_i,
   output axi_stream_rsp_t                      tx_axis_rsp_o,
   output axi_stream_req_t                      rx_axis_req_o,
   input  axi_stream_rsp_t                      rx_axis_rsp_i,
-  // Reg configs
-  input  reg2hw_itf_t                          reg2hw_i     ,
-  output hw2reg_itf_t                          hw2reg_o     ,
+
   output logic                                 eth_rx_irq_o ,
   output logic[11:0]                           eth_len_o    ,
   output logic                                 rx_complete_o,
   output logic                                 tx_busy_o    ,
-  output logic                                 sync_o
+  output logic                                 sync_o       ,
+  input  logic [47:0]                          mac_address  ,
+  input  logic                                 promiscuous  ,
+  input  logic                                 irq_en       ,
+  output logic [31:0]                          tx_fcs_rev   ,
+  output logic [31:0]                          rx_fcs_rev
 );
 
 // ---------------- axis streams for the framing module ----------------------
@@ -92,10 +86,7 @@ module eth_top #(
 // ---------------- END: axis streams for the framing module ----------------------
   framing_top #(
     .axi_stream_req_t  ( s_framing_req_t ),
-    .axi_stream_rsp_t  ( s_framing_rsp_t ),
-    .reg2hw_itf_t      ( reg2hw_itf_t    ),
-    .hw2reg_itf_t      ( hw2reg_itf_t    ),
-    .AW_REGBUS         ( RegAddrWidth    )
+    .axi_stream_rsp_t  ( s_framing_rsp_t )
   ) i_framing_top (
     .rst_ni         ( rst_ni      ),
     .clk_i          ( clk_i       ),
@@ -112,11 +103,6 @@ module eth_top #(
     .phy_int_n      ( phy_int_n   ),
     .phy_pme_n      ( phy_pme_n   ),
 
-    // MDIO
-    .phy_mdio_i     ( phy_mdio_i  ),
-    .phy_mdio_o     ( phy_mdio_o  ),
-    .phy_mdio_oe    ( phy_mdio_oe ),
-    .phy_mdc        ( phy_mdc     ),
     .rsp_valid_i    ( rsp_valid_i ),
 
     // AXIS TX/RX
@@ -125,14 +111,16 @@ module eth_top #(
     .rx_axis_req_o(s_framing_rx_req),
     .rx_axis_rsp_i(s_framing_rx_rsp),
 
-    // Reg Interface
-    .reg2hw_i       ( reg2hw_i      ),
-    .hw2reg_o       ( hw2reg_o      ),
     .eth_rx_irq_o   ( eth_rx_irq_o  ),
     .eth_len_o      ( eth_len_o     ),
     .rx_complete_o  ( rx_complete_o ),
     .tx_busy_o      ( tx_busy_o     ),
-    .sync_o         ( sync_o        )
+    .sync_o         ( sync_o        ),
+    .mac_address    ( mac_address   ),
+    .promiscuous    ( promiscuous   ),
+    .irq_en         ( irq_en        ),
+    .tx_fcs_rev     ( tx_fcs_rev    ),
+    .rx_fcs_rev     ( rx_fcs_rev    )
   );
 
   axi_stream_dw_downsizer #(

@@ -11,7 +11,7 @@
 package eth_pkg;
 
   // AXI parameters
-  parameter int unsigned AddrWidth  = 32;
+  parameter int unsigned AddrWidth  = 48;
   parameter int unsigned DataWidth  = 64;
   parameter int unsigned AxiIdWidth = 6;
   parameter int unsigned UserWidth  = 2;

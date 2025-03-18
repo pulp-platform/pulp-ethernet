@@ -10,7 +10,7 @@
         { name: "low_addr",
           desc: "lower 4 bytes of the devices MAC address",
           swaccess: "rw",
-          hwaccess: "hrw",
+          hwaccess: "hro",
           fields: [
               { bits: "31:0", name: "lower_mac_address",
                 desc: "Lower 32 bit of the devices MAC address"
@@ -20,25 +20,31 @@
         },
         { name: "machi",
           desc: "upper 2 bytes of the devices MAC address, cooked, loopback, promiscuous flag, irq_en",
-          swaccess: "rw",
-          hwaccess: "hrw",
           fields: [
               { bits: "15:0", name: "upper_addr",
                 desc: "Upper 16 bit of the devices MAC address",
-                resval: "0x2301"
+                resval: "0x2301",
+                swaccess: "rw",
+                hwaccess: "hro",
               },
               { bits: "16", name: "cooked",
                 desc: "obsolete flag",
-                resval: "0"
+                resval: "0",
+                swaccess: "rw",
+                hwaccess: "hro",
               },
               { bits: "17", name: "loopback",
                 desc: "enable the reception of loopback packet",
-                resval: "0"
+                resval: "0",
+                swaccess: "rw",
+                hwaccess: "hro",
               },
 
               { bits: "21:18", name: "spare",
                 desc: "promiscuous flag",
-                resval: "0"
+                resval: "0",
+                swaccess: "rw",
+                hwaccess: "hro",
               },
               { bits: "22", name: "promiscuous",
                 desc: "enable the reception of all packets",
@@ -54,23 +60,28 @@
         },
         { name: "mdio",
           desc: "mdio control register",
-          swaccess: "rw",
-          hwaccess: "hrw",
           fields: [
               { bits: "0", name: "mdio_clk",
                 desc: "MDIO clk",
-                resval: "0"
+                resval: "0",
+                swaccess: "rw",
+                hwaccess: "hro",
               },
               { bits: "1", name: "mdio_o",
                 desc: "MDIO output",
-                resval: "0"
+                resval: "0",
+                swaccess: "rw",
+                hwaccess: "hro",
               },
               { bits: "2", name: "mdio_oe",
                 desc: "MDIO output enable",
-                resval: "0"
+                resval: "0",
+                swaccess: "rw",
+                hwaccess: "hro",
               },
               { bits: "3", name: "mdio_i",
                 desc: "MDIO input",
+                resval: "0",
                 swaccess: "ro",
                 hwaccess: "hrw"
               }
@@ -205,39 +216,48 @@
           fields: [
             { bits: "0",
               name: "decouple_aw",
-              desc: "Decouple R-AW"
+              desc: "Decouple R-AW",
+              resval: "0"
             },
             { bits: "1",
               name: "decouple_rw",
-              desc: "Decouple R-W"
+              desc: "Decouple R-W",
+              resval: "0"
             },
             { bits: "2",
               name: "src_reduce_len",
-              desc: "Reduce maximal source burst length"
+              desc: "Reduce maximal source burst length",
+              resval: "0"
             },
             { bits: "3",
               name: "dst_reduce_len",
-              desc: "Reduce maximal destination burst length"
+              desc: "Reduce maximal destination burst length",
+              resval: "0"
             }
             { bits: "6:4",
               name: "src_max_llen",
-              desc: "Maximal logarithmic source burst length"
+              desc: "Maximal logarithmic source burst length",
+              resval: "0"
             }
             { bits: "9:7",
               name: "dst_max_llen",
-              desc: "Maximal logarithmic destination burst length"
+              desc: "Maximal logarithmic destination burst length",
+              resval: "0"
             }
             { bits: "10:10",
               name: "enable_nd",
-              desc: "ND-extension enabled"
+              desc: "ND-extension enabled",
+              resval: "0"
             }
             { bits: "13:11",
               name: "src_protocol",
-              desc: "Selection of the source protocol"
+              desc: "Selection of the source protocol",
+              resval: "0"
             }
             { bits: "16:14",
               name: "dst_protocol",
-              desc: "Selection of the destination protocol"
+              desc: "Selection of the destination protocol",
+              resval: "0"
             }
           ]
         },
@@ -268,7 +288,7 @@
         { name:"rsp_ready",
           desc: "idma response ready",
           swaccess: "ro",
-          hwaccess: "hrw",
+          hwaccess: "hro",
           fields: [
             { bits: "0",
               name: "rsp_ready",
@@ -279,7 +299,7 @@
         },
         { name:"rsp_valid",
           desc: "idma response valid",
-          swaccess: "rw",
+          swaccess: "ro",
           hwaccess: "hrw",
           fields: [
             { bits: "0",

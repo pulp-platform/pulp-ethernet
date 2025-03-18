@@ -32,11 +32,11 @@ module eth_synth (
   /// iDMA testmode
   (* keep = "true" *) input  logic                    testmode_i,
   /// iDMA AXI Interface
-  output axi_req_t                axi_req_o,
-  input  axi_resp_t               axi_rsp_i,
+  (* keep = "true" *) output axi_req_t                axi_req_o,
+  (* keep = "true" *) input  axi_resp_t               axi_rsp_i,
   /// Register Configuration Interface
-  input  reg_req_t                reg_req_i,
-  output reg_rsp_t                reg_rsp_o,
+  (* keep = "true" *) input  reg_req_t                reg_req_i,
+  (* keep = "true" *) output reg_rsp_t                reg_rsp_o,
   output logic                    eth_rx_irq_o
 );
 

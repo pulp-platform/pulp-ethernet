@@ -132,42 +132,6 @@ package eth_idma_reg_pkg;
   } eth_idma_reg2hw_rsp_valid_clr_reg_t;
 
   typedef struct packed {
-    logic [31:0] d;
-    logic        de;
-  } eth_idma_hw2reg_low_addr_reg_t;
-
-  typedef struct packed {
-    struct packed {
-      logic [15:0] d;
-      logic        de;
-    } upper_addr;
-    struct packed {
-      logic        d;
-      logic        de;
-    } cooked;
-    struct packed {
-      logic        d;
-      logic        de;
-    } loopback;
-    struct packed {
-      logic [3:0]  d;
-      logic        de;
-    } spare;
-  } eth_idma_hw2reg_machi_reg_t;
-
-  typedef struct packed {
-    struct packed {
-      logic        d;
-      logic        de;
-    } mdio_clk;
-    struct packed {
-      logic        d;
-      logic        de;
-    } mdio_o;
-    struct packed {
-      logic        d;
-      logic        de;
-    } mdio_oe;
     struct packed {
       logic        d;
       logic        de;
@@ -223,11 +187,6 @@ package eth_idma_reg_pkg;
   typedef struct packed {
     logic        d;
     logic        de;
-  } eth_idma_hw2reg_rsp_ready_reg_t;
-
-  typedef struct packed {
-    logic        d;
-    logic        de;
   } eth_idma_hw2reg_rsp_valid_reg_t;
 
   // Register -> HW type
@@ -252,18 +211,15 @@ package eth_idma_reg_pkg;
 
   // HW -> register type
   typedef struct packed {
-    eth_idma_hw2reg_low_addr_reg_t low_addr; // [212:180]
-    eth_idma_hw2reg_machi_reg_t machi; // [179:154]
-    eth_idma_hw2reg_mdio_reg_t mdio; // [153:146]
-    eth_idma_hw2reg_tx_busy_reg_t tx_busy; // [145:144]
-    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [143:111]
-    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [110:78]
-    eth_idma_hw2reg_rsr_reg_t rsr; // [77:74]
-    eth_idma_hw2reg_length_low_reg_t length_low; // [73:41]
-    eth_idma_hw2reg_length_high_reg_t length_high; // [40:8]
-    eth_idma_hw2reg_req_valid_reg_t req_valid; // [7:6]
-    eth_idma_hw2reg_req_ready_reg_t req_ready; // [5:4]
-    eth_idma_hw2reg_rsp_ready_reg_t rsp_ready; // [3:2]
+    eth_idma_hw2reg_mdio_reg_t mdio; // [145:144]
+    eth_idma_hw2reg_tx_busy_reg_t tx_busy; // [143:142]
+    eth_idma_hw2reg_tx_fcs_reg_t tx_fcs; // [141:109]
+    eth_idma_hw2reg_rx_fcs_reg_t rx_fcs; // [108:76]
+    eth_idma_hw2reg_rsr_reg_t rsr; // [75:72]
+    eth_idma_hw2reg_length_low_reg_t length_low; // [71:39]
+    eth_idma_hw2reg_length_high_reg_t length_high; // [38:6]
+    eth_idma_hw2reg_req_valid_reg_t req_valid; // [5:4]
+    eth_idma_hw2reg_req_ready_reg_t req_ready; // [3:2]
     eth_idma_hw2reg_rsp_valid_reg_t rsp_valid; // [1:0]
   } eth_idma_hw2reg_t;
 

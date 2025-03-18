@@ -9,12 +9,12 @@
 `include "idma/typedef.svh"
 `include "register_interface/typedef.svh"
 `include "register_interface/assign.svh"
-import eth_pkg::*;
+//import eth_pkg::*;
 
 module eth_idma_tb
  #(
   parameter int unsigned DataWidth           = 32'd64,
-  parameter int unsigned AddrWidth           = 32'd32,
+  parameter int unsigned AddrWidth           = 32'd48,
   parameter int unsigned UserWidth           = 32'd2,
   parameter int unsigned AxiIdWidth          = 32'd6,
   parameter int unsigned NumAxInFlight       = 32'd3,
@@ -135,10 +135,10 @@ module eth_idma_tb
   // clocking block
   clk_rst_gen #(
     .ClkPeriod    ( SYS_TCK   ),
-    .RstClkCycles ( 1         )
+    .RstClkCycles ( 10        )
   ) i_clk_rst_gen (
     .clk_o        ( s_clk     ),
-    .rst_no       ( s_rst_n   )
+    .rst_no       ( s_rst_n   )  // active low reset
   );
 
 
@@ -182,22 +182,23 @@ module eth_idma_tb
     .axi_rsp_o          ( axi_rx_rsp_mem    )
    );
 
-  eth_idma_wrap #(
-    .DataWidth           ( DataWidth           ),
-    .AddrWidth           ( AddrWidth           ),
-    .UserWidth           ( UserWidth           ),
-    .AxiIdWidth          ( AxiIdWidth          ),
-    .NumAxInFlight       ( NumAxInFlight       ),
-    .BufferDepth         ( BufferDepth         ),
-    .TFLenWidth          ( TFLenWidth          ),
-    .MemSysDepth         ( MemSysDepth         ),
-    .RejectZeroTransfers ( RejectZeroTransfers ),
-    .axi_req_t           ( axi_req_t           ),
-    .axi_rsp_t           ( axi_rsp_t           ),
-    .reg_req_t           ( reg_bus_req_t       ),
-    .reg_rsp_t           ( reg_bus_rsp_t       )
-  )
-  i_tx_eth_idma_wrap (
+  // eth_idma_wrap #(
+  //   .DataWidth           ( DataWidth           ),
+  //   .AddrWidth           ( AddrWidth           ),
+  //   .UserWidth           ( UserWidth           ),
+  //   .AxiIdWidth          ( AxiIdWidth          ),
+  //   .NumAxInFlight       ( NumAxInFlight       ),
+  //   .BufferDepth         ( BufferDepth         ),
+  //   .TFLenWidth          ( TFLenWidth          ),
+  //   .MemSysDepth         ( MemSysDepth         ),
+  //   .RejectZeroTransfers ( RejectZeroTransfers ),
+  //   .axi_req_t           ( axi_req_t           ),
+  //   .axi_rsp_t           ( axi_rsp_t           ),
+  //   .reg_req_t           ( reg_bus_req_t       ),
+  //   .reg_rsp_t           ( reg_bus_rsp_t       )
+  // )
+  //
+  eth_synth i_tx_eth_idma_wrap (
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
      /// Etherent Internal clocks
@@ -227,23 +228,23 @@ module eth_idma_tb
   reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
   reg_bus_rsp_t rx_reg_idma_rsp, tx_reg_idma_rsp;
 
-  eth_idma_wrap #(
-    .DataWidth           ( DataWidth           ),
-    .AddrWidth           ( AddrWidth           ),
-    .UserWidth           ( UserWidth           ),
-    .AxiIdWidth          ( AxiIdWidth          ),
-    .NumAxInFlight       ( NumAxInFlight       ),
-    .BufferDepth         ( BufferDepth         ),
-    .TFLenWidth          ( TFLenWidth          ),
-    .MemSysDepth         ( MemSysDepth         ),
-    .RxFifoLogDepth      (                    ),
-    .RejectZeroTransfers ( RejectZeroTransfers ),
-    .axi_req_t           ( axi_req_t           ),
-    .axi_rsp_t           ( axi_rsp_t           ),
-    .reg_req_t           ( reg_bus_req_t       ),
-    .reg_rsp_t           ( reg_bus_rsp_t       )
-  )
-  i_rx_eth_idma_wrap (
+  // eth_idma_wrap #(
+  //   .DataWidth           ( DataWidth           ),
+  //   .AddrWidth           ( AddrWidth           ),
+  //   .UserWidth           ( UserWidth           ),
+  //   .AxiIdWidth          ( AxiIdWidth          ),
+  //   .NumAxInFlight       ( NumAxInFlight       ),
+  //   .BufferDepth         ( BufferDepth         ),
+  //   .TFLenWidth          ( TFLenWidth          ),
+  //   .MemSysDepth         ( MemSysDepth         ),
+  //   .RxFifoLogDepth      (                    ),
+  //   .RejectZeroTransfers ( RejectZeroTransfers ),
+  //   .axi_req_t           ( axi_req_t           ),
+  //   .axi_rsp_t           ( axi_rsp_t           ),
+  //   .reg_req_t           ( reg_bus_req_t       ),
+  //   .reg_rsp_t           ( reg_bus_rsp_t       )
+  // )
+  eth_synth i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
     .eth_clk125_i     ( s_clk125  ), // 125MHz in-phase
@@ -296,8 +297,14 @@ module eth_idma_tb
 
   initial begin
 
+    repeat(1)@(posedge s_clk);
+    reg_drv_tx.reset_master();
+    //reg_drv_tx.reset_slave();
+    reg_drv_rx.reset_master();
+    //reg_drv_rx.reset_slave();
+
     @(posedge s_rst_n);
-    @(posedge s_clk);
+    //#delay
 
     //$readmemh("../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     //$readmemh("../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);

@@ -155,8 +155,6 @@ module eth_idma_reg_top #(
   logic req_ready_qs;
   logic rsp_ready_qs;
   logic rsp_valid_qs;
-  logic rsp_valid_wd;
-  logic rsp_valid_we;
   logic rx_end_clr_wd;
   logic rx_end_clr_we;
   logic rsp_valid_clr_wd;
@@ -178,8 +176,8 @@ module eth_idma_reg_top #(
     .wd     (low_addr_wd),
 
     // from internal hardware
-    .de     (hw2reg.low_addr.de),
-    .d      (hw2reg.low_addr.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -206,8 +204,8 @@ module eth_idma_reg_top #(
     .wd     (machi_upper_addr_wd),
 
     // from internal hardware
-    .de     (hw2reg.machi.upper_addr.de),
-    .d      (hw2reg.machi.upper_addr.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -232,8 +230,8 @@ module eth_idma_reg_top #(
     .wd     (machi_cooked_wd),
 
     // from internal hardware
-    .de     (hw2reg.machi.cooked.de),
-    .d      (hw2reg.machi.cooked.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -258,8 +256,8 @@ module eth_idma_reg_top #(
     .wd     (machi_loopback_wd),
 
     // from internal hardware
-    .de     (hw2reg.machi.loopback.de),
-    .d      (hw2reg.machi.loopback.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -284,8 +282,8 @@ module eth_idma_reg_top #(
     .wd     (machi_spare_wd),
 
     // from internal hardware
-    .de     (hw2reg.machi.spare.de),
-    .d      (hw2reg.machi.spare.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -364,8 +362,8 @@ module eth_idma_reg_top #(
     .wd     (mdio_mdio_clk_wd),
 
     // from internal hardware
-    .de     (hw2reg.mdio.mdio_clk.de),
-    .d      (hw2reg.mdio.mdio_clk.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -390,8 +388,8 @@ module eth_idma_reg_top #(
     .wd     (mdio_mdio_o_wd),
 
     // from internal hardware
-    .de     (hw2reg.mdio.mdio_o.de),
-    .d      (hw2reg.mdio.mdio_o.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -416,8 +414,8 @@ module eth_idma_reg_top #(
     .wd     (mdio_mdio_oe_wd),
 
     // from internal hardware
-    .de     (hw2reg.mdio.mdio_oe.de),
-    .d      (hw2reg.mdio.mdio_oe.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -1048,8 +1046,8 @@ module eth_idma_reg_top #(
     .wd     ('0  ),
 
     // from internal hardware
-    .de     (hw2reg.rsp_ready.de),
-    .d      (hw2reg.rsp_ready.d ),
+    .de     (1'b0),
+    .d      ('0  ),
 
     // to internal hardware
     .qe     (),
@@ -1064,15 +1062,14 @@ module eth_idma_reg_top #(
 
   prim_subreg #(
     .DW      (1),
-    .SWACCESS("RW"),
+    .SWACCESS("RO"),
     .RESVAL  (1'h0)
   ) u_rsp_valid (
     .clk_i   (clk_i    ),
     .rst_ni  (rst_ni  ),
 
-    // from register interface
-    .we     (rsp_valid_we),
-    .wd     (rsp_valid_wd),
+    .we     (1'b0),
+    .wd     ('0  ),
 
     // from internal hardware
     .de     (hw2reg.rsp_valid.de),
@@ -1270,9 +1267,6 @@ module eth_idma_reg_top #(
 
   assign req_valid_we = addr_hit[14] & reg_we & !reg_error;
   assign req_valid_wd = reg_wdata[0];
-
-  assign rsp_valid_we = addr_hit[17] & reg_we & !reg_error;
-  assign rsp_valid_wd = reg_wdata[0];
 
   assign rx_end_clr_we = addr_hit[18] & reg_we & !reg_error;
   assign rx_end_clr_wd = reg_wdata[0];

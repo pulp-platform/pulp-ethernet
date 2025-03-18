@@ -70,10 +70,9 @@ module eth_idma_wrap #(
   /// iDMA Busy Signal
   output idma_pkg::idma_busy_t    idma_busy_o,
   /// Register Configuration Interface
-  input  reg_req_t      reg_req_i,
-  output reg_rsp_t      reg_rsp_o,
-  output logic          eth_rx_irq_o
-
+  input  reg_req_t                reg_req_i,
+  output reg_rsp_t                reg_rsp_o,
+  output logic                    eth_rx_irq_o
 );
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
@@ -81,8 +80,8 @@ module eth_idma_wrap #(
   localparam int unsigned RegAddrWidth = 8;
   localparam int unsigned StrbWidth     = DataWidth / 8;
 
-  eth_idma_reg2hw_t reg2hw, reg2hw_eth; // Write
-  eth_idma_hw2reg_t hw2reg, hw2reg_eth; // Read
+  eth_idma_reg2hw_t reg2hw; // Write
+  eth_idma_hw2reg_t hw2reg; // Read
 
   logic phy_rx_clk;
 
@@ -91,17 +90,16 @@ module eth_idma_wrap #(
   assign phy_rx_clk   = phy_rx_clk_i;
 
   eth_idma_reg_top #(
-    .reg_req_t(reg_req_t),
-    .reg_rsp_t(reg_rsp_t),
-    .AW(RegAddrWidth)
+    .reg_req_t ( reg_req_t    ),
+    .reg_rsp_t ( reg_rsp_t    )
   ) i_regs (
-    .clk_i(clk_i),
-    .rst_ni(rst_ni),
-    .reg_req_i(reg_req_i),
-    .reg_rsp_o(reg_rsp_o),
-    .reg2hw(reg2hw), // Write
-    .hw2reg(hw2reg), // Read
-    .devmode_i(1'b1)
+    .clk_i      ( clk_i     ),
+    .rst_ni     ( rst_ni    ),
+    .reg_req_i  ( reg_req_i ),
+    .reg_rsp_o  ( reg_rsp_o ),
+    .reg2hw     ( reg2hw    ), // Write
+    .hw2reg     ( hw2reg    ), // Read
+    .devmode_i  ( 1'b0      )
   );
 
   /// Address type
@@ -171,6 +169,10 @@ module eth_idma_wrap #(
   logic rx_complete;
   logic tx_busy;
   logic sync;
+  logic [47:0] mac_address;
+  logic promiscuous;
+  logic irq_en;
+  logic [31:0] tx_fcs_rev, rx_fcs_rev;
   //logic rx_en;
 
   /// AXI request and response
@@ -191,10 +193,10 @@ module eth_idma_wrap #(
   (* mark_debug = "true" *) idma_req_t idma_reg_req;
   (* mark_debug = "true" *) idma_rsp_t idma_reg_rsp;
 
-  logic rsp_valid_clr;
+  //logic rsp_valid_clr;
   //logic idma_axis_read_rsp_tready_sync;
-  assign req_valid                               = reg2hw.req_valid.q;
-  assign idma_rsp_ready                          = 1'b1;
+  assign req_valid          = reg2hw.req_valid.q;
+  assign idma_rsp_ready     = 1'b1;
 
   // assign request struct
   always_comb begin : proc_hw_req_conv
@@ -209,11 +211,13 @@ module eth_idma_wrap #(
     // otherwise, dma lengths should be set by hardware as RX
 
     idma_reg_req.length = reg2hw.length_low.q;
-    hw2reg.length_low.de = 1'b0; // Default de to 0
-    hw2reg.length_low.d = 12'b0;
+    hw2reg.length_low.de = 'b0; // Default de to 0
+    hw2reg.length_low.d = 32'b0;
+    hw2reg.length_high.de = 'b0; // Default de to 0
+    hw2reg.length_high.d = 32'b0; // hmmm, dont need so many bits, discard high
     if (rx_complete) begin
       idma_reg_req.length = eth_len;
-      hw2reg.length_low.de = 1'b1;
+      hw2reg.length_low.de = 'b1;
       hw2reg.length_low.d = eth_len;
     end
 
@@ -310,13 +314,10 @@ module eth_idma_wrap #(
 
   eth_top #(
     .DataWidth          (  DataWidth         ),
-    .RegAddrWidth       (  RegAddrWidth      ),
     .IdWidth            (  AxiIdWidth        ),
     .DestWidth          (  AxiIdWidth        ),
     .axi_stream_req_t   (  axi_stream_req_t  ),
-    .axi_stream_rsp_t   (  axi_stream_rsp_t  ),
-    .reg2hw_itf_t       (  eth_idma_reg2hw_t ),
-    .hw2reg_itf_t       (  eth_idma_hw2reg_t )
+    .axi_stream_rsp_t   (  axi_stream_rsp_t  )
   ) i_eth_top (
     .rst_ni             (  rst_ni            ),
     .clk_i              (  eth_clk125_i      ),
@@ -331,41 +332,49 @@ module eth_idma_wrap #(
     .phy_reset_n        (  phy_resetn_o      ),
     .phy_int_n          (  phy_intn_i        ),
     .phy_pme_n          (  phy_pme_i         ),
-    .phy_mdio_i         (  phy_mdio_i        ),
-    .phy_mdio_o         (  phy_mdio_o        ),
-    .phy_mdio_oe        (  phy_mdio_oe       ),
-    .phy_mdc            (  phy_mdc_o         ),
     .tx_axis_req_i      (  eth_axis_tx_req   ),
     .tx_axis_rsp_o      (  eth_axis_tx_rsp   ),
     .rx_axis_req_o      (  eth_axis_rx_req   ),
     .rx_axis_rsp_i      (  eth_axis_rx_rsp   ),
-    .reg2hw_i           (  reg2hw_eth        ),
-    .hw2reg_o           (  hw2reg_eth        ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
     .rsp_valid_i        (  rsp_valid         ),
     .eth_len_o          (  eth_len           ),
     .rx_complete_o      (  rx_complete       ),
     .tx_busy_o          (  tx_busy           ),
-    .sync_o             (  sync              )
+    .sync_o             (  sync              ),
+    .mac_address        (  mac_address       ),
+    .promiscuous        (  promiscuous       ),
+    .irq_en             (  irq_en            ),
+    .tx_fcs_rev         (  tx_fcs_rev        ),
+    .rx_fcs_rev         (  rx_fcs_rev        )
   );
-
 
   assign hw2reg.rsp_valid.de = 1'b1;
   assign hw2reg.rsp_valid.d  = rsp_valid;
   assign hw2reg.req_ready.de = 1'b1;
   assign hw2reg.req_ready.d  = idma_req_ready;
 
-  assign hw2reg.mdio      = hw2reg_eth.mdio;
-  assign hw2reg.machi     = hw2reg_eth.machi;
-  assign hw2reg.low_addr  = hw2reg_eth.low_addr;
-  assign hw2reg.rsr       = hw2reg_eth.rsr;
-  assign hw2reg.tx_busy   = hw2reg_eth.tx_busy;
-  assign hw2reg.tx_fcs    = hw2reg_eth.tx_fcs;
-  assign hw2reg.rx_fcs    = hw2reg_eth.rx_fcs;
+  assign mac_address = {reg2hw.machi.upper_addr.q, reg2hw.low_addr.q}; // combine upper and lower mac address from registers
+  assign promiscuous = reg2hw.machi.promiscuous.q;
+  assign phy_mdc_o   = reg2hw.mdio.mdio_clk.q;
+  assign phy_mdio_o  = reg2hw.mdio.mdio_o.q;
+  assign phy_mdio_oe = reg2hw.mdio.mdio_oe.q;
+  assign irq_en      = reg2hw.machi.irq_en.q;
 
-  assign reg2hw_eth.machi    = reg2hw.machi;
-  assign reg2hw_eth.low_addr = reg2hw.low_addr;
-  assign reg2hw_eth.mdio     = reg2hw.mdio;
+  assign hw2reg.tx_fcs.de      = 1'b1;
+  assign hw2reg.rx_fcs.de      = 1'b1;
+  assign hw2reg.rsr.rx_irq.de  = 1'b1;
+  assign hw2reg.mdio.mdio_i.de = 1'b1;
+  assign hw2reg.tx_busy.de     = 1'b1;
+  assign hw2reg.rsr.rx_complete.de  = 1'b1;
+
+  assign hw2reg.rsr.rx_irq.d  = eth_rx_irq_o;
+  assign hw2reg.rsr.rx_complete.d = rx_complete;
+  assign hw2reg.tx_busy.d     = tx_busy;
+  assign hw2reg.mdio.mdio_i.d = phy_mdio_i;
+  assign hw2reg.tx_fcs.d      = tx_fcs_rev;
+  assign hw2reg.rx_fcs.d      = rx_fcs_rev;
+
   //assign rsp_valid_clr      = reg2hw.rsp_valid_clr.q;
 
   //assign rx_en = eth_axis_rx_req.tvalid && sync;
