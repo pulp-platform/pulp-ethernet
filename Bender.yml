@@ -12,6 +12,9 @@ dependencies:
   common_cells:         { git: "https://github.com/pulp-platform/common_cells.git",         version: 1.21.0 }
   axi_stream:           { git: "https://github.com/pulp-platform/axi_stream.git",           rev: "54891ff"  }
   idma:                 { git: "git@github.com:pulp-platform/iDMA.git",                     version: 0.6.4  }
+  slv_guard:            { git: "git@github.com:chaoqun-liang/axi_monitor.git",              rev: "f9428a0"  }
+workspace:
+  checkout_dir: ips
 
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this

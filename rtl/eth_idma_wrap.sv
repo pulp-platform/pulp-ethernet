@@ -379,6 +379,8 @@ module eth_idma_wrap #(
 
   //assign rx_en = eth_axis_rx_req.tvalid && sync;
 
+  // use a small counter to hold rsp_valid high is enough
+  //  idma_rsp_valid is only up for one clock cycle, sw might miss it
   logic [5:0] rsp_cnt;
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if(!rst_ni) begin

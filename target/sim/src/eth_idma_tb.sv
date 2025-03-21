@@ -6,7 +6,6 @@
 
 `timescale 1 ns/1 ns
 `include "axi/typedef.svh"
-`include "idma/typedef.svh"
 `include "register_interface/typedef.svh"
 `include "register_interface/assign.svh"
 //import eth_pkg::*;
@@ -35,13 +34,18 @@ module eth_idma_tb
   localparam time SYS_TT        = 3ns;
 
   /// Register interface parameters
-  localparam int AW_REGBUS           = 32;
-  localparam int DW_REGBUS           = 32;
+  localparam int unsigned AW_REGBUS           = 32;
+  localparam int unsigned DW_REGBUS           = 32;
   localparam int unsigned STRB_WIDTH = DW_REGBUS/8;
+
+  /// TMU parameters
+
+  localparam int unsigned MaxUniqIds    = 32;
+  localparam int unsigned MaxTxnsPerId  = 8;
 
   /// Dependent parameters
   localparam int unsigned StrbWidth     = DataWidth / 8;
-  localparam int unsigned OffsetWidth   = $clog2(StrbWidth);
+  parameter int unsigned AxiIntIdWidth = (MaxUniqIds > 1) ? $clog2(MaxUniqIds) : 1;
 
   /// AXI4+ATOP typedefs
   typedef logic [AddrWidth-1:0]   addr_t;
@@ -50,6 +54,7 @@ module eth_idma_tb
   typedef logic [StrbWidth-1:0]   strb_t;
   typedef logic [DataWidth-1:0]   data_t;
   typedef logic [TFLenWidth-1:0]  tf_len_t;
+  typedef logic [AxiIntIdWidth-1:0] intid_t;
 
   `AXI_TYPEDEF_AW_CHAN_T(axi_aw_chan_t, addr_t, id_t, user_t)
   `AXI_TYPEDEF_W_CHAN_T(axi_w_chan_t, data_t, strb_t, user_t)
@@ -59,6 +64,15 @@ module eth_idma_tb
 
   `AXI_TYPEDEF_REQ_T(axi_req_t, axi_aw_chan_t, axi_w_chan_t, axi_ar_chan_t)
   `AXI_TYPEDEF_RESP_T(axi_rsp_t, axi_b_chan_t, axi_r_chan_t)
+
+  /// Intermediate AXI types
+  `AXI_TYPEDEF_AW_CHAN_T(int_aw_t, addr_t, intid_t, user_t);
+  `AXI_TYPEDEF_W_CHAN_T(w_t, data_t, strb_t, user_t);
+  `AXI_TYPEDEF_B_CHAN_T(int_b_t, intid_t, user_t);
+  `AXI_TYPEDEF_AR_CHAN_T(int_ar_t, addr_t, intid_t, user_t);
+  `AXI_TYPEDEF_R_CHAN_T(int_r_t, data_t, intid_t, user_t);
+  `AXI_TYPEDEF_REQ_T(slv_req_t, int_aw_t, w_t, int_ar_t);
+  `AXI_TYPEDEF_RESP_T(slv_resp_t, int_b_t, int_r_t );
 
   /// Regsiter bus typedefs
   typedef logic [AW_REGBUS-1:0]   reg_bus_addr_t;
@@ -82,15 +96,12 @@ module eth_idma_tb
   logic [3:0] eth_txd;
   logic       eth_tx_rstn, eth_rx_rstn;
 
-  logic [AW_REGBUS-1:0] tx_req_ready, tx_rsp_valid;
-  logic [DW_REGBUS-1:0] rx_req_ready, rx_rsp_valid;
-
-  logic tx_idma_req_valid, tx_idma_req_ready, tx_idma_rsp_valid, tx_idma_rsp_ready;
-  logic rx_idma_req_valid, rx_idma_req_ready, rx_idma_rsp_valid, rx_idma_rsp_ready;
-
   /// AXI4+ATOP request and response
-  axi_req_t axi_tx_req_mem, axi_rx_req_mem;
-  axi_rsp_t axi_tx_rsp_mem, axi_rx_rsp_mem;
+  axi_req_t tx_req, axi_rx_req_mem;
+  axi_rsp_t tx_rsp, axi_rx_rsp_mem;
+
+  slv_req_t tx_mem_req;
+  slv_resp_t tx_mem_rsp;
 
   /// -------------------- REG Drivers -----------------------
   typedef reg_test::reg_driver #(
@@ -110,27 +121,38 @@ module eth_idma_tb
   REG_BUS #(
     .DATA_WIDTH(DW_REGBUS),
     .ADDR_WIDTH(AW_REGBUS)
-  )  reg_bus_rx (
+  )  reg_bus_rx(
+    .clk_i(s_clk)
+  );
+
+  REG_BUS #(
+    .DATA_WIDTH(DW_REGBUS),
+    .ADDR_WIDTH(AW_REGBUS)
+  )  reg_bus_tmu(
     .clk_i(s_clk)
   );
 
   logic reg_error;
-  logic rx_irq;
+  logic rx_irq, tmu_irq;
   logic dma_done = 0;
   logic req_ready = 0;
-
+  logic rst_stat;
 
   reg_bus_drv_t reg_drv_tx  = new(reg_bus_tx);
   reg_bus_drv_t reg_drv_rx  = new(reg_bus_rx);
+  reg_bus_drv_t reg_drv_tmu = new(reg_bus_tmu);
 
-  reg_bus_req_t reg_bus_tx_req, reg_bus_rx_req;
-  reg_bus_rsp_t reg_bus_tx_rsp, reg_bus_rx_rsp;
+  reg_bus_req_t tmu_reg_req, reg_bus_tx_req, reg_bus_rx_req;
+  reg_bus_rsp_t tmu_reg_rsp, reg_bus_tx_rsp, reg_bus_rx_rsp;
 
-  `REG_BUS_ASSIGN_TO_REQ (reg_bus_tx_req, reg_bus_tx)
+   `REG_BUS_ASSIGN_TO_REQ (reg_bus_tx_req, reg_bus_tx)
   `REG_BUS_ASSIGN_FROM_RSP (reg_bus_tx, reg_bus_tx_rsp)
 
   `REG_BUS_ASSIGN_TO_REQ (reg_bus_rx_req, reg_bus_rx)
   `REG_BUS_ASSIGN_FROM_RSP (reg_bus_rx, reg_bus_rx_rsp)
+
+  `REG_BUS_ASSIGN_TO_REQ (tmu_reg_req, reg_bus_tmu)
+  `REG_BUS_ASSIGN_FROM_RSP (reg_bus_tmu, tmu_reg_rsp)
 
   // clocking block
   clk_rst_gen #(
@@ -141,6 +163,38 @@ module eth_idma_tb
     .rst_no       ( s_rst_n   )  // active low reset
   );
 
+   ////////////////
+   //    TMU     //
+   ////////////////
+
+  slv_guard_top #(
+      .AddrWidth    ( AddrWidth           ),
+      .DataWidth    ( DataWidth           ),
+      .StrbWidth    ( StrbWidth           ),
+      .AxiIdWidth   ( AxiIdWidth          ),
+      .AxiUserWidth ( UserWidth           ),
+      .MaxUniqIds   ( MaxUniqIds          ),
+      .MaxTxnsPerId ( MaxTxnsPerId        ),
+      .req_t        ( axi_req_t           ),
+      .rsp_t        ( axi_rsp_t           ),
+      .slv_req_t    ( slv_req_t           ),
+      .slv_rsp_t    ( slv_resp_t          ),
+      .reg_req_t    ( reg_bus_req_t       ),
+      .reg_rsp_t    ( reg_bus_rsp_t       )
+  ) i_slv_guard_top (
+      .clk_i       (   s_clk         ),
+      .rst_ni      (   s_rst_n       ),
+      .guard_ena_i (   1'b1          ),
+      .req_i       (   tx_req        ),
+      .rsp_o       (   tx_rsp        ),
+      .req_o       (   tx_mem_req    ),
+      .rsp_i       (   tx_mem_rsp    ),
+      .reg_req_i   (   tmu_reg_req   ),
+      .reg_rsp_o   (   tmu_reg_rsp   ),
+      .irq_o       (   tmu_irq       ),
+      .rst_req_o   (   rst_stat      ),
+      .rst_stat_i  (   1'b0          )
+  );
 
   // AXI4 TX sim memory
   axi_sim_mem #(
@@ -148,8 +202,8 @@ module eth_idma_tb
     .DataWidth         ( DataWidth    ),
     .IdWidth           ( AxiIdWidth   ),
     .UserWidth         ( UserWidth    ),
-    .axi_req_t         ( axi_req_t    ),
-    .axi_rsp_t         ( axi_rsp_t    ),
+    .axi_req_t         ( slv_req_t    ),
+    .axi_rsp_t         ( slv_resp_t   ),
     .WarnUninitialized ( 1'b0         ),
     .ClearErrOnAccess  ( 1'b1         ),
     .ApplDelay         ( SYS_TA       ),
@@ -158,8 +212,8 @@ module eth_idma_tb
   ) i_tx_axi_sim_mem (
     .clk_i              ( s_clk           ),
     .rst_ni             ( s_rst_n         ),
-    .axi_req_i          ( axi_tx_req_mem  ),
-    .axi_rsp_o          ( axi_tx_rsp_mem  )
+    .axi_req_i          ( tx_mem_req      ),
+    .axi_rsp_o          ( tx_mem_rsp      )
   );
 
   // AXI4 RX sim memory
@@ -219,8 +273,8 @@ module eth_idma_tb
     .reg_req_i           ( reg_bus_tx_req      ),
     .reg_rsp_o           ( reg_bus_tx_rsp      ),
     .testmode_i          ( 1'b0                ),
-    .axi_req_o           ( axi_tx_req_mem      ),
-    .axi_rsp_i           ( axi_tx_rsp_mem      )
+    .axi_req_o           ( tx_req              ),
+    .axi_rsp_i           ( tx_rsp              )
   );
 
   reg_bus_req_t rx_reg_idma_req, tx_reg_idma_req;
@@ -235,6 +289,7 @@ module eth_idma_tb
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
+    .RxFifoLogDepth      (                    ),
     .RejectZeroTransfers ( RejectZeroTransfers ),
     .axi_req_t           ( axi_req_t           ),
     .axi_rsp_t           ( axi_rsp_t           ),
@@ -267,7 +322,7 @@ module eth_idma_tb
     .eth_rx_irq_o     ( rx_irq          )
   );
 
-    // ------------------------ BEGINNING OF SIMULATION ------------------------
+  // ------------------------ BEGINNING OF SIMULATION ------------------------
 
   /// Ethernet Internal Clock generation
 
@@ -295,17 +350,36 @@ module eth_idma_tb
 
     repeat(1)@(posedge s_clk);
     reg_drv_tx.reset_master();
-    //reg_drv_tx.reset_slave();
     reg_drv_rx.reset_master();
-    //reg_drv_rx.reset_slave();
+    reg_drv_tmu.reset_master();
 
     @(posedge s_rst_n);
-    //#delay
 
-    //$readmemh("../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    //$readmemh("../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
     $readmemh("/scratch2/chaoliang/zoix_exercise/pulp-eth/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     $readmemh("/scratch2/chaoliang/zoix_exercise/pulp-eth/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+
+
+    /// TMU config
+    // slave unit enable 1 / disable 0
+    reg_drv_tmu.send_write(32'h0000_0000, 32'h0000_0100, 4'hf, reg_error);
+
+    // budget from aw_valid to aw_ready
+    reg_drv_tmu.send_write(32'h0000_0004, 32'h0000_0001, 4'hf, reg_error);
+    // time budget for unit length on w channel
+    reg_drv_tmu.send_write(32'h0000_0008, 32'h0000_0001, 4'hf, reg_error);
+    // budget from w_valid to w_ready
+    reg_drv_tmu.send_write(32'h0000_000c, 32'h0000_0001, 4'hf, reg_error);
+    // budget from w_last to b_valid
+    reg_drv_tmu.send_write(32'h0000_0010, 32'h0000_0001, 4'hf, reg_error);
+    // budget from b_valid to b_ready
+    reg_drv_tmu.send_write(32'h0000_0014, 32'h0000_0001, 4'hf, reg_error);
+
+    // budget from ar_valid to ar_ready
+    reg_drv_tmu.send_write(32'h0000_0018, 32'h0000_0001, 4'hf, reg_error);
+    // time budget for unit length on r channel
+    reg_drv_tmu.send_write(32'h0000_001c, 32'h0000_0001, 4'hf, reg_error);
+    // budget from rvld to rrdy
+    reg_drv_tmu.send_write(32'h0000_0020, 32'h0000_0001, 4'hf, reg_error);
 
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
