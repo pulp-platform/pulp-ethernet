@@ -93,6 +93,7 @@ ssio_ddr_in #
 )
 rx_ssio_ddr_inst (
     .input_clk(phy_rgmii_rx_clk),
+    .input_rst(~rst),
     .input_d({phy_rgmii_rxd, phy_rgmii_rx_ctl}),
     .output_clk(mac_gmii_rx_clk),
     .output_q1({mac_gmii_rxd[3:0], rgmii_rx_ctl_1}),

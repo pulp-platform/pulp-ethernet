@@ -181,7 +181,8 @@ module eth_idma_tb
       .slv_rsp_t    ( slv_resp_t          ),
       .reg_req_t    ( reg_bus_req_t       ),
       .reg_rsp_t    ( reg_bus_rsp_t       )
-  ) i_slv_guard_top (
+  )
+  i_slv_guard_top (
       .clk_i       (   s_clk         ),
       .rst_ni      (   s_rst_n       ),
       .guard_ena_i (   1'b1          ),
@@ -250,7 +251,8 @@ module eth_idma_tb
     .axi_rsp_t           ( axi_rsp_t           ),
     .reg_req_t           ( reg_bus_req_t       ),
     .reg_rsp_t           ( reg_bus_rsp_t       )
-  ) i_tx_eth_idma_wrap (
+  )
+  i_tx_eth_idma_wrap (
     .clk_i               ( s_clk               ),
     .rst_ni              ( s_rst_n             ),
      /// Etherent Internal clocks
@@ -295,7 +297,8 @@ module eth_idma_tb
     .axi_rsp_t           ( axi_rsp_t           ),
     .reg_req_t           ( reg_bus_req_t       ),
     .reg_rsp_t           ( reg_bus_rsp_t       )
-  ) i_rx_eth_idma_wrap (
+  )
+  i_rx_eth_idma_wrap (
     .clk_i            ( s_clk           ),
     .rst_ni           ( s_rst_n         ),
     .eth_clk125_i     ( s_clk125  ), // 125MHz in-phase
@@ -355,7 +358,7 @@ module eth_idma_tb
 
     @(posedge s_rst_n);
 
-    $readmemh("/scratch2/chaoliang/zoix_exercise/pulp-eth/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    //$readmemh("/scratch2/chaoliang/zoix_exercise/pulp-eth/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     $readmemh("/scratch2/chaoliang/zoix_exercise/pulp-eth/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
 
 

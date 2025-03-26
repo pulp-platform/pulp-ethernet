@@ -27,6 +27,7 @@ THE SOFTWARE.
 /*
  * Generic IDDR module
  */
+
 module iddr #
 (
     // target ("SIM", "GENERIC", "XILINX", "ALTERA")
@@ -39,14 +40,20 @@ module iddr #
     parameter WIDTH = 1
 )
 (
-    input  wire             clk,
+    input  logic             clk,
+    input  logic             rst,
 
-    input  wire [WIDTH-1:0] d,
+    input  logic [WIDTH-1:0] d,
 
-    output wire [WIDTH-1:0] q1,
-    output wire [WIDTH-1:0] q2
+    output logic [WIDTH-1:0] q1,
+    output logic [WIDTH-1:0] q2
 );
 
+
+logic [WIDTH-1:0] d_reg_1 ;
+logic [WIDTH-1:0] d_reg_2 ;
+logic [WIDTH-1:0] q_reg_1 ;
+logic [WIDTH-1:0] q_reg_2 ;
 /*
 
 Provides a consistent input DDR flip flop across multiple FPGA families
@@ -115,33 +122,41 @@ end else if (TARGET == "ALTERA") begin
         .dataout_l(q2)
     );
 
-    always @(posedge clk) begin
+    always@(posedge clk) begin
         q1_delay <= q1_int;
     end
 
     assign q1 = q1_delay;
+
 end else begin
-    reg [WIDTH-1:0] d_reg_1 = {WIDTH{1'b0}};
-    reg [WIDTH-1:0] d_reg_2 = {WIDTH{1'b0}};
 
-    reg [WIDTH-1:0] q_reg_1 = {WIDTH{1'b0}};
-    reg [WIDTH-1:0] q_reg_2 = {WIDTH{1'b0}};
-
-    always @(posedge clk) begin
-        d_reg_1 <= d;
+    always_ff @(posedge clk or negedge rst) begin
+        if(!rst)
+            d_reg_1 <= 'b0;
+        else
+            d_reg_1 <= d;
     end
 
-    always @(negedge clk) begin
-        d_reg_2 <= d;
+    always_ff @(negedge clk or negedge rst) begin
+        if(!rst)
+            d_reg_2 <= 'b0;
+        else
+            d_reg_2 <= d;
     end
 
-    always @(posedge clk) begin
-        q_reg_1 <= d_reg_1;
-        q_reg_2 <= d_reg_2;
+    always_ff @(posedge clk or negedge rst) begin
+        if(!rst) begin
+           q_reg_1 <= 'b0;
+           q_reg_2 <= 'b0;
+        end else begin
+            q_reg_1 <= d_reg_1;
+            q_reg_2 <= d_reg_2;
+        end
     end
 
     assign q1 = q_reg_1;
     assign q2 = q_reg_2;
+
 end
 
 endgenerate

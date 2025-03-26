@@ -45,6 +45,7 @@ module ssio_ddr_in
 )
 (
     input  wire             input_clk,
+    input  wire             input_rst,
 
     input  wire [WIDTH-1:0] input_d,
 
@@ -161,6 +162,7 @@ iddr #(
 )
 data_iddr_inst (
     .clk(clk_io),
+    .rst(input_rst),
     .d(input_d),
     .q1(output_q1),
     .q2(output_q2)
