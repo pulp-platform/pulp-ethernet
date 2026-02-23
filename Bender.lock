@@ -7,8 +7,8 @@ packages:
     dependencies:
     - common_cells
   axi:
-    revision: 9402c8a9ce0a7b5253c3c29e788612d771e8b5d6
-    version: 0.39.3
+    revision: a256a3b86394fedf19e361047fccfdd7f6ef83e4
+    version: 0.39.9
     source:
       Git: https://github.com/pulp-platform/axi.git
     dependencies:
@@ -23,22 +23,22 @@ packages:
     dependencies:
     - common_cells
   common_cells:
-    revision: 0d67563b6b592549542544f1abc0f43e5d4ee8b4
-    version: 1.35.0
+    revision: 9ca8a7655f741e7dd5736669a20a301325194c28
+    version: 1.39.0
     source:
       Git: https://github.com/pulp-platform/common_cells.git
     dependencies:
     - common_verification
     - tech_cells_generic
   common_verification:
-    revision: 9c07fa860593b2caabd9b5681740c25fac04b878
-    version: 0.2.3
+    revision: fb1885f48ea46164a10568aeff51884389f67ae3
+    version: 0.2.5
     source:
       Git: https://github.com/pulp-platform/common_verification.git
     dependencies: []
   idma:
-    revision: 95f366e56f7e772c283fb3c8b343afc4a3978375
-    version: 0.6.2
+    revision: 28a36e5e07705549e59fc33db96ab681bc1ca88e
+    version: 0.6.5
     source:
       Git: git@github.com:pulp-platform/iDMA.git
     dependencies:
@@ -48,17 +48,25 @@ packages:
     - common_verification
     - obi
     - register_interface
+  lidar_coordinate_conversion:
+    revision: 56a188537fe98f6971360fd09f658f23be4e97df
+    version: null
+    source:
+      Git: git@github.com:alinazmeu/lidar_coordinate_conversion.git
+    dependencies:
+    - axi_stream
+    - common_cells
   obi:
-    revision: 1aa411df145c4ebdd61f8fed4d003c33f7b20636
-    version: 0.1.2
+    revision: 0155fc34e900c7c884e081c0a1114a247937ff69
+    version: 0.1.7
     source:
       Git: https://github.com/pulp-platform/obi.git
     dependencies:
     - common_cells
     - common_verification
   register_interface:
-    revision: ae616e5a1ec2b41e72d200e5ab09c65e94aebd3d
-    version: 0.4.4
+    revision: d6e1d4cdaab7870f4faf3f88a1c788eaf5ac129d
+    version: 0.4.7
     source:
       Git: https://github.com/pulp-platform/register_interface.git
     dependencies:

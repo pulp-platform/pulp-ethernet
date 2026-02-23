@@ -15,7 +15,7 @@
 # Author: Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>
 
 ETH_ROOT ?= $(shell pwd)
-BENDER	 ?= bender -d $(ETH_ROOT)
+BENDER	 ?= ./bender
 
 clean:
 	rm -rf .bender

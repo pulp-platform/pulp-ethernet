@@ -189,6 +189,9 @@ module eth_idma_reg_top #(
   logic rsp_ready_wd;
   logic rsp_ready_we;
   logic rsp_valid_qs;
+  logic hwa_enable_qs;
+  logic hwa_enable_wd;
+  logic hwa_enable_we;
 
   // Register instances
   // R[low_addr]: V(False)
@@ -1405,9 +1408,36 @@ module eth_idma_reg_top #(
   );
 
 
+  // R[hwa_enable]: V(False)
+
+  prim_subreg #(
+    .DW      (1),
+    .SWACCESS("RW"),
+    .RESVAL  (1'h0)
+  ) u_hwa_enable (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    // from register interface
+    .we     (hwa_enable_we),
+    .wd     (hwa_enable_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0  ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.hwa_enable.q ),
+
+    // to register interface (read)
+    .qs     (hwa_enable_qs)
+  );
 
 
-  logic [20:0] addr_hit;
+
+
+  logic [21:0] addr_hit;
   always_comb begin
     addr_hit = '0;
     addr_hit[ 0] = (reg_addr == ETH_IDMA_LOW_ADDR_OFFSET);
@@ -1431,6 +1461,7 @@ module eth_idma_reg_top #(
     addr_hit[18] = (reg_addr == ETH_IDMA_REQ_READY_OFFSET);
     addr_hit[19] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
     addr_hit[20] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
+    addr_hit[21] = (reg_addr == ETH_IDMA_HWA_ENABLE_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -1458,7 +1489,8 @@ module eth_idma_reg_top #(
                (addr_hit[17] & (|(ETH_IDMA_PERMIT[17] & ~reg_be))) |
                (addr_hit[18] & (|(ETH_IDMA_PERMIT[18] & ~reg_be))) |
                (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be))) |
-               (addr_hit[20] & (|(ETH_IDMA_PERMIT[20] & ~reg_be)))));
+               (addr_hit[20] & (|(ETH_IDMA_PERMIT[20] & ~reg_be))) |
+               (addr_hit[21] & (|(ETH_IDMA_PERMIT[21] & ~reg_be)))));
   end
 
   assign low_addr_we = addr_hit[0] & reg_we & !reg_error;
@@ -1575,6 +1607,9 @@ module eth_idma_reg_top #(
   assign rsp_ready_we = addr_hit[19] & reg_we & !reg_error;
   assign rsp_ready_wd = reg_wdata[0];
 
+  assign hwa_enable_we = addr_hit[21] & reg_we & !reg_error;
+  assign hwa_enable_wd = reg_wdata[0];
+
   // Read data return
   always_comb begin
     reg_rdata_next = '0;
@@ -1686,6 +1721,10 @@ module eth_idma_reg_top #(
 
       addr_hit[20]: begin
         reg_rdata_next[0] = rsp_valid_qs;
+      end
+
+      addr_hit[21]: begin
+        reg_rdata_next[0] = hwa_enable_qs;
       end
 
       default: begin

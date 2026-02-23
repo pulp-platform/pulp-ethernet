@@ -354,5 +354,18 @@
             }
           ]
         },
+        {
+          name:"hwa_enable",
+          desc: "control signal to enable/disable the Lidar accelerator via software",
+          swaccess: "rw",
+          hwaccess: "hro",
+          fields: [
+            { bits: "0",
+            name: "hwa_enable",
+            desc: "control signal to enable/disable the Lidar accelerator via software"
+            resval: "0"
+            }
+          ]
+        },
   ]
 }

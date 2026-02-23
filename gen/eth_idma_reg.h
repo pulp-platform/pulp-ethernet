@@ -165,6 +165,10 @@ extern "C" {
 #define ETH_IDMA_RSP_VALID_REG_OFFSET 0x50
 #define ETH_IDMA_RSP_VALID_RSP_VALID_BIT 0
 
+// control signal to enable/disable the Lidar accelerator via software
+#define ETH_IDMA_HWA_ENABLE_REG_OFFSET 0x54
+#define ETH_IDMA_HWA_ENABLE_HWA_ENABLE_BIT 0
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -77,6 +77,9 @@ module eth_idma_wrap #(
   import eth_idma_reg_pkg::*;
   import idma_pkg::*;
 
+  logic hwa_error;
+  logic [11:0] hwa_length;
+
   localparam int unsigned RegAddrWidth = 8;
   localparam int unsigned StrbWidth     = DataWidth / 8;
 
@@ -301,7 +304,9 @@ module eth_idma_wrap #(
     .hw2reg_o           (  hw2reg_eth        ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
     .eth_len_o          (  eth_len           ),
-    .rx_complete_o      (  rx_complete       )
+    .rx_complete_o      (  rx_complete       ),
+    .hwa_error_o        (  hwa_error         ),
+    .hwa_length_o       (  hwa_length        )
   );
 
   assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
@@ -321,6 +326,13 @@ module eth_idma_wrap #(
   assign reg2hw_eth.low_addr = reg2hw.low_addr;
   assign reg2hw_eth.mdio     = reg2hw.mdio;
   assign reg2hw_eth.rsr.rx_end_clr  = reg2hw.rsr.rx_end_clr;
+  assign reg2hw_eth.hwa_enable = reg2hw.hwa_enable;
+
+
+  logic hwa_on;
+  assign hwa_on = reg2hw.hwa_enable.q;
+  localparam int unsigned HWA_LENGTH = 2304/*4608*/;
+
 
   // if on-chip devvice works as TX, dma length is set by the core
   // otherwise, dma lengths should be set by hardware as RX
@@ -328,11 +340,21 @@ module eth_idma_wrap #(
     idma_reg_req.length = reg2hw.length.q;
     hw2reg.length.de = 1'b0; // Default de to 0
     hw2reg.length.d = 0;
-    if (rx_complete) begin
-      idma_reg_req.length = eth_len;
-      hw2reg.length.de = 1'b1;
-      hw2reg.length.d = eth_len;
-    end
+    if (hwa_on && hwa_error) begin
+         idma_reg_req.length = hwa_length;
+         hw2reg.length.d = hwa_length;
+         hw2reg.length.de = 1'b1;
+    end else if (rx_complete) begin
+     if (hwa_on) begin
+         idma_reg_req.length = HWA_LENGTH;
+         hw2reg.length.d = hwa_length;
+         hw2reg.length.de = 1'b1;
+      end else begin
+        idma_reg_req.length = eth_len;
+        hw2reg.length.de = 1'b1;
+        hw2reg.length.d = eth_len;
+      end
+      end
   end
 
   // TX CDC FIFO

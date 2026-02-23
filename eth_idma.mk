@@ -14,8 +14,8 @@
 #
 # Author: Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>
 
-BENDER ?= bender
-QUESTA ?= questa-2023.4
+BENDER ?= "./bender"
+QUESTA ?= 
 TBENCH ?= eth_idma_tb
 DUT    ?= eth_idma_wrap
 
@@ -35,6 +35,9 @@ else
 	VSIM_FLAGS := $(QUESTA_FLAGS) -c
 	RUN_AND_EXIT := run -all; exit
 endif
+
+bender:
+	curl --proto '=https' --tlsv1.2 https://pulp-platform.github.io/bender/init -sSf | sh
 
 ######################
 # Nonfree components #

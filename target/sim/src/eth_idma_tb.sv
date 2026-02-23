@@ -147,7 +147,7 @@ module eth_idma_tb
   // AXI4 TX sim memory
   axi_sim_mem #(
     .AddrWidth         ( AddrWidth    ),
-    .DataWidth         ( DataWidth    ),
+    .DataWidth         ( DataWidth   ),
     .IdWidth           ( AxiIdWidth   ),
     .UserWidth         ( UserWidth    ),
     .axi_req_t         ( axi_req_t    ),
@@ -237,7 +237,7 @@ module eth_idma_tb
     .BufferDepth         ( BufferDepth         ),
     .TFLenWidth          ( TFLenWidth          ),
     .MemSysDepth         ( MemSysDepth         ),
-    .RxFifoLogDepth      ( 6                   ),
+    .RxFifoLogDepth      ( 12                   ),
     .RejectZeroTransfers ( RejectZeroTransfers ),
     .axi_req_t           ( axi_req_t           ),
     .axi_rsp_t           ( axi_rsp_t           ),
@@ -293,15 +293,19 @@ module eth_idma_tb
     end
   end
 
+
   initial begin
 
     @(posedge s_rst_n);
     @(posedge s_clk);
 
-    //$readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    //$readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+    $readmemh("gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+    //$readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    //$readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+
+    reg_drv_rx.send_write( 'h54, 32'h1, 'hf, reg_error); //HWA path enable
+    @(posedge s_clk);
 
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
@@ -316,7 +320,7 @@ module eth_idma_tb
     reg_drv_tx.send_write( 'h20, 32'h0, 'hf, reg_error); // DST_ADDR
     @(posedge s_clk);
 
-    reg_drv_tx.send_write( 'h24, 'h40, 'hf, reg_error); // Size in bytes
+    reg_drv_tx.send_write( 'h24, 'h4e6 /*'h9c6*/, 'hf, reg_error); // Size in bytes
     @(posedge s_clk);
 
     reg_drv_tx.send_write( 'h28, 32'h0, 'hf, reg_error); // src protocol AXI

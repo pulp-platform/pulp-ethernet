@@ -62,9 +62,21 @@ module eth_top #(
   output hw2reg_itf_t                          hw2reg_o     ,
   output logic                                 eth_rx_irq_o ,
   output logic[15:0]                           eth_len_o    ,
-  output logic                                 rx_complete_o
+  output logic                                 rx_complete_o,
+  output logic                                 hwa_error_o,
+  output logic [11:0]                          hwa_length_o
 );
 
+  import eth_idma_reg_pkg::* ;
+
+  logic hwa_enable;
+  logic [7:0] nr_packets;
+  assign hwa_enable = reg2hw_i.hwa_enable.q;
+  //assign hwa_enable = 1'b1;
+
+  axi_stream_req_t rx_axis_framing_req_o, rx_axis_hwa_req_o;
+  axi_stream_rsp_t rx_axis_framing_rsp_i, rx_axis_hwa_rsp_i;
+  
 // ---------------- axis streams for the framing module ----------------------
   localparam int unsigned FramingDataWidth = 8;
   localparam int unsigned FramingIdWidth   = IdWidth;
@@ -84,6 +96,29 @@ module eth_top #(
 // AXI stream signals
   s_framing_req_t s_framing_tx_req, s_framing_rx_req;
   s_framing_rsp_t s_framing_tx_rsp, s_framing_rx_rsp;
+
+  s_framing_req_t s_framing_rx_req_hwa, s_framing_rx_req_upsizer;
+  s_framing_rsp_t s_framing_rx_rsp_upsizer, s_framing_rx_rsp_hwa;
+
+// ---------------- axis streams for the hwa Lidar module----------------------
+  localparam int unsigned HwaDataWidth = 16;
+  localparam int unsigned HwaIdWidth   = IdWidth;
+  localparam int unsigned HwaDestWidth = DestWidth;
+  localparam int unsigned HwaUserWidth = 1;
+
+// AXI stream channels typedefs
+  typedef logic [HwaDataWidth-1:0]   hwa_tdata_t;
+  typedef logic [HwaDataWidth/8-1:0] hwa_tstrb_t;
+  typedef logic [HwaDataWidth/8-1:0] hwa_tkeep_t;
+  typedef logic [HwaIdWidth-1:0]     hwa_tid_t;
+  typedef logic [HwaDestWidth-1:0]   hwa_tdest_t;
+  typedef logic [HwaUserWidth-1:0]   hwa_tuser_t;
+
+  `AXI_STREAM_TYPEDEF_ALL(s_hwa, hwa_tdata_t, hwa_tstrb_t, hwa_tkeep_t, hwa_tid_t, hwa_tdest_t, hwa_tuser_t)
+
+// AXI stream signals
+  s_hwa_req_t s_hwa_rx_req;
+  s_hwa_rsp_t s_hwa_rx_rsp;
 
 // ---------------- END: axis streams for the framing module ----------------------
   framing_top #(
@@ -128,6 +163,24 @@ module eth_top #(
     .rx_complete_o  ( rx_complete_o )
   );
 
+  Hwa_top_level # (
+    .axi_stream_in_req_t(s_framing_req_t),
+    .axi_stream_in_rsp_t(s_framing_rsp_t),
+    .axi_stream_out_req_t(s_hwa_req_t),
+    .axi_stream_out_rsp_t(s_hwa_rsp_t)
+  ) i_hwa_top (
+    .rstn_i(rst_ni),
+    .clk_i(clk_i),
+    .axis_in_req_i(s_framing_rx_req_hwa),
+    .axis_in_rsp_o(s_framing_rx_rsp_hwa),
+    .axis_out_req_o(s_hwa_rx_req),
+    .axis_out_rsp_i(s_hwa_rx_rsp),
+    .nr_packets(nr_packets),
+    .error_rx_o (hwa_error_o),
+    .hwa_length_o(hwa_length_o) 
+  );
+
+
   axi_stream_dw_downsizer #(
     .DataWidthIn          ( DataWidth        ),
     .DataWidthOut         ( FramingDataWidth ),
@@ -147,23 +200,49 @@ module eth_top #(
     .out_rsp_i  ( s_framing_tx_rsp )
   );
 
-  axi_stream_dw_upsizer #(
-    .DataWidthIn           ( FramingDataWidth ),
-    .DataWidthOut          ( DataWidth        ),
-    .IdWidth               ( IdWidth          ),
-    .DestWidth             ( DestWidth        ),
-    .UserWidth             ( UserWidth        ),
-    .axi_stream_in_req_t   ( s_framing_req_t  ),
-    .axi_stream_in_rsp_t   ( s_framing_rsp_t  ),
-    .axi_stream_out_req_t  ( axi_stream_req_t ),
-    .axi_stream_out_rsp_t  ( axi_stream_rsp_t )
-  ) i_axi_stream_dw_upsizer (
-    .clk_i     ( clk_i             ),
-    .rst_ni    ( rst_ni            ),
-    .in_req_i  ( s_framing_rx_req  ),
-    .in_rsp_o  ( s_framing_rx_rsp  ),
-    .out_req_o ( rx_axis_req_o     ),
-    .out_rsp_i ( rx_axis_rsp_i     )
-  );
+    axi_stream_dw_upsizer #(
+      .DataWidthIn           ( HwaDataWidth     ),
+      .DataWidthOut          ( DataWidth        ),
+      .IdWidth               ( IdWidth          ),
+      .DestWidth             ( DestWidth        ),
+      .UserWidth             ( UserWidth        ),
+      .axi_stream_in_req_t   ( s_hwa_req_t      ),
+      .axi_stream_in_rsp_t   ( s_hwa_rsp_t      ),
+      .axi_stream_out_req_t  ( axi_stream_req_t ),
+      .axi_stream_out_rsp_t  ( axi_stream_rsp_t )
+    ) i_hwa_axi_upsizer (
+      .clk_i     ( clk_i             ),
+      .rst_ni    ( rst_ni            ),
+      .in_req_i  ( s_hwa_rx_req      ),
+      .in_rsp_o  ( s_hwa_rx_rsp      ),
+      .out_req_o ( rx_axis_hwa_req_o ),
+      .out_rsp_i ( rx_axis_hwa_rsp_i   )
+    );
+
+    axi_stream_dw_upsizer #(
+      .DataWidthIn           ( FramingDataWidth ),
+      .DataWidthOut          ( DataWidth        ),
+      .IdWidth               ( IdWidth          ),
+      .DestWidth             ( DestWidth        ),
+      .UserWidth             ( UserWidth        ),
+      .axi_stream_in_req_t   ( s_framing_req_t  ),
+      .axi_stream_in_rsp_t   ( s_framing_rsp_t  ),
+      .axi_stream_out_req_t  ( axi_stream_req_t ),
+      .axi_stream_out_rsp_t  ( axi_stream_rsp_t )
+    ) i_axi_stream_dw_upsizer (
+      .clk_i     ( clk_i             ),
+      .rst_ni    ( rst_ni            ),
+      .in_req_i  ( s_framing_rx_req_upsizer  ),
+      .in_rsp_o  ( s_framing_rx_rsp_upsizer  ),
+      .out_req_o ( rx_axis_framing_req_o ),
+      .out_rsp_i ( rx_axis_framing_rsp_i   )
+    );
+
+  assign rx_axis_req_o = hwa_enable ? rx_axis_hwa_req_o : rx_axis_framing_req_o;
+  assign rx_axis_framing_rsp_i = hwa_enable ? '0 : rx_axis_rsp_i;
+  assign rx_axis_hwa_rsp_i = hwa_enable ? rx_axis_rsp_i : '0;
+  assign s_framing_rx_rsp = hwa_enable ? s_framing_rx_rsp_hwa : s_framing_rx_rsp_upsizer;
+  assign s_framing_rx_req_hwa = hwa_enable ? s_framing_rx_req : '0;
+  assign s_framing_rx_req_upsizer = hwa_enable ? '0 : s_framing_rx_req;
 
 endmodule : eth_top

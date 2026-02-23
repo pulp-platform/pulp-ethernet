@@ -167,6 +167,10 @@ package eth_idma_reg_pkg;
   } eth_idma_reg2hw_rsp_valid_reg_t;
 
   typedef struct packed {
+    logic        q;
+  } eth_idma_reg2hw_hwa_enable_reg_t;
+
+  typedef struct packed {
     logic [31:0] d;
     logic        de;
   } eth_idma_hw2reg_low_addr_reg_t;
@@ -280,24 +284,25 @@ package eth_idma_reg_pkg;
 
   // Register -> HW type
   typedef struct packed {
-    eth_idma_reg2hw_low_addr_reg_t low_addr; // [194:163]
-    eth_idma_reg2hw_machi_reg_t machi; // [162:139]
-    eth_idma_reg2hw_mdio_reg_t mdio; // [138:135]
-    eth_idma_reg2hw_rsr_reg_t rsr; // [134:134]
-    eth_idma_reg2hw_src_addr_reg_t src_addr; // [133:102]
-    eth_idma_reg2hw_dst_addr_reg_t dst_addr; // [101:70]
-    eth_idma_reg2hw_length_reg_t length; // [69:58]
-    eth_idma_reg2hw_src_protocol_reg_t src_protocol; // [57:55]
-    eth_idma_reg2hw_dst_protocol_reg_t dst_protocol; // [54:52]
-    eth_idma_reg2hw_axi_id_reg_t axi_id; // [51:51]
-    eth_idma_reg2hw_opt_src_reg_t opt_src; // [50:33]
-    eth_idma_reg2hw_opt_dst_reg_t opt_dst; // [32:15]
-    eth_idma_reg2hw_beo_reg_t beo; // [14:5]
-    eth_idma_reg2hw_last_reg_t last; // [4:4]
-    eth_idma_reg2hw_req_valid_reg_t req_valid; // [3:3]
-    eth_idma_reg2hw_req_ready_reg_t req_ready; // [2:2]
-    eth_idma_reg2hw_rsp_ready_reg_t rsp_ready; // [1:1]
-    eth_idma_reg2hw_rsp_valid_reg_t rsp_valid; // [0:0]
+    eth_idma_reg2hw_low_addr_reg_t low_addr; // [195:164]
+    eth_idma_reg2hw_machi_reg_t machi; // [163:140]
+    eth_idma_reg2hw_mdio_reg_t mdio; // [139:136]
+    eth_idma_reg2hw_rsr_reg_t rsr; // [135:135]
+    eth_idma_reg2hw_src_addr_reg_t src_addr; // [134:103]
+    eth_idma_reg2hw_dst_addr_reg_t dst_addr; // [102:71]
+    eth_idma_reg2hw_length_reg_t length; // [70:59]
+    eth_idma_reg2hw_src_protocol_reg_t src_protocol; // [58:56]
+    eth_idma_reg2hw_dst_protocol_reg_t dst_protocol; // [55:53]
+    eth_idma_reg2hw_axi_id_reg_t axi_id; // [52:52]
+    eth_idma_reg2hw_opt_src_reg_t opt_src; // [51:34]
+    eth_idma_reg2hw_opt_dst_reg_t opt_dst; // [33:16]
+    eth_idma_reg2hw_beo_reg_t beo; // [15:6]
+    eth_idma_reg2hw_last_reg_t last; // [5:5]
+    eth_idma_reg2hw_req_valid_reg_t req_valid; // [4:4]
+    eth_idma_reg2hw_req_ready_reg_t req_ready; // [3:3]
+    eth_idma_reg2hw_rsp_ready_reg_t rsp_ready; // [2:2]
+    eth_idma_reg2hw_rsp_valid_reg_t rsp_valid; // [1:1]
+    eth_idma_reg2hw_hwa_enable_reg_t hwa_enable; // [0:0]
   } eth_idma_reg2hw_t;
 
   // HW -> register type
@@ -340,6 +345,7 @@ package eth_idma_reg_pkg;
   parameter logic [BlockAw-1:0] ETH_IDMA_REQ_READY_OFFSET = 7'h 48;
   parameter logic [BlockAw-1:0] ETH_IDMA_RSP_READY_OFFSET = 7'h 4c;
   parameter logic [BlockAw-1:0] ETH_IDMA_RSP_VALID_OFFSET = 7'h 50;
+  parameter logic [BlockAw-1:0] ETH_IDMA_HWA_ENABLE_OFFSET = 7'h 54;
 
   // Register index
   typedef enum int {
@@ -363,11 +369,12 @@ package eth_idma_reg_pkg;
     ETH_IDMA_REQ_VALID,
     ETH_IDMA_REQ_READY,
     ETH_IDMA_RSP_READY,
-    ETH_IDMA_RSP_VALID
+    ETH_IDMA_RSP_VALID,
+    ETH_IDMA_HWA_ENABLE
   } eth_idma_id_e;
 
   // Register width information to check illegal writes
-  parameter logic [3:0] ETH_IDMA_PERMIT [21] = '{
+  parameter logic [3:0] ETH_IDMA_PERMIT [22] = '{
     4'b 1111, // index[ 0] ETH_IDMA_LOW_ADDR
     4'b 0111, // index[ 1] ETH_IDMA_MACHI
     4'b 0001, // index[ 2] ETH_IDMA_MDIO
@@ -388,7 +395,8 @@ package eth_idma_reg_pkg;
     4'b 0001, // index[17] ETH_IDMA_REQ_VALID
     4'b 0001, // index[18] ETH_IDMA_REQ_READY
     4'b 0001, // index[19] ETH_IDMA_RSP_READY
-    4'b 0001  // index[20] ETH_IDMA_RSP_VALID
+    4'b 0001, // index[20] ETH_IDMA_RSP_VALID
+    4'b 0001  // index[21] ETH_IDMA_HWA_ENABLE
   };
 
 endpackage
