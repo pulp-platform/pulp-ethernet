@@ -49,7 +49,7 @@ packages:
     - obi
     - register_interface
   lidar_coordinate_conversion:
-    revision: 56a188537fe98f6971360fd09f658f23be4e97df
+    revision: b0123db2cdb0ec3198f8406645e5179f46d78639
     version: null
     source:
       Git: git@github.com:alinazmeu/lidar_coordinate_conversion.git

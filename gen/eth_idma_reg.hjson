@@ -367,5 +367,18 @@
             }
           ]
         },
+        {
+          name:"rpm_val",
+          desc: "rpm value from 300 to 1200",
+          swaccess: "rw",
+          hwaccess: "hro",
+          fields: [
+            { bits: "10:0",
+            name: "rpm_val",
+            desc: "rpm value from 300 to 1200"
+            resval: "0"
+            }
+          ]
+        },
   ]
 }

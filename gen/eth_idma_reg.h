@@ -169,6 +169,13 @@ extern "C" {
 #define ETH_IDMA_HWA_ENABLE_REG_OFFSET 0x54
 #define ETH_IDMA_HWA_ENABLE_HWA_ENABLE_BIT 0
 
+// rpm value from 300 to 1200
+#define ETH_IDMA_RPM_VAL_REG_OFFSET 0x58
+#define ETH_IDMA_RPM_VAL_RPM_VAL_MASK 0x7ff
+#define ETH_IDMA_RPM_VAL_RPM_VAL_OFFSET 0
+#define ETH_IDMA_RPM_VAL_RPM_VAL_FIELD \
+  ((bitfield_field32_t) { .mask = ETH_IDMA_RPM_VAL_RPM_VAL_MASK, .index = ETH_IDMA_RPM_VAL_RPM_VAL_OFFSET })
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -192,6 +192,9 @@ module eth_idma_reg_top #(
   logic hwa_enable_qs;
   logic hwa_enable_wd;
   logic hwa_enable_we;
+  logic [10:0] rpm_val_qs;
+  logic [10:0] rpm_val_wd;
+  logic rpm_val_we;
 
   // Register instances
   // R[low_addr]: V(False)
@@ -1435,9 +1438,36 @@ module eth_idma_reg_top #(
   );
 
 
+  // R[rpm_val]: V(False)
+
+  prim_subreg #(
+    .DW      (11),
+    .SWACCESS("RW"),
+    .RESVAL  (11'h0)
+  ) u_rpm_val (
+    .clk_i   (clk_i    ),
+    .rst_ni  (rst_ni  ),
+
+    // from register interface
+    .we     (rpm_val_we),
+    .wd     (rpm_val_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0  ),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.rpm_val.q ),
+
+    // to register interface (read)
+    .qs     (rpm_val_qs)
+  );
 
 
-  logic [21:0] addr_hit;
+
+
+  logic [22:0] addr_hit;
   always_comb begin
     addr_hit = '0;
     addr_hit[ 0] = (reg_addr == ETH_IDMA_LOW_ADDR_OFFSET);
@@ -1462,6 +1492,7 @@ module eth_idma_reg_top #(
     addr_hit[19] = (reg_addr == ETH_IDMA_RSP_READY_OFFSET);
     addr_hit[20] = (reg_addr == ETH_IDMA_RSP_VALID_OFFSET);
     addr_hit[21] = (reg_addr == ETH_IDMA_HWA_ENABLE_OFFSET);
+    addr_hit[22] = (reg_addr == ETH_IDMA_RPM_VAL_OFFSET);
   end
 
   assign addrmiss = (reg_re || reg_we) ? ~|addr_hit : 1'b0 ;
@@ -1490,7 +1521,8 @@ module eth_idma_reg_top #(
                (addr_hit[18] & (|(ETH_IDMA_PERMIT[18] & ~reg_be))) |
                (addr_hit[19] & (|(ETH_IDMA_PERMIT[19] & ~reg_be))) |
                (addr_hit[20] & (|(ETH_IDMA_PERMIT[20] & ~reg_be))) |
-               (addr_hit[21] & (|(ETH_IDMA_PERMIT[21] & ~reg_be)))));
+               (addr_hit[21] & (|(ETH_IDMA_PERMIT[21] & ~reg_be))) |
+               (addr_hit[22] & (|(ETH_IDMA_PERMIT[22] & ~reg_be)))));
   end
 
   assign low_addr_we = addr_hit[0] & reg_we & !reg_error;
@@ -1610,6 +1642,9 @@ module eth_idma_reg_top #(
   assign hwa_enable_we = addr_hit[21] & reg_we & !reg_error;
   assign hwa_enable_wd = reg_wdata[0];
 
+  assign rpm_val_we = addr_hit[22] & reg_we & !reg_error;
+  assign rpm_val_wd = reg_wdata[10:0];
+
   // Read data return
   always_comb begin
     reg_rdata_next = '0;
@@ -1725,6 +1760,10 @@ module eth_idma_reg_top #(
 
       addr_hit[21]: begin
         reg_rdata_next[0] = hwa_enable_qs;
+      end
+
+      addr_hit[22]: begin
+        reg_rdata_next[10:0] = rpm_val_qs;
       end
 
       default: begin

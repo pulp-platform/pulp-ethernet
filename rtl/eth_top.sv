@@ -74,6 +74,10 @@ module eth_top #(
   assign hwa_enable = reg2hw_i.hwa_enable.q;
   //assign hwa_enable = 1'b1;
 
+  //new for rpm
+  logic [10:0] rpm;
+  assign rpm=reg2hw_i.rpm_val.q;
+
   axi_stream_req_t rx_axis_framing_req_o, rx_axis_hwa_req_o;
   axi_stream_rsp_t rx_axis_framing_rsp_i, rx_axis_hwa_rsp_i;
   
@@ -171,6 +175,7 @@ module eth_top #(
   ) i_hwa_top (
     .rstn_i(rst_ni),
     .clk_i(clk_i),
+    .rpm_i(rpm),
     .axis_in_req_i(s_framing_rx_req_hwa),
     .axis_in_rsp_o(s_framing_rx_rsp_hwa),
     .axis_out_req_o(s_hwa_rx_req),

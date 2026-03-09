@@ -306,6 +306,8 @@ module eth_idma_tb
 
     reg_drv_rx.send_write( 'h54, 32'h1, 'hf, reg_error); //HWA path enable
     @(posedge s_clk);
+    reg_drv_rx.send_write( 'h58, 32'd600, 'hf, reg_error); //rpm_val
+    @(posedge s_clk);
 
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address

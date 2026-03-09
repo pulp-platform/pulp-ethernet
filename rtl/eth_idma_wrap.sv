@@ -307,6 +307,7 @@ module eth_idma_wrap #(
     .rx_complete_o      (  rx_complete       ),
     .hwa_error_o        (  hwa_error         ),
     .hwa_length_o       (  hwa_length        )
+
   );
 
   assign hw2reg.rsp_valid.de = reg2hw.req_valid.q | idma_rsp_valid;
@@ -329,10 +330,17 @@ module eth_idma_wrap #(
   assign reg2hw_eth.hwa_enable = reg2hw.hwa_enable;
 
 
+
   logic hwa_on;
   assign hwa_on = reg2hw.hwa_enable.q;
   localparam int unsigned HWA_LENGTH = 2304/*4608*/;
 
+  //new for rpm setting rom is a input siganl to eth_top
+  //logic[5:0] rpm;
+  
+  //assign rpm=reg2hw.rpm_val.q;
+  
+  assign reg2hw_eth.rpm_val=reg2hw.rpm_val;
 
   // if on-chip devvice works as TX, dma length is set by the core
   // otherwise, dma lengths should be set by hardware as RX
