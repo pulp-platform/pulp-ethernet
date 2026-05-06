@@ -49,10 +49,10 @@ packages:
     - obi
     - register_interface
   lidar_coordinate_conversion:
-    revision: b0123db2cdb0ec3198f8406645e5179f46d78639
+    revision: bb6740c7658e352e58dfb4fb987abf7ff8c9ae8b
     version: null
     source:
-      Git: git@github.com:alinazmeu/lidar_coordinate_conversion.git
+      Git: https://github.com/alinazmeu/lidar_coordinate_conversion.git
     dependencies:
     - axi_stream
     - common_cells

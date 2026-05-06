@@ -4,6 +4,7 @@ package:
   authors:
     - "Chaoqun Liang <chaoqun.liang@unibo.it>"
     - "Alessandro Ottaviano <aottaviano@iis.ee.ethz.ch>"
+    - "Alina Zmeu <alina.zmeu@studio.unibo.it>"
 
 dependencies:
   axi :                 { git: "git@github.com:pulp-platform/axi.git",                      version: 0.39.1 }
@@ -12,7 +13,7 @@ dependencies:
   common_cells:         { git: "https://github.com/pulp-platform/common_cells.git",         version: 1.21.0 }
   axi_stream:           { git: "https://github.com/pulp-platform/axi_stream.git",           rev: "54891ff"  }
   idma:                 { git: "git@github.com:pulp-platform/iDMA.git",                     version: 0.6.2  }
-  lidar_coordinate_conversion:  { git: "git@github.com:alinazmeu/lidar_coordinate_conversion.git",  rev: "b0123db2cdb0ec3198f8406645e5179f46d78639"}
+  lidar_coordinate_conversion:  { git: "https://github.com/alinazmeu/lidar_coordinate_conversion.git",  rev: "bb6740c7658e352e58dfb4fb987abf7ff8c9ae8b"}
 
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this
