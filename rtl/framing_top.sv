@@ -115,6 +115,13 @@ module framing_top #(
     rx_axis_req_o.tvalid = accept_frame_q ? rx_axis_tvalid_0_q : 'd0;
     rx_axis_req_o.t.last = accept_frame_q ? rx_axis_tlast_0_q  : 'd0;
     rx_axis_req_o.t.user = accept_frame_q ? rx_axis_tuser_0_q  : 'd0;
+    // Every accepted beat of this byte-wide stream carries one real data byte,
+    // so TSTRB and TKEEP simply track TVALID. They were previously not assigned
+    // anywhere in this always_comb, which infers a latch and leaves the
+    // downstream upsizer nothing to build the word-level TKEEP from: a receiver
+    // read 0 valid bytes for every frame, whatever its length.
+    rx_axis_req_o.t.strb = (accept_frame_q && rx_axis_tvalid_0_q) ? '1 : '0;
+    rx_axis_req_o.t.keep = (accept_frame_q && rx_axis_tvalid_0_q) ? '1 : '0;
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin

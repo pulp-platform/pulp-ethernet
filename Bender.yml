@@ -47,3 +47,4 @@ sources:
   - target: test
     files:
       - target/sim/src/eth_tb.sv
+      - target/sim/src/eth_rx_keep_tb.sv
