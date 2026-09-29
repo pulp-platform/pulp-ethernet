@@ -335,17 +335,12 @@ module eth_idma_wrap #(
     .reg2hw_i           (  reg2hw_eth        ),
     .hw2reg_o           (  hw2reg_eth        ),
     .eth_rx_irq_o       (  eth_rx_irq_o      ),
-    .rsp_valid_i        (  rsp_valid         ),
+    .rsp_valid_i        (  rsp_valid         ),//idma_rsp_valid
     .eth_len_o          (  eth_len           ),
     .rx_complete_o      (  rx_complete       ),
-<<<<<<< HEAD
     .tx_busy_o          (  tx_busy           ),
     .sync_o             (  sync              )
-=======
-    .rsp_valid_i        (  idma_rsp_valid    )
->>>>>>> 36f87ff
   );
-
 
   assign hw2reg.rsp_valid.de = 1'b1;
   assign hw2reg.rsp_valid.d  = rsp_valid;
