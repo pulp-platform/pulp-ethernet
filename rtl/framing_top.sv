@@ -1,4 +1,3 @@
-
 module framing_top #(
   /// AXI Stream in request struct
   parameter type axi_stream_req_t  = logic,
@@ -55,9 +54,9 @@ module framing_top #(
   logic [2:0] last;
   (* mark_debug = "true" *)logic buf_busy;
   (* mark_debug = "true" *)logic rsp_valid;
+  logic rsp_valid_q, rsp_pulse;
   logic mac_gmii_tx_en;
   logic [47:0] mac_address,rx_dest_mac;
-  //(* mark_debug = "true" *) logic [47:0] dest_mac_sync1, dest_mac_sync2, dest_mac_sync3;
   logic [31:0] tx_fcs, rx_fcs;
   logic [31:0] tx_fcs_rev, rx_fcs_rev;
   logic promiscuous;
@@ -72,57 +71,67 @@ module framing_top #(
   logic       rx_axis_tlast;
   logic       rx_axis_tuser;
 
-   logic  [6:0] rx_axis_tvalid_pipe;
-
-  logic  [6:0] rx_axis_tlast_pipe;
-  logic  [6:0] rx_axis_tuser_pipe;
+  logic [6:0] rx_axis_tvalid_pipe;
+  logic [6:0] rx_axis_tlast_pipe;
+  logic [6:0] rx_axis_tuser_pipe;
   logic [7:0] rx_axis_tdata_pipe [6:0];
 
   assign tx_busy_o = tx_busy;
-  assign mac_address = {reg2hw_i.machi.upper_addr.q, reg2hw_i.low_addr.q}; // combine upper and lower mac address from registers
+  assign mac_address = {reg2hw_i.machi.upper_addr.q, reg2hw_i.low_addr.q};
   assign promiscuous = reg2hw_i.machi.promiscuous.q;
   assign phy_mdc     = reg2hw_i.mdio.mdio_clk.q;
   assign phy_mdio_o  = reg2hw_i.mdio.mdio_o.q;
   assign phy_mdio_oe = reg2hw_i.mdio.mdio_oe.q;
   assign irq_en      = reg2hw_i.machi.irq_en.q;
 
-  assign hw2reg_o.tx_fcs.de      = 1'b1;
-  assign hw2reg_o.rx_fcs.de      = 1'b1;
-  assign hw2reg_o.rsr.rx_irq.de  = 1'b1;
-  assign hw2reg_o.mdio.mdio_i.de = 1'b1;
-  assign hw2reg_o.tx_busy.de     = 1'b1;
-  assign hw2reg_o.rsr.rx_complete.de  = 1'b1;
+  assign hw2reg_o.tx_fcs.de          = 1'b1;
+  assign hw2reg_o.rx_fcs.de          = 1'b1;
+  assign hw2reg_o.rsr.rx_irq.de      = 1'b1;
+  assign hw2reg_o.mdio.mdio_i.de     = 1'b1;
+  assign hw2reg_o.tx_busy.de         = 1'b1;
+  assign hw2reg_o.rsr.rx_complete.de = 1'b1;
 
-  assign hw2reg_o.rsr.rx_irq.d  = eth_rx_irq_o;
+  assign hw2reg_o.rsr.rx_irq.d      = eth_rx_irq_o;
   assign hw2reg_o.rsr.rx_complete.d = rx_complete;
-  assign hw2reg_o.tx_busy.d     = tx_busy;
-  assign hw2reg_o.mdio.mdio_i.d = phy_mdio_i;
-  assign hw2reg_o.tx_fcs.d      = tx_fcs_rev;
-  assign hw2reg_o.rx_fcs.d      = rx_fcs_rev;
-  assign eth_len_o = eth_len;
-  assign eth_rx_irq_o = eth_irq && irq_en;
-  assign rx_complete_o = rx_complete;
-  assign sync_o    = sync;
+  assign hw2reg_o.tx_busy.d         = tx_busy;
+  assign hw2reg_o.mdio.mdio_i.d     = phy_mdio_i;
+  assign hw2reg_o.tx_fcs.d          = tx_fcs_rev;
+  assign hw2reg_o.rx_fcs.d          = rx_fcs_rev;
+  assign eth_len_o                  = eth_len;
+  assign eth_rx_irq_o               = eth_irq && irq_en;
+  assign rx_complete_o              = rx_complete;
+  assign sync_o                     = sync;
 
   sync #(
-  .STAGES     ( 32'd3      ),
-  .ResetValue ( 1'b0       )
-) i_rsp_sync (
-  .clk_i    ( phy_rx_clk    ),
-  .rst_ni   ( rst_ni        ),
-  .serial_i ( rsp_valid_i   ),
-  .serial_o ( rsp_valid  )
-);
+    .STAGES     ( 32'd3      ),
+    .ResetValue ( 1'b0       )
+  ) i_rsp_sync (
+    .clk_i    ( phy_rx_clk   ),
+    .rst_ni   ( rst_ni       ),
+    .serial_i ( rsp_valid_i  ),
+    .serial_o ( rsp_valid    )
+  );
+
+  // Convert synchronized toggle (or stretched edge) into a single-cycle
+  // phy_rx_clk clear pulse so short back-to-back frames are never overridden.
+  always_ff @(posedge phy_rx_clk or negedge rst_ni) begin
+    if (!rst_ni) begin
+      rsp_valid_q <= 1'b0;
+    end else begin
+      rsp_valid_q <= rsp_valid;
+    end
+  end
+  assign rsp_pulse = rsp_valid ^ rsp_valid_q;
 
   always_ff @(posedge phy_rx_clk or negedge rst_ni) begin
     if(!rst_ni) begin
-      byte_sync    <= 1'b0;
-      buf_busy     <= 1'b0;
+      byte_sync        <= 1'b0;
+      buf_busy         <= 1'b0;
       rx_packet_length <= 12'b0;
-      eth_len <= 12'b0;
-      rx_dest_mac <= 48'b0;
-      rx_complete <= 1'b0;
-      last <= 3'b0;
+      eth_len          <= 12'b0;
+      rx_dest_mac      <= 48'b0;
+      rx_complete      <= 1'b0;
+      last             <= 3'b0;
       for ( int i = 0; i < 7; i++) begin
         rx_axis_tdata_pipe[i]  <= 8'd0;
         rx_axis_tlast_pipe[i]  <= 1'b0;
@@ -131,11 +140,11 @@ module framing_top #(
       end
     end else begin
       if( rx_axis_tvalid && !byte_sync && !buf_busy) begin
-        byte_sync  <= 1'b1;               // Start frame reception
-        buf_busy   <= 1'b1;
+        byte_sync <= 1'b1;               // Start frame reception
+        buf_busy  <= 1'b1;
       end
       // Capture Incoming Data
-       if((!rx_complete) && (rx_axis_tvalid || (|rx_axis_tvalid_pipe))) begin
+      if((!rx_complete) && (rx_axis_tvalid || (|rx_axis_tvalid_pipe))) begin
         // Shift data through the pipeline stages
         for (int i = 6; i > 0; i--) begin
           rx_axis_tdata_pipe[i]  <= rx_axis_tdata_pipe[i-1];
@@ -150,7 +159,7 @@ module framing_top #(
         rx_axis_tvalid_pipe[0] <= rx_axis_tvalid;
       end
       // Increment packet length
-      // also make sure between tlast and rsp_valid where rx_complete is up, no new packets are accepted
+      // also make sure between tlast and rsp_pulse where rx_complete is up, no new packets are accepted
       if (rx_axis_tvalid && (!rx_complete)) begin
         rx_packet_length <= rx_packet_length + 1;
         if (rx_packet_length < HEADER_LEN)
@@ -160,7 +169,6 @@ module framing_top #(
       if(rx_axis_tlast_pipe[6] && byte_sync) begin
         last <= 3'b1;
         eth_len <= rx_packet_length;
-        //eth_len <= rx_packet_length -4;
         rx_packet_length <= 'b0;
         byte_sync <= 1'b0;
         rx_complete <= 1'b1;
@@ -170,8 +178,8 @@ module framing_top #(
         last <= 3'b0;
       end
 
-      if (rsp_valid) begin
-        buf_busy <= 1'b0;
+      if (rsp_pulse) begin
+        buf_busy    <= 1'b0;
         rx_complete <= 1'b0;
       end
     end
@@ -180,34 +188,34 @@ module framing_top #(
   // MAC Address Validation and IRQ Handling with conditional
   always_ff @(posedge phy_rx_clk or negedge rst_ni) begin
     if(!rst_ni) begin
-      sync <= 1'b0;
+      sync    <= 1'b0;
       eth_irq <= 1'b0;
     end else begin
-      // Sync evaluation afte header reception
+      // Sync evaluation after header reception
       if((rx_packet_length == HEADER_LEN) && !sync ) begin
           sync <= (rx_dest_mac[47:24] == 24'h01005E) // Multicast
-                           || (rx_dest_mac == 48'hFF_FF_FF_FF_FF_FF) // Broadcast
-                           || (rx_dest_mac == mac_address) // Unicast to our MAC
-                           || promiscuous;
+               || (rx_dest_mac == 48'hFF_FF_FF_FF_FF_FF) // Broadcast
+               || (rx_dest_mac == mac_address) // Unicast to our MAC
+               || promiscuous;
       end
-      // length is written to reg at tlast. stabalize for several cycles and trigger the irq
+      // length is written to reg at tlast. stabilize for several cycles and trigger the irq
       if(last == 7) begin
         eth_irq <= 1'b1;
-        sync <= 1'b0;
+        sync    <= 1'b0;
       end
-      if( rsp_valid)  begin
+      if (rsp_pulse) begin
         eth_irq <= 1'b0;
       end
     end
   end
 
   always_comb begin
-    rx_axis_req_o.t  = '0;
+    rx_axis_req_o.t      = '0;
     rx_axis_req_o.tvalid = '0;
     if (rx_axis_tvalid_pipe[6]) begin
       rx_axis_req_o.t.data = rx_axis_tdata_pipe[6];
       rx_axis_req_o.t.last = rx_axis_tlast_pipe[6];
-      rx_axis_req_o.t.user =  rx_axis_tuser_pipe[6];
+      rx_axis_req_o.t.user = rx_axis_tuser_pipe[6];
       rx_axis_req_o.t.strb = 'd1;
       rx_axis_req_o.t.keep = 'd1;
       rx_axis_req_o.tvalid = rx_axis_tvalid_pipe[6];
@@ -239,7 +247,7 @@ module framing_top #(
     .tx_axis_tvalid(tx_axis_req_i.tvalid),
     .tx_axis_tready(tx_axis_rsp_o.tready),
     .tx_axis_tlast (tx_axis_req_i.t.last),
-    .tx_axis_tuser (tx_axis_req_i.t.user), /// set to 0 if data is correct and set to 1 to abort TX
+    .tx_axis_tuser (tx_axis_req_i.t.user),
 
     // AXIS RX
     .rx_axis_tdata (rx_axis_tdata       ),
@@ -248,9 +256,9 @@ module framing_top #(
     .rx_axis_tuser (rx_axis_tuser       ),
 
     // Error registers
-    .rx_fcs_reg    (rx_fcs               ),
-    .tx_fcs_reg    (tx_fcs               ),
-    .tx_busy       (tx_busy              )
+    .rx_fcs_reg    (rx_fcs              ),
+    .tx_fcs_reg    (tx_fcs              ),
+    .tx_busy       (tx_busy             )
   );
 
   assign tx_fcs_rev = {<<{tx_fcs}};
