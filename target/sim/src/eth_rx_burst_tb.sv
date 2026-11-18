@@ -297,9 +297,9 @@ module eth_rx_burst_tb
     rd(1, LENGTH, len);
     dma(1, 0, s*Slot, 0);
     wr(1, RSR, 32'h2);  // as in eth_idma_tb
-    if (len[11:0] != (((FLen[k] + 7) / 8) * 8) + 4) begin
+    if (len[11:0] != FLen[k] + 4) begin
       $display("[%0t] FAIL slot %0d: length %0d, expected %0d (frame %0d)",
-               $time, s, len[11:0], (((FLen[k] + 7) / 8) * 8) + 4, k);
+               $time, s, len[11:0], FLen[k] + 4, k);
       errors++;
     end
     for (int i = 0; i < FLen[k]; i++)

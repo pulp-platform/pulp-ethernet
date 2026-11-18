@@ -36,6 +36,7 @@ sources:
   - rtl/rgmii_soc.sv
   - rtl/ssio_ddr_in.sv
    # Level 2
+  - rtl/eth_tx_keep_filter.sv
   - rtl/framing_top.sv
   - rtl/eth_top.sv
   - rtl/eth_idma_wrap.sv

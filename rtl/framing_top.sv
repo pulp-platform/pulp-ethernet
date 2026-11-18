@@ -229,6 +229,26 @@ module framing_top #(
     end
   end
 
+  // Drop the keep = 0 padding bytes of the last downsized beat and move tlast
+  logic [7:0] tx_f_data;
+  logic       tx_f_valid, tx_f_ready, tx_f_last, tx_f_user;
+
+  eth_tx_keep_filter i_tx_keep_filter (
+    .clk_i       ( clk_i                   ),
+    .rst_ni      ( rst_ni                  ),
+    .in_data_i   ( tx_axis_req_i.t.data    ),
+    .in_keep_i   ( tx_axis_req_i.t.keep[0] ),
+    .in_last_i   ( tx_axis_req_i.t.last    ),
+    .in_user_i   ( tx_axis_req_i.t.user[0] ),
+    .in_valid_i  ( tx_axis_req_i.tvalid    ),
+    .in_ready_o  ( tx_axis_rsp_o.tready    ),
+    .out_data_o  ( tx_f_data               ),
+    .out_last_o  ( tx_f_last               ),
+    .out_user_o  ( tx_f_user               ),
+    .out_valid_o ( tx_f_valid              ),
+    .out_ready_i ( tx_f_ready              )
+  );
+
   rgmii_soc rgmii_soc1 (
     .rst_int       (~rst_ni             ),
     .clk_int       (clk_i               ),
@@ -250,11 +270,11 @@ module framing_top #(
     .mac_gmii_tx_en(mac_gmii_tx_en      ),
 
     // AXIS TX
-    .tx_axis_tdata (tx_axis_req_i.t.data),
-    .tx_axis_tvalid(tx_axis_req_i.tvalid),
-    .tx_axis_tready(tx_axis_rsp_o.tready),
-    .tx_axis_tlast (tx_axis_req_i.t.last),
-    .tx_axis_tuser (tx_axis_req_i.t.user),
+    .tx_axis_tdata (tx_f_data           ),
+    .tx_axis_tvalid(tx_f_valid          ),
+    .tx_axis_tready(tx_f_ready          ),
+    .tx_axis_tlast (tx_f_last           ),
+    .tx_axis_tuser (tx_f_user           ),
 
     // AXIS RX
     .rx_axis_tdata (rx_axis_tdata       ),
