@@ -34,6 +34,9 @@ module eth_idma_wrap #(
   /// CDC FIFO
   parameter int unsigned TxFifoLogDepth      = 32'd5,
   parameter int unsigned RxFifoLogDepth      = 32'd3,
+  /// Frames that fit in the RX CDC FIFO (1536 B each), at least 1
+  parameter int unsigned RxMaxFrames         = (((DataWidth/8) << RxFifoLogDepth) / 1536 > 0) ?
+                                               (((DataWidth/8) << RxFifoLogDepth) / 1536) : 1,
   /// AXI4+ATOP Request and Response channel type
   parameter type axi_req_t                   = logic,
   parameter type axi_rsp_t                   = logic,
@@ -369,6 +372,7 @@ module eth_idma_wrap #(
   eth_top #(
     .DataWidth          (  DataWidth         ),
     .RegAddrWidth       (  RegAddrWidth      ),
+    .RxMaxFrames        (  RxMaxFrames       ),
     .IdWidth            (  AxiIdWidth        ),
     .DestWidth          (  AxiIdWidth        ),
     .axi_stream_req_t   (  axi_stream_req_t  ),
@@ -481,21 +485,14 @@ module eth_idma_wrap #(
       if (rx_dma_done) begin
         rx_done_tog_q <= ~rx_done_tog_q;
       end
-
+      
+      // Sticky: rsp_valid stays set until SW writes RSP_VALID_CLR (1 then 0)
+      sw_rsp_cnt_q <= 6'd0;
       if (rsp_valid_clr_pulse) begin
         rsp_valid    <= 1'b0;
-        sw_rsp_cnt_q <= 6'd0;
       end else if (idma_rsp_valid) begin
         rsp_valid    <= 1'b1;
-        sw_rsp_cnt_q <= 6'd1;
-      end else if (rsp_valid) begin
-        if (sw_rsp_cnt_q == 6'b111111) begin
-          rsp_valid    <= 1'b0;
-          sw_rsp_cnt_q <= 6'd0;
-        end else begin
-          sw_rsp_cnt_q <= sw_rsp_cnt_q + 6'd1;
-        end
-      end
+      end   
     end
   end
 

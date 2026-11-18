@@ -11,7 +11,7 @@ dependencies:
   register_interface :  { git: "https://github.com/pulp-platform/register_interface.git",   version: 0.4.2  }
   common_cells:         { git: "https://github.com/pulp-platform/common_cells.git",         version: 1.21.0 }
   axi_stream:           { git: "https://github.com/pulp-platform/axi_stream.git",           rev: "54891ff"  }
-  idma:                 { git: "git@github.com:pulp-platform/iDMA.git",                     version: 0.6.2  }
+  idma:                 { git: "git@github.com:pulp-platform/iDMA.git",                     version: 0.6.5  }
 
 sources:
   # Source files grouped in levels. Files in level 0 have no dependencies on files in this
@@ -23,6 +23,8 @@ sources:
   - rtl/axis_gmii_rx.sv
   - rtl/axis_gmii_tx.sv
    # Level 1
+      # Level 1
+  - rtl/eth_rx_frame_queue.sv
   - rtl/eth_mac_1g_rgmii_fifo.sv
   - rtl/eth_mac_1g_rgmii.sv
   - rtl/eth_mac_1g.sv
@@ -41,3 +43,4 @@ sources:
   - target: test
     files:
       - target/sim/src/eth_idma_tb.sv
+      - target/sim/src/eth_rx_burst_tb.sv

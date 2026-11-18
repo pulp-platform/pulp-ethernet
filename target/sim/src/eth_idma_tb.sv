@@ -300,8 +300,8 @@ module eth_idma_tb
 
     //$readmemh("../../../gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
     //$readmemh("../../../gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
-    $readmemh("/scratch/chaol/eth-fix/pulp-ethernet/gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
+    $readmemh("gen/rx_mem_init.vmem", i_rx_axi_sim_mem.mem);
+    $readmemh("gen/eth_frame.vmem", i_tx_axi_sim_mem.mem);
 
     /// TX eth configs
     reg_drv_tx.send_write( 'h00, 32'h00890702, 'hf, reg_error); //lower 32bits of MAC address
@@ -374,6 +374,8 @@ module eth_idma_tb
       @(posedge s_clk);
     end
     // can @posedge of rsp_valid
+    reg_drv_rx.send_write( 'h58, 32'h1, 'hf, reg_error ); // RSP_VALID_CLR
+    reg_drv_rx.send_write( 'h58, 32'h0, 'hf, reg_error );
     reg_drv_rx.send_write( 'h18, 32'h2, 'hf, reg_error ); // to clear rx_complete, thus to clear rx_irq once all data is processed.
     @(posedge s_clk);
 

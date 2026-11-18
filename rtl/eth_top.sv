@@ -23,6 +23,7 @@ module eth_top #(
   parameter int unsigned UserWidth       = 1,
   /// Register address width
   parameter int unsigned RegAddrWidth    = 4,
+  parameter int unsigned RxMaxFrames     = 1,
     /// AXI Stream in request struct
   parameter type axi_stream_req_t        = logic,
   /// AXI Stream in response struct
@@ -95,7 +96,8 @@ module eth_top #(
     .axi_stream_rsp_t  ( s_framing_rsp_t ),
     .reg2hw_itf_t      ( reg2hw_itf_t    ),
     .hw2reg_itf_t      ( hw2reg_itf_t    ),
-    .AW_REGBUS         ( RegAddrWidth    )
+    .AW_REGBUS         ( RegAddrWidth    ),
+    .RxMaxFrames       ( RxMaxFrames     )
   ) i_framing_top (
     .rst_ni         ( rst_ni      ),
     .clk_i          ( clk_i       ),

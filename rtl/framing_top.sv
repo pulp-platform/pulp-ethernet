@@ -7,7 +7,9 @@ module framing_top #(
   parameter type reg2hw_itf_t      = logic,
   parameter type hw2reg_itf_t      = logic,
   /// regbus address width
-  parameter int AW_REGBUS          = 4
+  parameter int AW_REGBUS          = 4,
+  /// Frames that may wait for the RX DMA at once. 1 = old behaviour.
+  parameter int unsigned RxMaxFrames = 32'd1
 ) (
   // Internal 125 MHz clock
   input  wire                 clk_i        ,
@@ -76,6 +78,8 @@ module framing_top #(
   logic [6:0] rx_axis_tuser_pipe;
   logic [7:0] rx_axis_tdata_pipe [6:0];
 
+  logic       rx_accept, rx_beat, rx_end_out, rx_drop;
+
   assign tx_busy_o = tx_busy;
   assign mac_address = {reg2hw_i.machi.upper_addr.q, reg2hw_i.low_addr.q};
   assign promiscuous = reg2hw_i.machi.promiscuous.q;
@@ -123,14 +127,34 @@ module framing_top #(
   end
   assign rsp_pulse = rsp_valid ^ rsp_valid_q;
 
+  
+
+  assign rx_beat    = rx_axis_tvalid & rx_accept;
+  assign rx_end_out = rx_axis_tvalid_pipe[6] & rx_axis_tlast_pipe[6];
+
+  eth_rx_frame_queue #(
+    .MaxFrames ( RxMaxFrames ),
+    .HoldOff   ( 32'd16      ),
+    .LenWidth  ( 32'd12      )
+  ) i_rx_frame_queue (
+    .clk_i      ( phy_rx_clk     ),
+    .rst_ni     ( rst_ni         ),
+    .valid_i    ( rx_axis_tvalid ),
+    .last_i     ( rx_axis_tlast  ),
+    .accept_o   ( rx_accept      ),
+    .end_out_i  ( rx_end_out     ),
+    .done_i     ( rsp_pulse      ),
+    .complete_o ( rx_complete    ),
+    .len_o      ( eth_len        ),
+    .busy_o     ( buf_busy       ),
+    .drop_o     ( rx_drop        )
+  );
+
   always_ff @(posedge phy_rx_clk or negedge rst_ni) begin
     if(!rst_ni) begin
       byte_sync        <= 1'b0;
-      buf_busy         <= 1'b0;
       rx_packet_length <= 12'b0;
-      eth_len          <= 12'b0;
       rx_dest_mac      <= 48'b0;
-      rx_complete      <= 1'b0;
       last             <= 3'b0;
       for ( int i = 0; i < 7; i++) begin
         rx_axis_tdata_pipe[i]  <= 8'd0;
@@ -139,48 +163,34 @@ module framing_top #(
         rx_axis_tvalid_pipe[i] <= 1'b0;
       end
     end else begin
-      if( rx_axis_tvalid && !byte_sync && !buf_busy) begin
-        byte_sync <= 1'b1;               // Start frame reception
-        buf_busy  <= 1'b1;
-      end
-      // Capture Incoming Data
-      if((!rx_complete) && (rx_axis_tvalid || (|rx_axis_tvalid_pipe))) begin
-        // Shift data through the pipeline stages
+      // Inside an accepted frame (debug only)
+      if (rx_beat) byte_sync <= ~rx_axis_tlast;
+      // Delay pipe: only bytes of accepted frames enter it
+      if (rx_beat || (|rx_axis_tvalid_pipe)) begin
         for (int i = 6; i > 0; i--) begin
           rx_axis_tdata_pipe[i]  <= rx_axis_tdata_pipe[i-1];
           rx_axis_tlast_pipe[i]  <= rx_axis_tlast_pipe[i-1];
           rx_axis_tuser_pipe[i]  <= rx_axis_tuser_pipe[i-1];
           rx_axis_tvalid_pipe[i] <= rx_axis_tvalid_pipe[i-1];
         end
-        // Capture current data into stage 0
         rx_axis_tdata_pipe[0]  <= rx_axis_tdata;
         rx_axis_tlast_pipe[0]  <= rx_axis_tlast;
         rx_axis_tuser_pipe[0]  <= rx_axis_tuser;
-        rx_axis_tvalid_pipe[0] <= rx_axis_tvalid;
+        rx_axis_tvalid_pipe[0] <= rx_beat;
       end
-      // Increment packet length
-      // also make sure between tlast and rsp_pulse where rx_complete is up, no new packets are accepted
-      if (rx_axis_tvalid && (!rx_complete)) begin
-        rx_packet_length <= rx_packet_length + 1;
+      // Byte count for the destination MAC check
+      if (rx_beat) begin
+        rx_packet_length <= rx_axis_tlast ? 12'b0 : rx_packet_length + 1;
         if (rx_packet_length < HEADER_LEN)
           rx_dest_mac <= {rx_dest_mac[39:0], rx_axis_tdata};
       end
 
-      if(rx_axis_tlast_pipe[6] && byte_sync) begin
+      if (rx_end_out) begin
         last <= 3'b1;
-        eth_len <= rx_packet_length;
-        rx_packet_length <= 'b0;
-        byte_sync <= 1'b0;
-        rx_complete <= 1'b1;
       end else if ((last > 0) && (last < 7)) begin
         last <= last + 3'b1;
       end else begin
         last <= 3'b0;
-      end
-
-      if (rsp_pulse) begin
-        buf_busy    <= 1'b0;
-        rx_complete <= 1'b0;
       end
     end
   end
@@ -198,14 +208,11 @@ module framing_top #(
                || (rx_dest_mac == mac_address) // Unicast to our MAC
                || promiscuous;
       end
-      // length is written to reg at tlast. stabilize for several cycles and trigger the irq
       if(last == 7) begin
-        eth_irq <= 1'b1;
         sync    <= 1'b0;
       end
-      if (rsp_pulse) begin
-        eth_irq <= 1'b0;
-      end
+      // IRQ is high while a complete frame waits
+      eth_irq <= rx_complete;
     end
   end
 
