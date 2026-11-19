@@ -516,7 +516,7 @@ module eth_idma_wrap #(
   );
 
   // RX CDC FIFO
-  cdc_fifo_gray #(
+  eth_cdc_fifo_sram #(
     .T           ( axis_t_chan_t  ),
     .LOG_DEPTH   ( RxFifoLogDepth ),
     .SYNC_STAGES ( 3 )

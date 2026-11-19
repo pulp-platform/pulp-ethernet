@@ -10,6 +10,7 @@ dependencies:
   common_verification : { git: "https://github.com/pulp-platform/common_verification.git",  version: 0.2.0  }
   register_interface :  { git: "https://github.com/pulp-platform/register_interface.git",   version: 0.4.2  }
   common_cells:         { git: "https://github.com/pulp-platform/common_cells.git",         version: 1.21.0 }
+  tech_cells_generic:   { git: "https://github.com/pulp-platform/tech_cells_generic.git", version: 0.2.13 }
   axi_stream:           { git: "https://github.com/pulp-platform/axi_stream.git",           rev: "54891ff"  }
   idma:                 { git: "git@github.com:pulp-platform/iDMA.git",                     version: 0.6.5  }
 
@@ -25,6 +26,7 @@ sources:
    # Level 1
       # Level 1
   - rtl/eth_rx_frame_queue.sv
+  - rtl/eth_cdc_fifo_sram.sv
   - rtl/eth_mac_1g_rgmii_fifo.sv
   - rtl/eth_mac_1g_rgmii.sv
   - rtl/eth_mac_1g.sv
